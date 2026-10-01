@@ -15,6 +15,7 @@ Só a fonte IBM Plex vem do Google Fonts; sem internet o painel usa a fonte padr
 ## O que tem aqui dentro
 
 - `painel-sao-nicolau.html` — o painel (menu lateral, cards, adicionar/remover ferramentas).
+- `index.html` — só redireciona para `painel-sao-nicolau.html`. Serve para o GitHub Pages (e qualquer hospedagem) achar a página principal; não edite nem apague.
 - `tools/` — um arquivo `.html` por ferramenta fixa.
 - `iniciar_painel.bat` / `iniciar_painel.command` — só abrem o servidor local (porta 8791).
 
@@ -53,3 +54,8 @@ Com o servidor local, cada ferramenta abre num quadro isolado (sandbox). As ferr
 ## Limites
 
 8 MB por ferramenta adicionada pela interface; 80 ferramentas adicionadas pela interface.
+
+
+## Publicar no GitHub Pages
+
+Suba a pasta inteira (com `tools/`, `index.html` e `.nojekyll`) na raiz do repositório e ative Settings > Pages > Deploy from a branch > main / (root). O endereço abre direto o painel. O painel e a pasta `tools/` precisam ficar juntos.
