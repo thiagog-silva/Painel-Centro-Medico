@@ -1,0 +1,983 @@
+<!doctype html>
+<html lang="pt-BR">
+<!-- VERSÃO: 1.0.0 — finalizada em 01/10/2026 — Balancete de Verificação (CSV do sistema -> padrão Balancete CM) -->
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Balancete de Verificação</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Sans+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+/* Paleta exclusiva — Hospital São Nicolau Complexo Hospitalar (azul-marinho / ciano da marca), claro e escuro */
+:root{
+  --bg:#f7f7fb;
+  --surface:#ffffff;
+  --surface-alt:#eef1f8;
+  --ink:#17254d;
+  --muted:#5f6f8f;
+  --border:#dbe2ee;
+  --accent:#28509c;
+  --accent-strong:#1c3a7a;
+  --accent-ink:#f5f8ff;
+  --accent-soft:#e3ebfa;
+  --danger:#b3261e;
+  --danger-soft:#fbe9e6;
+  --warning:#8a5a00;
+  --warning-soft:#fff1d9;
+  --success:#1e7d4a;
+  --success-soft:#e5f4ea;
+  --tag-debito-bg:#fff1d9;
+  --tag-debito-ink:#8a5a00;
+  --tag-credito-bg:#dff1fa;
+  --tag-credito-ink:#17608f;
+  /* extras da marca (faixa do topo e destaques em gradiente) */
+  --brand-cyan:#2da6de;
+  --brand-mid:#2b76b9;
+  --brand-navy:#2a4291;
+  --shadow: 0 1px 2px rgba(20,40,100,.06), 0 8px 24px -12px rgba(20,40,100,.22);
+  --radius:14px;
+  --font-display:'IBM Plex Sans Condensed', 'IBM Plex Sans', sans-serif;
+  --font-body:'IBM Plex Sans', system-ui, sans-serif;
+  --font-mono:'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0d1426; --surface:#141d36; --surface-alt:#1a2542; --ink:#e6ecfa;
+    --muted:#93a3c7; --border:#27345a; --accent:#63a9ee; --accent-strong:#a4cdfa;
+    --accent-ink:#06142e; --accent-soft:#172a50; --danger:#ff9d93; --danger-soft:#3a201d;
+    --warning:#ffcf70; --warning-soft:#3a2c12; --success:#8fe3ac; --success-soft:#173425;
+    --tag-debito-bg:#3a2c12; --tag-debito-ink:#ffcf70; --tag-credito-bg:#12304a; --tag-credito-ink:#7fd0f5;
+    --brand-cyan:#38b4ea; --brand-mid:#3b8bd0; --brand-navy:#4a65c4;
+    --shadow: 0 1px 2px rgba(0,0,0,.35), 0 12px 28px -14px rgba(0,0,0,.65);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0d1426; --surface:#141d36; --surface-alt:#1a2542; --ink:#e6ecfa;
+  --muted:#93a3c7; --border:#27345a; --accent:#63a9ee; --accent-strong:#a4cdfa;
+  --accent-ink:#06142e; --accent-soft:#172a50; --danger:#ff9d93; --danger-soft:#3a201d;
+  --warning:#ffcf70; --warning-soft:#3a2c12; --success:#8fe3ac; --success-soft:#173425;
+  --tag-debito-bg:#3a2c12; --tag-debito-ink:#ffcf70; --tag-credito-bg:#12304a; --tag-credito-ink:#7fd0f5;
+  --brand-cyan:#38b4ea; --brand-mid:#3b8bd0; --brand-navy:#4a65c4;
+  --shadow: 0 1px 2px rgba(0,0,0,.35), 0 12px 28px -14px rgba(0,0,0,.65);
+}
+
+*{ box-sizing:border-box; }
+body{
+  background:var(--bg); color:var(--ink); font-family:var(--font-body);
+  margin:0; padding-inline:16px; padding-block:20px 60px;
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3{ font-family:var(--font-display); font-weight:700; text-wrap:balance; margin:0; }
+.mono{ font-family:var(--font-mono); font-variant-numeric:tabular-nums; }
+.app-shell{ max-width:1180px; margin:0 auto; }
+
+.topbar{
+  position:sticky; top:env(safe-area-inset-top,0px); z-index:30;
+  background:color-mix(in srgb, var(--bg) 88%, transparent);
+  backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
+  border-bottom:1px solid var(--border); margin:-20px -16px 28px; padding:16px;
+  border-top:6px solid; border-image:linear-gradient(90deg,var(--brand-cyan),var(--brand-navy)) 1 0 0 0;
+}
+.topbar-inner{ max-width:1180px; margin:0 auto; display:flex; flex-wrap:wrap; align-items:center; gap:14px 24px; justify-content:space-between; }
+.brand{ display:flex; align-items:center; gap:12px; }
+.brand-mark{
+  width:38px; height:38px; border-radius:10px; background:var(--accent); color:var(--accent-ink);
+  display:flex; align-items:center; justify-content:center; font-family:var(--font-mono); font-weight:700; font-size:15px;
+  box-shadow:var(--shadow); flex:none;
+}
+.brand h1{ font-size:19px; letter-spacing:.2px; }
+.brand p{ margin:2px 0 0; font-size:12.5px; color:var(--muted); }
+.steps-pills{ display:flex; gap:8px; flex-wrap:wrap; }
+.step-pill{
+  font-family:var(--font-mono); font-size:11.5px; letter-spacing:.03em; padding:6px 11px; border-radius:999px;
+  border:1px solid var(--border); color:var(--muted); background:var(--surface); white-space:nowrap;
+}
+.step-pill.is-active{ border-color:var(--accent); color:var(--accent-strong); background:var(--accent-soft); font-weight:600; }
+.step-pill.is-done{ color:var(--success); border-color:var(--success); }
+
+.step-card{
+  background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+  padding:26px; margin-bottom:22px; box-shadow:var(--shadow);
+}
+.step-card[data-locked="true"]{ opacity:.45; pointer-events:none; }
+.step-head{ display:flex; align-items:flex-start; gap:14px; margin-bottom:18px; }
+.step-num{
+  width:32px; height:32px; border-radius:9px; background:var(--surface-alt); color:var(--ink);
+  font-family:var(--font-mono); font-weight:600; font-size:14px; display:flex; align-items:center; justify-content:center; flex:none;
+  border:1px solid var(--border);
+}
+.step-head h2{ font-size:20px; }
+.step-head .step-sub{ margin:3px 0 0; color:var(--muted); font-size:13.5px; max-width:70ch; }
+
+.dropzone{
+  border:1.5px dashed var(--border); border-radius:12px; padding:30px 20px; text-align:center;
+  background:var(--surface-alt); cursor:pointer; transition:border-color .15s, background .15s;
+}
+.dropzone:hover, .dropzone.is-dragover{ border-color:var(--accent); background:var(--accent-soft); }
+.dropzone strong{ display:block; font-size:15px; margin-bottom:4px; }
+.dropzone span{ font-size:12.5px; color:var(--muted); }
+.file-chip{
+  display:inline-flex; align-items:center; gap:8px; margin-top:14px; padding:7px 12px; border-radius:9px;
+  background:var(--accent-soft); color:var(--accent-strong); font-size:13px; font-family:var(--font-mono);
+}
+.field-row{ display:flex; flex-wrap:wrap; gap:16px; margin-top:16px; }
+.field{ display:flex; flex-direction:column; gap:5px; min-width:190px; flex:1; }
+.field label{ font-size:12px; color:var(--muted); font-weight:600; letter-spacing:.02em; text-transform:uppercase; }
+select, input[type="text"], input[type="number"], input[type="month"]{
+  font-family:var(--font-body); font-size:13.5px; padding:9px 10px; border-radius:8px; border:1px solid var(--border);
+  background:var(--surface); color:var(--ink); width:100%;
+}
+select:focus, input:focus, button:focus-visible, summary:focus-visible{ outline:2px solid var(--accent); outline-offset:1px; }
+
+.table-wrap{ overflow:auto; border:1px solid var(--border); border-radius:10px; margin-top:14px; }
+table{ border-collapse:collapse; width:100%; font-size:13px; }
+thead th{
+  position:sticky; top:0; background:var(--surface-alt); text-align:left; padding:9px 10px; font-size:11.5px;
+  text-transform:uppercase; letter-spacing:.04em; color:var(--muted); border-bottom:1px solid var(--border); white-space:nowrap;
+}
+tbody td{ padding:8px 10px; border-bottom:1px solid var(--border); white-space:nowrap; }
+tbody tr:last-child td{ border-bottom:none; }
+
+button{ font-family:var(--font-body); cursor:pointer; border:none; border-radius:9px; font-weight:600; font-size:13.5px; }
+.btn-primary{ background:var(--accent); color:var(--accent-ink); padding:11px 20px; box-shadow:var(--shadow); }
+.btn-primary:disabled{ opacity:.45; cursor:not-allowed; box-shadow:none; }
+.btn-secondary{ background:var(--surface-alt); color:var(--ink); border:1px solid var(--border); padding:10px 16px; }
+.btn-ghost{ background:transparent; color:var(--muted); border:1px solid var(--border); padding:7px 10px; font-size:12px; }
+.btn-icon{ background:var(--surface-alt); border:1px solid var(--border); color:var(--ink); width:28px; height:28px; border-radius:7px; display:inline-flex; align-items:center; justify-content:center; padding:0; }
+.actions-row{ display:flex; flex-wrap:wrap; gap:12px; margin-top:18px; align-items:center; }
+.hint{ font-size:12.5px; color:var(--muted); }
+.hint.warn{ color:var(--warning); }
+.hint.err{ color:var(--danger); }
+
+.summary-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:12px; margin-bottom:18px; }
+.summary-tile{ background:var(--surface-alt); border:1px solid var(--border); border-radius:10px; padding:14px 16px; min-width:0; }
+.summary-tile .n{ font-family:var(--font-mono); font-size:clamp(15px,1.4vw,18px); font-weight:600; font-variant-numeric:tabular-nums; white-space:nowrap; }
+.summary-tile .n .cur{ font-size:11px; font-weight:500; color:var(--muted); margin-right:4px; }
+.summary-tile .n small{ font-size:11px; font-weight:500; color:var(--muted); margin-left:4px; letter-spacing:.04em; }
+.summary-tile .l{ font-size:11.5px; color:var(--muted); text-transform:uppercase; letter-spacing:.03em; margin-top:2px; }
+.summary-tile.accent{ background:var(--accent-soft); }
+.summary-tile.accent .n{ color:var(--accent-strong); }
+.summary-tile.warn .n{ color:var(--warning); }
+
+.tag{ display:inline-flex; align-items:center; gap:5px; font-family:var(--font-mono); font-size:11.5px; font-weight:600; padding:4px 9px; border-radius:999px; white-space:nowrap; }
+.tag-debito{ background:var(--tag-debito-bg); color:var(--tag-debito-ink); }
+.tag-credito{ background:var(--tag-credito-bg); color:var(--tag-credito-ink); }
+
+.empty-state{ text-align:center; padding:34px 16px; color:var(--success); }
+.empty-state .big{ font-size:28px; }
+
+fieldset{ border:1px solid var(--border); border-radius:10px; padding:16px; margin:0 0 16px; }
+legend{ padding:0 6px; font-size:12.5px; font-weight:700; color:var(--accent-strong); text-transform:uppercase; letter-spacing:.03em; }
+
+.toast-host{ position:fixed; right:16px; bottom:calc(16px + env(safe-area-inset-bottom,0px)); z-index:60; display:flex; flex-direction:column; gap:8px; max-width:min(360px, calc(100vw - 32px)); }
+.toast{ background:var(--ink); color:var(--bg); padding:11px 14px; border-radius:9px; font-size:13px; box-shadow:var(--shadow); animation:toast-in .18s ease-out; }
+.toast.toast-err{ background:var(--danger); color:var(--accent-ink); }
+.toast.toast-ok{ background:var(--success); color:var(--accent-ink); }
+@keyframes toast-in{ from{ transform:translateY(6px); opacity:0; } to{ transform:none; opacity:1; } }
+
+code.k{ background:var(--surface-alt); border:1px solid var(--border); padding:1px 5px; border-radius:5px; font-family:var(--font-mono); font-size:12px; }
+
+/* ================= Específico do Balancete ================= */
+.sub-fields{ display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:14px 16px; }
+.sub-fields .wide{ grid-column:1 / -1; }
+.sub-fields .field{ min-width:0; }
+.fs-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:16px; }
+.fs-grid fieldset{ margin:0; }
+
+/* Conferências */
+.checks{ border:1px solid var(--border); border-radius:10px; margin-bottom:18px; background:var(--surface); }
+.checks > summary{ list-style:none; cursor:pointer; display:flex; align-items:center; gap:10px; padding:12px 16px; font-weight:600; font-size:13.5px; }
+.checks > summary::-webkit-details-marker{ display:none; }
+.checks > summary .chev{ margin-left:auto; width:8px; height:8px; border-right:1.6px solid var(--muted); border-bottom:1.6px solid var(--muted); transform:rotate(45deg); transition:transform .15s; }
+.checks[open] > summary .chev{ transform:rotate(-135deg); }
+.checks .stat{ font-family:var(--font-mono); font-size:11.5px; padding:3px 9px; border-radius:999px; border:1px solid var(--border); background:var(--surface-alt); font-weight:600; }
+.checks .stat.bad{ background:var(--accent); color:var(--accent-ink); border-color:var(--accent); }
+.checks ul{ list-style:none; margin:0; padding:2px 16px 14px; display:grid; gap:2px; }
+.checks li{ display:grid; grid-template-columns:22px 1fr auto; gap:10px; align-items:start; padding:9px 0; border-top:1px solid var(--border); font-size:13px; }
+.checks li:first-child{ border-top:1px solid var(--border); }
+.checks .ic{ font-family:var(--font-mono); font-weight:700; text-align:center; width:20px; height:20px; line-height:18px; border-radius:50%; border:1.5px solid var(--ink); font-size:11px; }
+.checks .ic.ok{ background:var(--ink); color:var(--bg); }
+.checks .ic.bad{ border-style:double; border-width:3px; line-height:14px; }
+.checks .ic.info{ border-color:var(--muted); color:var(--muted); font-style:italic; }
+.checks .t{ font-weight:600; }
+.checks .d{ color:var(--muted); font-size:12.5px; margin-top:2px; }
+.checks .d .mono{ color:var(--ink); }
+.checks .fixrow{ display:flex; gap:8px; align-items:flex-start; margin-top:6px; font-size:12.5px; }
+.checks .fixrow input{ margin-top:2px; accent-color:var(--accent); }
+
+/* Barra de ferramentas */
+.toolbar{ display:grid; gap:12px; margin-bottom:6px; }
+.tb-row{ display:flex; flex-wrap:wrap; gap:12px 22px; align-items:center; }
+.tb-row .search{ flex:1 1 320px; position:relative; }
+.tb-row .search input{ padding-left:34px; }
+.tb-row .search::before{ content:""; position:absolute; left:12px; top:50%; width:9px; height:9px; margin-top:-7px; border:1.6px solid var(--muted); border-radius:50%; }
+.tb-row .search::after{ content:""; position:absolute; left:22px; top:50%; width:5px; height:1.6px; background:var(--muted); transform:rotate(45deg); margin-top:5px; }
+.tb-actions{ display:flex; gap:10px; margin-left:auto; flex-wrap:wrap; }
+.tb-group{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.tb-label{ font-size:11.5px; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); font-weight:600; }
+.seg{ display:inline-flex; border:1px solid var(--border); border-radius:9px; overflow:hidden; background:var(--surface); }
+.seg button{ border-radius:0; background:transparent; color:var(--muted); padding:7px 12px; font-family:var(--font-mono); font-size:12px; border-right:1px solid var(--border); font-weight:500; }
+.seg button:last-child{ border-right:none; }
+.seg button:hover{ background:var(--surface-alt); color:var(--ink); }
+.seg button.on{ background:var(--accent); color:var(--accent-ink); font-weight:600; }
+.chips{ display:flex; gap:6px; flex-wrap:wrap; }
+.chip{ font-family:var(--font-mono); font-size:11.5px; padding:6px 11px; border-radius:999px; border:1px solid var(--border); color:var(--muted); background:var(--surface); font-weight:500; }
+.chip:hover{ color:var(--ink); border-color:var(--muted); }
+.chip.on{ border-color:var(--accent); color:var(--accent-strong); background:var(--accent-soft); font-weight:600; }
+.check{ display:inline-flex; align-items:center; gap:8px; font-size:13px; cursor:pointer; user-select:none; }
+.check input{ width:16px; height:16px; accent-color:var(--accent); }
+
+/* Relatório */
+.report{ margin-top:14px; border:1px solid var(--border); border-radius:12px; background:var(--surface); overflow:hidden; }
+.rep-head{ text-align:center; padding:26px 20px 20px; border-bottom:2px solid var(--ink); }
+.rep-head .kicker{ font-family:var(--font-mono); font-size:11.5px; letter-spacing:.28em; text-transform:uppercase; color:var(--muted); }
+.rep-head h2{ font-size:26px; margin:6px 0 8px; letter-spacing:.01em; }
+.rep-head .meta{ display:flex; flex-wrap:wrap; gap:4px 22px; justify-content:center; font-size:12.5px; color:var(--muted); }
+.rep-head .meta b{ color:var(--ink); font-weight:600; }
+.report .table-wrap{ border:none; border-radius:0; margin:0; max-height:min(74vh, 980px); }
+.rep-table{ font-size:13px; border-collapse:separate; border-spacing:0; table-layout:auto; }
+.rep-table thead th{ z-index:3; padding:11px 12px; border-bottom:1.5px solid var(--ink); }
+.rep-table thead th.r{ text-align:right; }
+.rep-table tbody td{ padding:6px 12px; border-bottom:1px solid color-mix(in srgb, var(--border) 70%, transparent); }
+.rep-table .c-cls{ font-family:var(--font-mono); font-size:11.5px; color:var(--muted); width:1%; }
+.rep-table .c-conta{ font-family:var(--font-mono); font-size:11.5px; color:var(--muted); width:1%; text-align:right; }
+.rep-table .c-desc{ min-width:260px; white-space:normal; }
+.rep-table td.num{ font-family:var(--font-mono); font-variant-numeric:tabular-nums; text-align:right; font-size:12.5px; width:1%; min-width:108px; }
+.rep-table td.num .dc{ display:inline-block; width:1.9ch; text-align:center; font-style:normal; font-size:10.5px; font-weight:600; margin-left:5px; color:var(--muted); border:1px solid transparent; border-radius:4px; line-height:1.5; }
+.rep-table td.num.zero{ color:var(--muted); opacity:.6; }
+.rep-table td.num.sal{ border-left:1px solid color-mix(in srgb, var(--border) 80%, transparent); }
+.rep-table thead th.sal{ border-left:1px solid color-mix(in srgb, var(--border) 80%, transparent); }
+.desc{ display:flex; align-items:center; gap:6px; padding-left:calc(var(--d) * 16px); }
+.tog{ flex:none; width:18px; height:18px; border-radius:5px; background:transparent; color:var(--muted); display:inline-flex; align-items:center; justify-content:center; padding:0; border:none; }
+.tog::before{ content:""; width:6px; height:6px; border-right:1.8px solid currentColor; border-bottom:1.8px solid currentColor; transform:rotate(-45deg); transition:transform .12s; }
+.tog[aria-expanded="true"]::before{ transform:rotate(45deg); margin-top:-2px; }
+.tog:hover{ background:var(--accent-soft); color:var(--ink); }
+.tog.static{ pointer-events:none; opacity:.55; }
+.spc{ flex:none; width:18px; height:18px; }
+.rep-table .flag{ font-family:var(--font-mono); font-size:11px; font-weight:700; margin-left:2px; cursor:help; }
+.rep-table mark{ background:var(--accent-soft); color:var(--ink); text-decoration:underline; text-underline-offset:2px; border-radius:2px; padding:0 1px; }
+
+/* hierarquia por peso e traço — sem cor */
+.rep-table tr.lv1 td{ background:var(--surface-alt); font-weight:700; text-transform:uppercase; letter-spacing:.05em; border-top:2px solid var(--ink); border-bottom:1px solid var(--ink); padding-block:11px; font-size:13px; }
+.rep-table tr.lv1 td.num{ font-size:13px; letter-spacing:0; }
+.rep-table tr.lv1 .c-cls, .rep-table tr.lv1 .c-conta{ color:var(--ink); }
+.rep-table tr.lv2 td{ background:color-mix(in srgb, var(--surface-alt) 45%, var(--surface)); font-weight:700; border-top:1px solid var(--ink); padding-block:8px; }
+.rep-table tr.lv3 td{ font-weight:600; border-top:1px solid var(--border); }
+.rep-table tr.lv4 td{ font-weight:500; }
+.rep-table tr.lv5 td{ font-weight:400; }
+.rep-table tr.lv6 td{ font-weight:400; }
+.rep-table tr.lv6 .c-desc{ color:var(--ink); }
+.rep-table tr:not(.lv1):hover td{ background:var(--accent-soft); }
+.rep-table tr.is-empty td{ text-align:center; color:var(--muted); padding:28px; }
+
+.rep-foot{ padding:22px 20px 40px; border-top:1px solid var(--border); }
+.rep-legend{ font-size:11.5px; color:var(--muted); display:flex; flex-wrap:wrap; gap:6px 22px; margin-bottom:26px; }
+.sigs{ display:grid; grid-template-columns:1fr 1fr; gap:28px 64px; margin-top:34px; padding-top:90px; font-size:13.5px; }
+.sig .ln{ border-top:1px solid var(--ink); padding-top:9px; }
+.sig b{ display:block; font-weight:600; }
+.sig span{ color:var(--muted); display:block; }
+.sig.empty{ visibility:hidden; }
+
+@media (max-width: 860px){
+  .rep-table .c-conta, .rep-table th.c-conta{ display:none; }
+  .sigs{ grid-template-columns:1fr; }
+}
+
+/* ================= Impressão / PDF ================= */
+@page{ size:A4 landscape; margin:11mm 10mm 13mm; @bottom-center{ content:counter(page) " / " counter(pages); font-size:8pt; } }
+@media print{
+  :root, :root:not([data-theme="light"]), :root[data-theme="dark"]{
+    --bg:#fff; --surface:#fff; --surface-alt:#ececec; --ink:#000; --muted:#555; --border:#bbb;
+    --accent:#000; --accent-strong:#000; --accent-ink:#fff; --accent-soft:#e6e6e6; --shadow:none;
+    color-scheme: light;
+  }
+  body{ padding:0; background:var(--bg); }
+  .topbar, #card1, .toast-host, .step-head, .summary-grid, #checks, .toolbar, .tog{ display:none !important; }
+  .app-shell{ max-width:none; }
+  #card2{ border:none; box-shadow:none; padding:0; margin:0; opacity:1 !important; }
+  .report{ border:none; margin:0; border-radius:0; overflow:visible; }
+  .report .table-wrap{ max-height:none; overflow:visible; }
+  .rep-head{ padding:0 0 8px; }
+  .rep-head h2{ font-size:17pt; margin:2px 0 4px; }
+  .rep-head .meta{ font-size:8.5pt; }
+  .rep-table{ font-size:8pt; }
+  .rep-table thead{ display:table-header-group; }
+  .rep-table thead th{ position:static; font-size:7pt; padding:5px 6px; }
+  .rep-table tbody td{ padding:2.5px 6px; }
+  .rep-table td.num{ font-size:7.8pt; min-width:0; }
+  .rep-table tr{ break-inside:avoid; }
+  .rep-table tr.lv1 td{ padding-block:5px; font-size:8pt; }
+  .rep-table tr.lv1 td, .rep-table tr.lv2 td{ -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  .rep-table tbody tr:hover td{ background:inherit; }
+  .desc{ padding-left:calc(var(--d) * 9px); }
+  .spc{ display:none; }
+  .rep-foot{ break-inside:avoid; padding:10px 0 0; }
+  .sigs{ margin-top:22px; padding-top:60pt; font-size:9.5pt; }
+}
+</style>
+</head>
+<body>
+<div class="app-shell">
+
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <div class="brand-mark">BV</div>
+        <div>
+          <h1>Balancete de Verificação</h1>
+          <p>Do CSV do sistema ao padrão do Balancete CM</p>
+        </div>
+      </div>
+      <div class="steps-pills" aria-label="Etapas">
+        <span class="step-pill is-active" id="pill1">1 · Importar</span>
+        <span class="step-pill" id="pill2">2 · Balancete</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ETAPA 1 -->
+  <section class="step-card" id="card1">
+    <div class="step-head">
+      <div class="step-num">1</div>
+      <div>
+        <h2>Importar o balancete</h2>
+        <p class="step-sub">Selecione o arquivo <code class="k">Balancete.csv</code> exportado do sistema. O cabeçalho do relatório e as assinaturas abaixo seguem o modelo do Balancete CM e podem ser ajustados a qualquer momento — o relatório se atualiza na hora.</p>
+      </div>
+    </div>
+
+    <div class="dropzone" id="drop" tabindex="0" role="button" aria-label="Selecionar arquivo CSV do balancete">
+      <strong>Arraste o CSV aqui ou clique para escolher</strong>
+      <span>Colunas esperadas: Classificação · Conta · Descrição · Saldo anterior · Valor débito · Valor crédito · Valor saldo</span>
+    </div>
+    <input type="file" id="file" accept=".csv,.txt,text/csv" hidden>
+    <div id="fileInfo" style="display:none">
+      <span class="file-chip" id="fileChip"></span>
+      <button class="btn-ghost" id="btnChange" style="margin-left:8px">Trocar arquivo</button>
+    </div>
+    <p class="hint err" id="fileErr" style="display:none;margin:12px 0 0"></p>
+
+    <div style="margin-top:20px">
+      <div class="fs-grid">
+        <fieldset>
+          <legend>Cabeçalho do relatório</legend>
+          <div class="sub-fields">
+            <div class="field wide"><label for="f-emp">Empresa</label><input type="text" id="f-emp" autocomplete="off"></div>
+            <div class="field"><label for="f-per">Período</label><input type="month" id="f-per"></div>
+            <div class="field"><label for="f-cnpj">CNPJ</label><input type="text" id="f-cnpj" autocomplete="off"></div>
+            <div class="field wide"><label for="f-nire">NIRE / registro</label><input type="text" id="f-nire" autocomplete="off"></div>
+          </div>
+        </fieldset>
+        <fieldset>
+          <legend>Assinaturas</legend>
+          <div class="sub-fields">
+            <div class="field wide"><label for="f-s1n">Esquerda — nome</label><input type="text" id="f-s1n" autocomplete="off"></div>
+            <div class="field wide"><label for="f-s1d">Esquerda — documento / cargo</label><input type="text" id="f-s1d" autocomplete="off"></div>
+            <div class="field wide"><label for="f-s2n">Direita — nome</label><input type="text" id="f-s2n" autocomplete="off"></div>
+            <div class="field wide"><label for="f-s2d">Direita — documento / cargo</label><input type="text" id="f-s2d" autocomplete="off"></div>
+          </div>
+        </fieldset>
+      </div>
+      <p class="hint">O CSV não traz empresa nem período — confira o campo <b>Período</b> antes de imprimir ou exportar.</p>
+    </div>
+  </section>
+
+  <!-- ETAPA 2 -->
+  <section class="step-card" id="card2" data-locked="true">
+    <div class="step-head">
+      <div class="step-num">2</div>
+      <div>
+        <h2>Balancete</h2>
+        <p class="step-sub">Recolha por nível, busque contas, oculte as zeradas e exporte. Os saldos mostram o valor com a natureza (<b>D</b>/<b>C</b>).</p>
+      </div>
+    </div>
+
+    <div class="summary-grid" id="summary"></div>
+    <details class="checks" id="checks"></details>
+
+    <div class="toolbar">
+      <div class="tb-row">
+        <div class="search"><input type="text" id="q" placeholder="Buscar por descrição, classificação ou conta…   ( / )" aria-label="Buscar no balancete" autocomplete="off"></div>
+        <div class="tb-actions">
+          <button class="btn-secondary" id="btnPrint" type="button">Imprimir / PDF</button>
+          <button class="btn-primary" id="btnXlsx" type="button">Baixar Excel</button>
+        </div>
+      </div>
+      <div class="tb-row">
+        <div class="tb-group"><span class="tb-label">Nível</span><div class="seg" id="seg"></div></div>
+        <div class="tb-group"><span class="tb-label">Grupo</span><div class="chips" id="chips"></div></div>
+        <label class="check"><input type="checkbox" id="optZero"> Ocultar contas zeradas</label>
+      </div>
+    </div>
+
+    <article class="report" id="report">
+      <header class="rep-head" id="repHead"></header>
+      <div class="table-wrap">
+        <table class="rep-table" id="tbl">
+          <thead>
+            <tr>
+              <th class="c-cls">Classificação</th>
+              <th class="c-conta r">Conta</th>
+              <th class="c-desc">Descrição</th>
+              <th class="r">Saldo anterior</th>
+              <th class="r">Valor débito</th>
+              <th class="r">Valor crédito</th>
+              <th class="r sal">Valor saldo</th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+      <footer class="rep-foot" id="repFoot"></footer>
+    </article>
+  </section>
+
+  <div class="toast-host" id="toasts" aria-live="polite"></div>
+</div>
+
+<script>
+/* ===== Ponte de capacidades (downloads dentro do painel) ===== */
+(function(){
+  if (window.top === window.self) return;
+  if (window.claude && window.claude.use) return;
+  let proximoId = 1;
+  const pendentes = {};
+  window.addEventListener('message', (ev) => {
+    const msg = ev.data;
+    if (!msg || msg.__ponteClaude !== true || msg.tipo !== 'resposta') return;
+    const p = pendentes[msg.id];
+    if (!p) return;
+    delete pendentes[msg.id];
+    if (msg.erro) p.reject(msg.erro); else p.resolve(msg.resultado);
+  });
+  function chamarHub(acao, payload){
+    return new Promise((resolve, reject) => {
+      const id = proximoId++;
+      pendentes[id] = { resolve, reject };
+      window.parent.postMessage({ __ponteClaude: true, tipo: 'chamada', id, acao, payload }, '*');
+    });
+  }
+  window.claude = {
+    use: async (nome) => {
+      if (nome !== 'downloads') return null;
+      return { save: (req) => chamarHub('downloads.save', req) };
+    }
+  };
+})();
+
+async function salvarArquivo(filename, blob){
+  if (typeof window.claude !== 'undefined' && typeof window.claude.use === 'function'){
+    try{
+      const downloads = await window.claude.use('downloads');
+      if (downloads){ await downloads.save({ filename, data: blob }); return true; }
+    }catch(err){
+      alert('Não foi possível salvar o arquivo (' + (err && (err.code || err.message) || 'erro') + ').');
+      return false;
+    }
+  }
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 4000);
+  return true;
+}
+
+/* ===== Utilidades ===== */
+const $ = (s)=>document.querySelector(s);
+const esc = (s)=>String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const norm = (s)=>String(s).normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
+const NF = new Intl.NumberFormat('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+const brl = (c)=>NF.format(c/100);             // centavos -> "1.234,56" (com sinal se negativo)
+const absBrl = (c)=>NF.format(Math.abs(c)/100);
+const NAT = {'1':'D','2':'C','3':'C','4':'D','5':'D'};   // natureza por grupo (padrão do Balancete CM)
+const KEYS = ['ant','deb','cre','sal'];
+
+function toast(msg, kind){
+  const el = document.createElement('div');
+  el.className = 'toast' + (kind==='err' ? ' toast-err' : kind==='ok' ? ' toast-ok' : '');
+  el.textContent = (kind==='err' ? '✕ ' : kind==='ok' ? '✓ ' : '') + msg;
+  $('#toasts').appendChild(el);
+  setTimeout(()=>el.remove(), kind==='err' ? 7000 : 3800);
+}
+function lsGet(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
+function lsSet(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
+
+/* ===== Configuração do cabeçalho ===== */
+const CFG_DEFAULT = {
+  emp:  'Centro Médico Cirúrgico de Catalão Ltda',
+  cnpj: '01.326.206/0001-79',
+  nire: '52200063122 — Junta Comercial do Estado de Goiás em 15/10/1970',
+  s1n:  'Audicon Accounting Ltda',
+  s1d:  'CNPJ: 29.509.633/0001-01 · CRC-MG 013.281',
+  s2n:  'William Andre Safatle',
+  s2d:  'Administrador não sócio'
+};
+const FIELDS = ['emp','cnpj','nire','per','s1n','s1d','s2n','s2d'];
+let cfg = {...CFG_DEFAULT};
+function prevMonth(){
+  const d = new Date(); d.setDate(1); d.setMonth(d.getMonth()-1);
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+}
+function loadCfg(){
+  try{ const s = JSON.parse(lsGet('balancete_cm_cfg')||'{}'); cfg = {...CFG_DEFAULT, ...s}; }catch(e){}
+  cfg.per = prevMonth();   // período não é lembrado: confira a cada mês
+  FIELDS.forEach(f=>{ $('#f-'+f).value = cfg[f] || ''; });
+}
+function bindCfg(){
+  FIELDS.forEach(f=>{
+    $('#f-'+f).addEventListener('input', e=>{
+      cfg[f] = e.target.value;
+      const {per, ...keep} = cfg; lsSet('balancete_cm_cfg', JSON.stringify(keep));
+      if (model) renderHead();
+    });
+  });
+}
+function periodoTxt(){
+  const m = /^(\d{4})-(\d{2})$/.exec(cfg.per||''); return m ? m[2]+'/'+m[1] : '—';
+}
+
+/* ===== Leitura do CSV ===== */
+function decodeBuffer(buf){
+  const u = new Uint8Array(buf);
+  if (u[0]===0xFF && u[1]===0xFE) return new TextDecoder('utf-16le').decode(u.subarray(2));
+  if (u[0]===0xFE && u[1]===0xFF) return new TextDecoder('utf-16be').decode(u.subarray(2));
+  if (u[0]===0xEF && u[1]===0xBB && u[2]===0xBF) return new TextDecoder('utf-8').decode(u.subarray(3));
+  if (u.length>3 && u[1]===0 && u[3]===0) return new TextDecoder('utf-16le').decode(u);
+  if (u.length>3 && u[0]===0 && u[2]===0) return new TextDecoder('utf-16be').decode(u);
+  try{ return new TextDecoder('utf-8',{fatal:true}).decode(u); }
+  catch(e){ return new TextDecoder('windows-1252').decode(u); }
+}
+function parseCSV(text, delim){
+  const rows=[]; let row=[], f='', q=false;
+  for (let i=0;i<text.length;i++){
+    const ch = text[i];
+    if (q){
+      if (ch==='"'){ if (text[i+1]==='"'){ f+='"'; i++; } else q=false; }
+      else f+=ch;
+    } else if (ch==='"') q=true;
+    else if (ch===delim){ row.push(f); f=''; }
+    else if (ch==='\n' || ch==='\r'){
+      if (ch==='\r' && text[i+1]==='\n') i++;
+      row.push(f); f='';
+      if (row.some(x=>x.trim()!=='')) rows.push(row);
+      row=[];
+    } else f+=ch;
+  }
+  if (f!=='' || row.length){ row.push(f); if (row.some(x=>x.trim()!=='')) rows.push(row); }
+  return rows;
+}
+function parseNum(raw, warns, ctx){
+  let s = String(raw==null?'':raw).replace(/R\$|\s/g,'');
+  if (s==='') return 0;
+  const sci = /e/i.test(s);
+  if (s.includes(',')) s = s.replace(/\./g,'').replace(',','.');
+  const n = Number(s);
+  if (!isFinite(n)){ warns.push('Valor não numérico "'+raw+'" ('+ctx+') tratado como 0,00.'); return 0; }
+  if (sci && Math.abs(n) >= 1e8) warns.push('Valor em notação científica ≥ 100 milhões ('+ctx+'): os centavos podem ter sido arredondados pelo sistema.');
+  return Math.round(n*100);
+}
+function buildModel(table){
+  if (table.length < 2) throw new Error('O arquivo não tem linhas de dados.');
+  const head = table[0].map(norm).map(s=>s.trim());
+  const find = (...tests)=>{ for (const t of tests){ const i = head.findIndex(t); if (i>=0) return i; } return -1; };
+  const ix = {
+    cls: find(h=>h.startsWith('classifica')),
+    conta: find(h=>h==='conta'),
+    desc: find(h=>h.startsWith('descri')),
+    ant: find(h=>h.startsWith('saldo anterior')),
+    deb: find(h=>h.includes('debito')),
+    cre: find(h=>h.includes('credito')),
+    sal: find(h=>h==='valor saldo', h=>h==='saldo atual', h=>h==='saldo', h=>(h.includes('saldo') && !h.includes('anterior')))
+  };
+  const missing = Object.entries(ix).filter(([k,v])=>v<0).map(([k])=>({cls:'Classificação',conta:'Conta',desc:'Descrição',ant:'Saldo anterior',deb:'Valor débito',cre:'Valor crédito',sal:'Valor saldo'}[k]));
+  if (missing.length) throw new Error('Não encontrei estas colunas no cabeçalho do CSV: '+missing.join(', ')+'. Confira se é o Balancete.csv do sistema.');
+
+  const warns = [], rows = [], byCls = {};
+  table.slice(1).forEach((r, n)=>{
+    const cls = (r[ix.cls]||'').trim();
+    if (!cls) return;
+    if (!/^\d+(\.\d+)*$/.test(cls)){ warns.push('Linha '+(n+2)+': classificação "'+cls+'" fora do padrão — ignorada.'); return; }
+    if (byCls[cls]){ warns.push('Classificação duplicada "'+cls+'" — mantida a primeira ocorrência.'); return; }
+    const ctx = cls;
+    const raw = [parseNum(r[ix.ant],warns,ctx), parseNum(r[ix.deb],warns,ctx), parseNum(r[ix.cre],warns,ctx), parseNum(r[ix.sal],warns,ctx)];
+    const row = {
+      cls, conta:(r[ix.conta]||'').trim(), desc:(r[ix.desc]||'').replace(/\s+/g,' ').trim(),
+      lvl: cls.split('.').length, grp: cls[0], nat: NAT[cls[0]] || 'D',
+      raw, parent:null, children:[], exp:null, eff:null, diverge:false, idx: rows.length
+    };
+    row.hay = norm(row.cls+' '+row.conta+' '+row.desc);
+    rows.push(row); byCls[cls]=row;
+  });
+  if (!rows.length) throw new Error('Nenhuma conta válida encontrada no arquivo.');
+  // hierarquia (pai = ancestral mais próximo que exista)
+  rows.forEach(r=>{
+    const parts = r.cls.split('.');
+    for (let k=parts.length-1; k>=1; k--){
+      const p = byCls[parts.slice(0,k).join('.')];
+      if (p){ r.parent = p; p.children.push(r); break; }
+    }
+  });
+  // totalizadoras recalculadas a partir das contas analíticas
+  [...rows].sort((a,b)=>b.lvl-a.lvl).forEach(r=>{
+    r.exp = r.children.length ? KEYS.map((_,k)=>r.children.reduce((s,c)=>s+c.exp[k],0)) : r.raw.slice();
+    r.diverge = r.children.length>0 && r.exp.some((v,k)=>Math.abs(v-r.raw[k])>1);
+  });
+  return {rows, byCls, warns, maxLvl: Math.max(...rows.map(r=>r.lvl))};
+}
+
+/* ===== Estado ===== */
+let model = null;
+const S = { q:'', group:'', hideZero:false, collapsed:new Set(), fix:new Set() };
+
+function recalc(){
+  model.rows.forEach(r=>{
+    r.eff = (S.fix.has(r.cls) && r.diverge) ? r.exp : r.raw;
+  });
+  const z = {};
+  [...model.rows].sort((a,b)=>b.lvl-a.lvl).forEach(r=>{
+    z[r.cls] = r.eff.every(v=>v===0) && r.children.every(c=>z[c.cls]);
+  });
+  model.zero = z;
+}
+const dcOf = (v, nat)=> v===0 ? '' : (v>0 ? nat : (nat==='D'?'C':'D'));
+
+/* ===== Conferências ===== */
+function computeChecks(){
+  const out = [];
+  const grp = model.rows.filter(r=>r.lvl===1);
+  const sum = (k)=>grp.reduce((s,r)=>s+r.eff[k],0);
+  // 1. Débitos = Créditos
+  const td = sum(1), tc = sum(2);
+  out.push({ st: td===tc?'ok':'bad', t:'Total de débitos = total de créditos',
+    d:`Débitos <span class="mono">R$ ${absBrl(td)}</span> · Créditos <span class="mono">R$ ${absBrl(tc)}</span>` + (td===tc?'':` · diferença <span class="mono">R$ ${absBrl(td-tc)}</span>`) });
+  // 2. Equação patrimonial
+  const g = (c)=>model.byCls[c] ? model.byCls[c].eff[3] : null;
+  const A=g('1'), P=g('2'), R=g('3'), C=g('4'), Ap=g('5')||0;
+  if (A!==null && P!==null && R!==null && C!==null){
+    const diff = A - (P + R - C + Ap);
+    out.push({ st: diff===0?'ok':'bad', t:'Equação patrimonial fechada',
+      d:`Ativo = Passivo + Receitas − Custos e despesas + Apuração (grupo 5 tratado como credor)` + (diff===0?'':` · diferença <span class="mono">R$ ${absBrl(diff)}</span>`) });
+  } else out.push({ st:'info', t:'Equação patrimonial', d:'Não verificada: faltam os grupos 1 a 4 no arquivo.' });
+  // 3. Saldo anterior ± movimento = saldo atual (grupos 1–4)
+  const roll = model.rows.filter(r=>'1234'.includes(r.grp)).filter(r=>{
+    const [a,d,c,s] = r.eff, sg = r.nat==='D' ? 1 : -1;
+    return Math.abs(a + sg*(d-c) - s) > 1;
+  });
+  out.push({ st: roll.length?'bad':'ok', t:'Saldo anterior ± movimento = saldo atual',
+    d: roll.length ? `${roll.length} conta(s) não fecham: ` + roll.slice(0,6).map(r=>`<span class="mono">${esc(r.cls)}</span>`).join(', ') + (roll.length>6?' …':'') : 'Todas as contas dos grupos 1 a 4 fecham.' });
+  // 4. Totalizadoras x contas filhas
+  const dv = model.rows.filter(r=>r.diverge);
+  const item4 = { st: dv.length ? (dv.every(r=>S.fix.has(r.cls))?'ok':'bad') : 'ok', t:'Totalizadoras = soma das contas filhas', fix: dv };
+  item4.d = dv.length ? `${dv.length} linha(s) informada(s) pelo sistema divergem da soma das contas filhas. Marque para corrigir no relatório:` : 'Todas as contas de totalização conferem.';
+  out.push(item4);
+  // 5. Avisos de leitura
+  if (model.warns.length) out.push({ st:'bad', t:'Avisos na leitura do arquivo', d: model.warns.slice(0,8).map(esc).join('<br>') + (model.warns.length>8?`<br>… e mais ${model.warns.length-8}.`:'') });
+  return out;
+}
+function renderChecks(){
+  const list = computeChecks();
+  const bad = list.filter(c=>c.st==='bad').length;
+  const el = $('#checks');
+  const wasOpen = el.open;
+  const ic = {ok:'✓', bad:'!', info:'i'};
+  el.innerHTML = `<summary><span>Conferências</span><span class="stat ${bad?'bad':''}">${bad ? bad+' com alerta' : 'tudo conferido'}</span><span class="chev"></span></summary><ul>` +
+    list.map(c=>{
+      let extra = '';
+      if (c.fix && c.fix.length){
+        extra = c.fix.map(r=>{
+          const rd = r.raw[3], ed = r.exp[3];
+          return `<label class="fixrow"><input type="checkbox" data-fix="${esc(r.cls)}" ${S.fix.has(r.cls)?'checked':''}><span><span class="mono">${esc(r.cls)}</span> ${esc(r.desc)} — saldo informado <span class="mono">${absBrl(rd)} ${dcOf(rd,r.nat)||'–'}</span> · calculado <span class="mono">${absBrl(ed)} ${dcOf(ed,r.nat)||'–'}</span></span></label>`;
+        }).join('') + `<div class="fixrow"><button class="btn-ghost" type="button" data-fixall>Corrigir todas</button><button class="btn-ghost" type="button" data-fixnone>Desmarcar</button></div>`;
+      }
+      return `<li><span class="ic ${c.st}">${ic[c.st]}</span><div><div class="t">${c.t}</div><div class="d">${c.d}</div>${extra}</div><div></div></li>`;
+    }).join('') + '</ul>';
+  el.open = bad>0 ? true : wasOpen;
+}
+
+/* ===== Resumo ===== */
+function renderSummary(){
+  const tiles = [];
+  model.rows.filter(r=>r.lvl===1).forEach(r=>{
+    const v = r.eff[3];
+    tiles.push(`<div class="summary-tile ${r.grp==='1'?'accent':''}"><div class="n"><span class="cur">R$</span>${absBrl(v)}<small>${dcOf(v,r.nat)}</small></div><div class="l">${esc(r.desc)}</div></div>`);
+  });
+  const R = model.byCls['3'], C = model.byCls['4'];
+  if (R && C){
+    const res = R.eff[3] - C.eff[3];
+    tiles.push(`<div class="summary-tile accent"><div class="n"><span class="cur">R$</span>${absBrl(res)}<small>${res===0?'':res>0?'lucro':'prejuízo'}</small></div><div class="l">Resultado (receitas − custos e despesas)</div></div>`);
+  }
+  $('#summary').innerHTML = tiles.join('');
+}
+
+/* ===== Cabeçalho e rodapé do relatório ===== */
+function renderHead(){
+  const bits = [];
+  if (cfg.cnpj) bits.push(`<span>CNPJ <b class="mono">${esc(cfg.cnpj)}</b></span>`);
+  if (cfg.nire) bits.push(`<span>NIRE <b>${esc(cfg.nire)}</b></span>`);
+  $('#repHead').innerHTML =
+    `<div class="kicker">Balancete de verificação</div>` +
+    `<h2>${esc(cfg.emp||'—')}</h2>` +
+    `<div class="meta"><span>Período <b class="mono">${periodoTxt()}</b></span>${bits.join('')}</div>`;
+  const sig = (n,d)=> (n||d) ? `<div class="sig"><div class="ln"><b>${esc(n)}</b><span>${esc(d)}</span></div></div>` : `<div class="sig empty"></div>`;
+  const anyFlag = model && model.rows.some(r=>r.diverge);
+  $('#repFoot').innerHTML =
+    `<div class="rep-legend"><span>Valores em R$ · <b>D</b> devedor · <b>C</b> credor</span>` +
+    (anyFlag ? `<span><b>†</b> total do sistema diverge da soma das contas filhas · <b>‡</b> corrigido</span>` : '') + `</div>` +
+    `<div class="sigs">${sig(cfg.s1n,cfg.s1d)}${sig(cfg.s2n,cfg.s2d)}</div>`;
+}
+
+/* ===== Tabela ===== */
+function ancestorCollapsed(r){
+  for (let p=r.parent; p; p=p.parent) if (S.collapsed.has(p.cls)) return true;
+  return false;
+}
+function visibleRows(){
+  const q = norm(S.q.trim());
+  let base = model.rows;
+  if (S.group) base = base.filter(r=>r.grp===S.group);
+  if (S.hideZero) base = base.filter(r=>!model.zero[r.cls]);
+  const baseSet = new Set(base.map(r=>r.cls));
+  let match = null;
+  if (q){
+    match = new Set();
+    base.forEach(r=>{
+      if (r.hay.includes(q)){
+        match.add(r.cls);
+        for (let p=r.parent; p; p=p.parent) match.add(p.cls);
+      }
+    });
+  }
+  return { list: model.rows.filter(r=> baseSet.has(r.cls) && (match ? match.has(r.cls) : !ancestorCollapsed(r))), q, forced: !!match };
+}
+function hl(text, q){
+  if (!q) return esc(text);
+  const n = norm(text), i = n.indexOf(q);
+  if (i < 0 || n.length !== text.length) return esc(text);
+  return esc(text.slice(0,i)) + '<mark>' + esc(text.slice(i,i+q.length)) + '</mark>' + esc(text.slice(i+q.length));
+}
+function numCell(v, nat, withDC, extra){
+  if (v === 0) return `<td class="num zero ${extra||''}">–</td>`;
+  if (!withDC) return `<td class="num ${extra||''}">${brl(v)}</td>`;
+  return `<td class="num ${extra||''}">${absBrl(v)}<i class="dc">${dcOf(v,nat)}</i></td>`;
+}
+function renderTable(){
+  const {list, q, forced} = visibleRows();
+  const tb = $('#tbody');
+  if (!list.length){
+    tb.innerHTML = '<tr class="is-empty"><td colspan="7">Nenhuma conta para os filtros atuais.</td></tr>';
+    return;
+  }
+  const html = [];
+  list.forEach(r=>{
+    const [a,d,c,s] = r.eff, isP = r.children.length>0;
+    const open = forced || !S.collapsed.has(r.cls);
+    const tog = isP
+      ? `<button class="tog ${forced?'static':''}" type="button" aria-expanded="${open}" aria-label="${open?'Recolher':'Expandir'} ${esc(r.desc)}" data-t="${esc(r.cls)}"></button>`
+      : '<span class="spc"></span>';
+    const flag = r.diverge ? (S.fix.has(r.cls) ? ' <span class="flag" title="Total corrigido pela soma das contas filhas">‡</span>' : ' <span class="flag" title="Total informado pelo sistema diverge da soma das contas filhas">†</span>') : '';
+    html.push(
+      `<tr class="lv${Math.min(r.lvl,6)}" data-c="${esc(r.cls)}">` +
+      `<td class="c-cls">${hl(r.cls,q)}</td>` +
+      `<td class="c-conta">${hl(r.conta,q)}</td>` +
+      `<td class="c-desc"><div class="desc" style="--d:${r.lvl-1}">${tog}<span>${hl(r.desc,q)}${flag}</span></div></td>` +
+      numCell(a, r.nat, true) + numCell(d, r.nat, false) + numCell(c, r.nat, false) + numCell(s, r.nat, true, 'sal') +
+      `</tr>`
+    );
+  });
+  tb.innerHTML = html.join('');
+}
+
+/* ===== Barra de ferramentas ===== */
+function levelSet(n){ return new Set(model.rows.filter(r=>r.children.length && r.lvl>=n).map(r=>r.cls)); }
+function activeLevel(){
+  for (let n=1; n<=model.maxLvl; n++){
+    const t = levelSet(n);
+    if (t.size===S.collapsed.size && [...t].every(x=>S.collapsed.has(x))) return n;
+  }
+  return 0;
+}
+function renderToolbar(){
+  const al = activeLevel();
+  let segs = '';
+  for (let n=1; n<=model.maxLvl; n++) segs += `<button type="button" data-lvl="${n}" class="${al===n?'on':''}" title="${n===model.maxLvl?'Todas as contas':'Mostrar até o nível '+n}">${n}</button>`;
+  $('#seg').innerHTML = segs;
+  const gs = model.rows.filter(r=>r.lvl===1);
+  $('#chips').innerHTML = `<button type="button" class="chip ${S.group===''?'on':''}" data-g="">Todos</button>` +
+    gs.map(r=>`<button type="button" class="chip ${S.group===r.grp?'on':''}" data-g="${r.grp}">${esc(r.cls)} · ${esc(r.desc)}</button>`).join('');
+}
+function refresh(){ renderToolbar(); renderTable(); }
+function refreshAll(){ recalc(); renderSummary(); renderChecks(); renderHead(); refresh(); }
+
+/* ===== Impressão ===== */
+function doPrint(){
+  const prev = document.title;
+  document.title = 'Balancete ' + periodoTxt().replace('/','-') + ' - ' + (cfg.emp||'');
+  try{ window.print(); }catch(e){ toast('Não foi possível abrir a impressão neste ambiente.','err'); }
+  setTimeout(()=>{ document.title = prev; }, 1500);
+}
+
+/* ===== Excel (ExcelJS carregado sob demanda) ===== */
+function loadScript(src){
+  return new Promise((res,rej)=>{
+    if (window.ExcelJS) return res();
+    const s = document.createElement('script'); s.src = src; s.onload = res;
+    s.onerror = ()=>rej(new Error('Não consegui carregar a biblioteca de Excel (precisa de internet).'));
+    document.head.appendChild(s);
+  });
+}
+async function exportXlsx(){
+  const btn = $('#btnXlsx'); btn.disabled = true; const old = btn.textContent; btn.textContent = 'Gerando…';
+  try{
+    await loadScript('https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js');
+    const per = periodoTxt();
+    const wb = new ExcelJS.Workbook();
+    const ws = wb.addWorksheet('Balancete ' + per.replace('/','.'), {
+      views:[{state:'frozen', ySplit:6, showGridLines:false}],
+      properties:{ outlineProperties:{ summaryBelow:false } },
+      pageSetup:{ orientation:'landscape', paperSize:9, fitToPage:true, fitToWidth:1, fitToHeight:0, printTitlesRow:'6:6',
+                  margins:{left:.4,right:.4,top:.5,bottom:.6,header:.3,footer:.3} }
+    });
+    ws.headerFooter.oddFooter = '&C&P / &N';
+    ws.columns = [
+      {width:21},{width:11},{width:64},{width:18},{width:3.5},{width:18},{width:18},{width:18},{width:3.5}
+    ];
+    const FONT = 'Calibri';
+    const black = {argb:'FF000000'}, lgray = {argb:'FFEDEDED'}, mgray = {argb:'FFF7F7F7'};
+    const put = (addr, v, o={})=>{ const c = ws.getCell(addr); c.value = v; c.font = {name:FONT, size:o.size||10, bold:!!o.bold, color:o.color||black, italic:!!o.italic}; if (o.align) c.alignment = o.align; return c; };
+
+    ws.mergeCells('A1:I1'); put('A1','BALANCETE DE VERIFICAÇÃO',{bold:true,size:14,align:{horizontal:'center'}});
+    ws.mergeCells('A2:I2'); put('A2',cfg.emp||'',{bold:true,size:12,align:{horizontal:'center'}});
+    ws.mergeCells('A3:I3'); put('A3','Período : '+per,{align:{horizontal:'center'}});
+    ws.mergeCells('A4:I4'); put('A4','CNPJ : '+(cfg.cnpj||''),{align:{horizontal:'center'}});
+    ws.mergeCells('A5:I5'); put('A5','NIRE : '+(cfg.nire||''),{align:{horizontal:'center'}});
+
+    const hdr = ['Classificação','Conta','Descrição','Saldo anterior','','Valor débito','Valor crédito','Valor saldo',''];
+    hdr.forEach((h,i)=>{
+      const c = ws.getCell(6, i+1); c.value = h || null;
+      c.font = {name:FONT,size:10,bold:true,color:black};
+      c.alignment = {horizontal: i>=3 ? 'right' : 'left', vertical:'middle'};
+      c.fill = {type:'pattern',pattern:'solid',fgColor:lgray};
+      c.border = {top:{style:'thin',color:black}, bottom:{style:'medium',color:black}};
+    });
+    ws.mergeCells('D6:E6'); ws.mergeCells('H6:I6');
+    ws.getRow(6).height = 20;
+
+    const NUMF = '#,##0.00;-#,##0.00';
+    let rn = 7;
+    model.rows.forEach(r=>{
+      const row = ws.getRow(rn);
+      const [a,d,c,s] = r.eff;
+      const bold = r.lvl<=3;
+      row.getCell(1).value = r.cls;
+      row.getCell(2).value = /^\d+$/.test(r.conta) ? Number(r.conta) : r.conta;
+      row.getCell(3).value = r.desc;
+      row.getCell(4).value = a/100; row.getCell(5).value = dcOf(a,r.nat) || null;
+      row.getCell(6).value = d/100;
+      row.getCell(7).value = c/100;
+      row.getCell(8).value = s/100; row.getCell(9).value = dcOf(s,r.nat) || null;
+      for (let i=1;i<=9;i++){
+        const cell = row.getCell(i);
+        cell.font = {name:FONT, size:10, bold:bold, color:black};
+        if ([4,6,7,8].includes(i)){ cell.numFmt = NUMF; cell.alignment = {horizontal:'right'}; }
+        if ([5,9].includes(i)) cell.alignment = {horizontal:'center'};
+        if (i===3) cell.alignment = {horizontal:'left', indent: r.lvl-1};
+        if (i===2) cell.alignment = {horizontal:'left'};
+        cell.border = { bottom:{style:'hair', color:{argb:'FFBBBBBB'}} };
+        if (r.lvl===1){ cell.fill = {type:'pattern',pattern:'solid',fgColor:lgray}; cell.border = {top:{style:'medium',color:black}, bottom:{style:'thin',color:black}}; }
+        else if (r.lvl===2){ cell.fill = {type:'pattern',pattern:'solid',fgColor:mgray}; cell.border = {top:{style:'thin',color:black}, bottom:{style:'hair',color:{argb:'FFBBBBBB'}}}; }
+      }
+      row.outlineLevel = Math.min(r.lvl-1, 7);
+      rn++;
+    });
+    rn += 3;
+    const sigL = ws.getCell('C'+rn); sigL.value = '______________________________________'; sigL.font = {name:FONT,size:10,color:black};
+    const sigR = ws.getCell('F'+rn); sigR.value = '______________________________'; sigR.font = {name:FONT,size:10,color:black};
+    put('C'+(rn+1), cfg.s1n||'',{bold:true}); put('F'+(rn+1), cfg.s2n||'',{bold:true});
+    put('C'+(rn+2), cfg.s1d||''); put('F'+(rn+2), cfg.s2d||'');
+
+    const buf = await wb.xlsx.writeBuffer();
+    const blob = new Blob([buf], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+    const nome = ('Balancete ' + (cfg.emp||'').split(' ').slice(0,3).join(' ') + ' - ' + per.replace('/','.')).replace(/[\\/:*?"<>|]/g,'').trim() + '.xlsx';
+    if (await salvarArquivo(nome, blob)) toast('Excel gerado: '+nome, 'ok');
+  }catch(err){
+    toast(err.message || 'Falha ao gerar o Excel.', 'err');
+  }finally{
+    btn.disabled = false; btn.textContent = old;
+  }
+}
+
+/* ===== Entrada do arquivo ===== */
+function showFileErr(msg){ const e = $('#fileErr'); e.textContent = msg || ''; e.style.display = msg ? 'block' : 'none'; }
+async function handleFile(file){
+  showFileErr('');
+  if (!file) return;
+  if (/\.xlsx?$/i.test(file.name)){ showFileErr('Este é um arquivo Excel. Aqui a entrada é o Balancete.csv exportado do sistema.'); toast('Arquivo inválido: use o CSV do sistema.','err'); return; }
+  try{
+    const buf = await file.arrayBuffer();
+    const text = decodeBuffer(buf);
+    const first = text.split(/\r?\n/)[0] || '';
+    const cnt = {';':(first.match(/;/g)||[]).length, '\t':(first.match(/\t/g)||[]).length, ',':(first.match(/,/g)||[]).length};
+    const delim = Object.keys(cnt).sort((a,b)=>cnt[b]-cnt[a])[0];
+    model = buildModel(parseCSV(text, cnt[delim] ? delim : ';'));
+    S.q=''; S.group=''; S.hideZero=false; S.fix=new Set(); S.collapsed=new Set();
+    $('#q').value=''; $('#optZero').checked=false;
+    $('#fileChip').textContent = file.name + ' · ' + model.rows.length + ' contas';
+    $('#fileInfo').style.display = 'block'; $('#drop').style.display = 'none';
+    $('#card2').dataset.locked = 'false';
+    $('#pill1').className = 'step-pill is-done'; $('#pill2').className = 'step-pill is-active';
+    refreshAll();
+    toast('Balancete carregado: '+model.rows.length+' contas.','ok');
+    $('#card2').scrollIntoView({behavior:'smooth', block:'start'});
+  }catch(err){
+    model = null;
+    showFileErr(err.message || 'Não foi possível ler o arquivo.');
+    toast(err.message || 'Falha ao ler o arquivo.','err');
+  }
+}
+
+function bindUI(){
+  const drop = $('#drop'), file = $('#file');
+  drop.addEventListener('click', ()=>file.click());
+  drop.addEventListener('keydown', e=>{ if (e.key==='Enter' || e.key===' '){ e.preventDefault(); file.click(); } });
+  ['dragenter','dragover'].forEach(ev=>drop.addEventListener(ev, e=>{ e.preventDefault(); drop.classList.add('is-dragover'); }));
+  ['dragleave','drop'].forEach(ev=>drop.addEventListener(ev, e=>{ e.preventDefault(); drop.classList.remove('is-dragover'); }));
+  drop.addEventListener('drop', e=>handleFile(e.dataTransfer.files[0]));
+  file.addEventListener('change', e=>{ handleFile(e.target.files[0]); file.value=''; });
+  $('#btnChange').addEventListener('click', ()=>file.click());
+
+  $('#q').addEventListener('input', e=>{ S.q = e.target.value; if (model) refresh(); });
+  $('#q').addEventListener('keydown', e=>{ if (e.key==='Escape'){ e.target.value=''; S.q=''; if (model) refresh(); } });
+  document.addEventListener('keydown', e=>{
+    if (e.key==='/' && !/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName) && model){ e.preventDefault(); $('#q').focus(); }
+  });
+  $('#optZero').addEventListener('change', e=>{ S.hideZero = e.target.checked; if (model) refresh(); });
+  $('#seg').addEventListener('click', e=>{
+    const b = e.target.closest('[data-lvl]'); if (!b || !model) return;
+    S.collapsed = levelSet(Number(b.dataset.lvl)); refresh();
+  });
+  $('#chips').addEventListener('click', e=>{
+    const b = e.target.closest('[data-g]'); if (!b || !model) return;
+    S.group = b.dataset.g; refresh();
+  });
+  $('#tbody').addEventListener('click', e=>{
+    const b = e.target.closest('[data-t]'); if (!b || b.classList.contains('static')) return;
+    const c = b.dataset.t;
+    if (S.collapsed.has(c)) S.collapsed.delete(c); else S.collapsed.add(c);
+    refresh();
+  });
+  $('#checks').addEventListener('change', e=>{
+    const c = e.target.dataset && e.target.dataset.fix; if (!c) return;
+    if (e.target.checked) S.fix.add(c); else S.fix.delete(c);
+    refreshAll();
+  });
+  $('#checks').addEventListener('click', e=>{
+    if (e.target.closest('[data-fixall]')){ model.rows.filter(r=>r.diverge).forEach(r=>S.fix.add(r.cls)); refreshAll(); }
+    else if (e.target.closest('[data-fixnone]')){ S.fix = new Set(); refreshAll(); }
+  });
+  $('#btnPrint').addEventListener('click', doPrint);
+  $('#btnXlsx').addEventListener('click', exportXlsx);
+}
+
+loadCfg(); bindCfg(); bindUI();
+</script>
+</body>
+</html>

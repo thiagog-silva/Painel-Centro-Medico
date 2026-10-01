@@ -26,6 +26,7 @@ Ferramentas já instaladas:
 - **Extratos Bancários Tasy** (`tools/extratos-bancarios-tasy.html`, categoria *Conciliação*) — transforma os extratos do mês (CSV/XLSX) em lançamentos TXT para importar no Tasy, validando débito = crédito, contas e CR. Não depende de internet (biblioteca embutida) e guarda neste navegador o plano de contas, as regras e os bancos que você atualizar.
 - **Resumo de Estoque** (`tools/resumo-estoque-balancete.html`, categoria *Conciliação*) — lê o PDF do relatório Saldo de Estoque do Tasy e monta o resumo e os lançamentos de estoque conferidos com o Balancete. Não depende de internet (bibliotecas embutidas) e guarda neste navegador as contas dos movimentos.
 - **Zerar CR** (`tools/zerar-cr.html`, categoria *Folha de Pagamento*) — corrige o TXT de lançamentos do Tasy: zera o CR de lançamentos sem contrapartida em Ativo/Passivo, ajusta débito = crédito, remove duplicatas e aplica o fato contábil. Não depende de internet.
+- **Balancete de Verificação** (`tools/balancete-verificacao.html`, categoria *Relatórios Contábeis*) — converte o CSV do balancete do sistema em relatório formatado no padrão do Balancete CM, com conferências automáticas, impressão em PDF e exportação para Excel.
 
 As próximas serão adicionadas depois, como descrito abaixo.
 

@@ -1,0 +1,1280 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="application-name" content="Hospital São Nicolau — Painel de Automação">
+<meta name="app-version" content="1.0.0">
+<title>Hospital São Nicolau — Painel de Automação</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Sans+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+/* =========================================================
+   PALETA OFICIAL — Hospital São Nicolau Complexo Hospitalar
+   (copiada do prompt-padrao-nova-ferramenta.md, sem alterações)
+   ========================================================= */
+:root{
+  /* Paleta exclusiva — Hospital São Nicolau Complexo Hospitalar (azul-marinho / ciano da marca) */
+  --bg:#f7f7fb;
+  --surface:#ffffff;
+  --surface-alt:#eef1f8;
+  --ink:#17254d;
+  --muted:#5f6f8f;
+  --border:#dbe2ee;
+  --accent:#28509c;
+  --accent-strong:#1c3a7a;
+  --accent-ink:#f5f8ff;
+  --accent-soft:#e3ebfa;
+  --danger:#b3261e;
+  --danger-soft:#fbe9e6;
+  --warning:#8a5a00;
+  --warning-soft:#fff1d9;
+  --success:#1e7d4a;
+  --success-soft:#e5f4ea;
+  --tag-debito-bg:#fff1d9;
+  --tag-debito-ink:#8a5a00;
+  --tag-credito-bg:#dff1fa;
+  --tag-credito-ink:#17608f;
+  /* extras da marca (faixa do topo e destaques em gradiente) */
+  --brand-cyan:#2da6de;
+  --brand-mid:#2b76b9;
+  --brand-navy:#2a4291;
+  --shadow: 0 1px 2px rgba(20,40,100,.06), 0 8px 24px -12px rgba(20,40,100,.22);
+  --radius:14px;
+  --font-display:'IBM Plex Sans Condensed', 'IBM Plex Sans', sans-serif;
+  --font-body:'IBM Plex Sans', system-ui, sans-serif;
+  --font-mono:'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0d1426; --surface:#141d36; --surface-alt:#1a2542; --ink:#e6ecfa;
+    --muted:#93a3c7; --border:#27345a; --accent:#63a9ee; --accent-strong:#a4cdfa;
+    --accent-ink:#06142e; --accent-soft:#172a50; --danger:#ff9d93; --danger-soft:#3a201d;
+    --warning:#ffcf70; --warning-soft:#3a2c12; --success:#8fe3ac; --success-soft:#173425;
+    --tag-debito-bg:#3a2c12; --tag-debito-ink:#ffcf70; --tag-credito-bg:#12304a; --tag-credito-ink:#7fd0f5;
+    --brand-cyan:#38b4ea; --brand-mid:#3b8bd0; --brand-navy:#4a65c4;
+    --shadow: 0 1px 2px rgba(0,0,0,.35), 0 12px 28px -14px rgba(0,0,0,.65);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0d1426; --surface:#141d36; --surface-alt:#1a2542; --ink:#e6ecfa;
+  --muted:#93a3c7; --border:#27345a; --accent:#63a9ee; --accent-strong:#a4cdfa;
+  --accent-ink:#06142e; --accent-soft:#172a50; --danger:#ff9d93; --danger-soft:#3a201d;
+  --warning:#ffcf70; --warning-soft:#3a2c12; --success:#8fe3ac; --success-soft:#173425;
+  --tag-debito-bg:#3a2c12; --tag-debito-ink:#ffcf70; --tag-credito-bg:#12304a; --tag-credito-ink:#7fd0f5;
+  --brand-cyan:#38b4ea; --brand-mid:#3b8bd0; --brand-navy:#4a65c4;
+  --shadow: 0 1px 2px rgba(0,0,0,.35), 0 12px 28px -14px rgba(0,0,0,.65);
+}
+
+/* =========================================================
+   COMPONENTES PADRÃO (bloco base do prompt-padrão)
+   ========================================================= */
+*{ box-sizing:border-box; }
+body{
+  background:var(--bg); color:var(--ink); font-family:var(--font-body);
+  margin:0; padding-inline:16px; padding-block:20px 60px;
+}
+h1,h2,h3{ font-family:var(--font-display); font-weight:700; text-wrap:balance; margin:0; }
+.mono{ font-family:var(--font-mono); font-variant-numeric:tabular-nums; }
+.app-shell{ max-width:1180px; margin:0 auto; }
+
+.topbar{
+  position:sticky; top:env(safe-area-inset-top,0px); z-index:30;
+  background:color-mix(in srgb, var(--bg) 88%, transparent);
+  backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
+  border-bottom:1px solid var(--border); margin:-20px -16px 28px; padding:16px;
+  border-top:6px solid; border-image:linear-gradient(90deg,var(--brand-cyan),var(--brand-navy)) 1 0 0 0;
+}
+.topbar-inner{ max-width:1180px; margin:0 auto; display:flex; flex-wrap:wrap; align-items:center; gap:14px 24px; justify-content:space-between; }
+.brand{ display:flex; align-items:center; gap:12px; min-width:0; }
+.brand-mark{
+  width:38px; height:38px; border-radius:10px; background:var(--accent); color:var(--accent-ink);
+  display:flex; align-items:center; justify-content:center; font-family:var(--font-mono); font-weight:700; font-size:15px;
+  box-shadow:var(--shadow); flex:none;
+}
+.brand h1{ font-size:19px; letter-spacing:.2px; }
+.brand p{ margin:2px 0 0; font-size:12.5px; color:var(--muted); }
+
+.step-card{
+  background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+  padding:26px; margin-bottom:22px; box-shadow:var(--shadow);
+}
+.step-head{ display:flex; align-items:flex-start; gap:14px; margin-bottom:18px; }
+.step-num{
+  width:32px; height:32px; border-radius:9px; background:var(--surface-alt); color:var(--ink);
+  font-family:var(--font-mono); font-weight:600; font-size:14px; display:flex; align-items:center; justify-content:center; flex:none;
+  border:1px solid var(--border);
+}
+.step-head h2{ font-size:20px; }
+.step-head .step-sub{ margin:3px 0 0; color:var(--muted); font-size:13.5px; max-width:64ch; }
+
+.dropzone{
+  border:1.5px dashed var(--border); border-radius:12px; padding:30px 20px; text-align:center;
+  background:var(--surface-alt); cursor:pointer; transition:border-color .15s, background .15s;
+}
+.dropzone:hover, .dropzone.is-dragover{ border-color:var(--accent); background:var(--accent-soft); }
+.dropzone strong{ display:block; font-size:15px; margin-bottom:4px; }
+.dropzone span{ font-size:12.5px; color:var(--muted); }
+.file-chip{
+  display:inline-flex; align-items:center; gap:8px; margin-top:14px; padding:7px 12px; border-radius:9px;
+  background:var(--accent-soft); color:var(--accent-strong); font-size:13px; font-family:var(--font-mono);
+  max-width:100%; overflow-wrap:anywhere;
+}
+.field-row{ display:flex; flex-wrap:wrap; gap:16px; margin-top:16px; }
+.field{ display:flex; flex-direction:column; gap:5px; min-width:190px; flex:1; }
+.field label{ font-size:12px; color:var(--muted); font-weight:600; letter-spacing:.02em; text-transform:uppercase; }
+select, input[type="text"], input[type="number"], input[type="search"]{
+  font-family:var(--font-body); font-size:13.5px; padding:9px 10px; border-radius:8px; border:1px solid var(--border);
+  background:var(--surface); color:var(--ink); width:100%;
+}
+select:focus, input:focus, button:focus-visible, a:focus-visible, .dropzone:focus-visible{ outline:2px solid var(--accent); outline-offset:1px; }
+
+button{ font-family:var(--font-body); cursor:pointer; border:none; border-radius:9px; font-weight:600; font-size:13.5px; }
+.btn-primary{ background:var(--accent); color:var(--accent-ink); padding:11px 20px; box-shadow:var(--shadow); }
+.btn-primary:disabled{ opacity:.45; cursor:not-allowed; box-shadow:none; }
+.btn-secondary{ background:var(--surface-alt); color:var(--ink); border:1px solid var(--border); padding:10px 16px; }
+.btn-ghost{ background:transparent; color:var(--muted); border:1px solid var(--border); padding:7px 10px; font-size:12px; }
+.btn-icon{ background:var(--surface-alt); border:1px solid var(--border); color:var(--ink); width:28px; height:28px; border-radius:7px; display:inline-flex; align-items:center; justify-content:center; padding:0; }
+.actions-row{ display:flex; flex-wrap:wrap; gap:12px; margin-top:18px; align-items:center; }
+.hint{ font-size:12.5px; color:var(--muted); }
+.hint.warn{ color:var(--warning); }
+.hint.err{ color:var(--danger); }
+
+.summary-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; margin-bottom:18px; }
+.summary-tile{ background:var(--surface-alt); border:1px solid var(--border); border-radius:10px; padding:14px 16px; }
+.summary-tile .n{ font-family:var(--font-mono); font-size:22px; font-weight:600; }
+.summary-tile .l{ font-size:11.5px; color:var(--muted); text-transform:uppercase; letter-spacing:.03em; margin-top:2px; }
+.summary-tile.accent{ background:var(--accent-soft); }
+.summary-tile.accent .n{ color:var(--accent-strong); }
+.summary-tile.warn .n{ color:var(--warning); }
+
+.tag{ display:inline-flex; align-items:center; gap:5px; font-family:var(--font-mono); font-size:11.5px; font-weight:600; padding:4px 9px; border-radius:999px; white-space:nowrap; }
+.tag-debito{ background:var(--tag-debito-bg); color:var(--tag-debito-ink); }
+.tag-credito{ background:var(--tag-credito-bg); color:var(--tag-credito-ink); }
+
+.empty-state{ text-align:center; padding:34px 16px; color:var(--success); }
+.empty-state .big{ font-size:28px; }
+
+fieldset{ border:1px solid var(--border); border-radius:10px; padding:16px; margin:0 0 16px; }
+legend{ padding:0 6px; font-size:12.5px; font-weight:700; color:var(--accent-strong); text-transform:uppercase; letter-spacing:.03em; }
+
+.toast-host{ position:fixed; right:16px; bottom:calc(16px + env(safe-area-inset-bottom,0px)); z-index:60; display:flex; flex-direction:column; gap:8px; max-width:min(360px, calc(100vw - 32px)); }
+.toast{ background:var(--ink); color:var(--bg); padding:11px 14px; border-radius:9px; font-size:13px; box-shadow:var(--shadow); animation:toast-in .18s ease-out; overflow-wrap:anywhere; }
+.toast.toast-err{ background:var(--danger); color:var(--accent-ink); }
+.toast.toast-ok{ background:var(--success); color:var(--accent-ink); }
+@keyframes toast-in{ from{ transform:translateY(6px); opacity:0; } to{ transform:none; opacity:1; } }
+
+code.k{ background:var(--surface-alt); border:1px solid var(--border); padding:1px 5px; border-radius:5px; font-family:var(--font-mono); font-size:12px; }
+
+/* =========================================================
+   ESPECÍFICO DO HUB (somente variáveis do tema)
+   ========================================================= */
+.layout{ display:grid; grid-template-columns:260px minmax(0,1fr); gap:22px; align-items:start; }
+.sidebar{
+  position:sticky; top:108px; background:var(--surface); border:1px solid var(--border);
+  border-radius:var(--radius); padding:14px; box-shadow:var(--shadow);
+  max-height:calc(100dvh - 128px); overflow-y:auto;
+}
+.nav-title{ font-size:11.5px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; margin:14px 8px 6px; }
+.nav-title:first-child{ margin-top:2px; }
+.nav-link{
+  display:flex; align-items:center; gap:10px; padding:9px 10px; border-radius:9px; color:var(--ink);
+  text-decoration:none; font-size:13.5px; font-weight:500; border:1px solid transparent;
+}
+.nav-link:hover{ background:var(--surface-alt); }
+.nav-link[aria-current="page"]{ background:var(--accent-soft); color:var(--accent-strong); border-color:var(--accent); font-weight:600; }
+.nav-link .nav-ico{ width:20px; text-align:center; flex:none; }
+.nav-link .nav-label{ flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.nav-link .nav-count{ font-family:var(--font-mono); font-size:11.5px; color:var(--muted); }
+.nav-empty{ padding:6px 10px; font-size:12.5px; color:var(--muted); }
+.menu-toggle{ display:none; width:38px; height:38px; font-size:18px; }
+.topbar-tools{ display:flex; gap:10px; align-items:center; }
+
+.page-head{ margin-bottom:18px; }
+.page-head h2{ font-size:24px; }
+.page-head p{ margin:4px 0 0; color:var(--muted); font-size:14px; max-width:70ch; }
+.toolbar-row{ display:flex; flex-wrap:wrap; gap:12px; align-items:center; margin-bottom:18px; }
+.toolbar-row .search{ flex:1; min-width:200px; max-width:420px; }
+
+.cat-block{ margin-bottom:26px; }
+.cat-head{ display:flex; align-items:center; gap:10px; margin-bottom:12px; }
+.cat-head h3{ font-size:17px; }
+.tool-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:14px; }
+.tool-card{
+  background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:18px;
+  box-shadow:var(--shadow); display:flex; flex-direction:column; gap:10px; min-width:0;
+}
+.tool-card.is-broken{ border-color:var(--warning); }
+.tool-top{ display:flex; gap:12px; align-items:flex-start; }
+.tool-ico{
+  width:42px; height:42px; border-radius:11px; background:var(--accent-soft); border:1px solid var(--border);
+  display:flex; align-items:center; justify-content:center; font-size:22px; flex:none;
+}
+.tool-card h3{ font-size:16px; overflow-wrap:anywhere; }
+.tool-card .desc{ margin:0; font-size:13px; color:var(--muted); overflow-wrap:anywhere; flex:1; }
+.tool-actions{ display:flex; gap:10px; align-items:center; justify-content:space-between; margin-top:2px; }
+a.btn-primary, a.btn-secondary{ display:inline-block; text-decoration:none; text-align:center; font-family:var(--font-body); font-weight:600; font-size:13.5px; border-radius:9px; }
+.tag-neutral{ background:var(--surface-alt); color:var(--muted); border:1px solid var(--border); }
+.tag-warn{ background:var(--warning-soft); color:var(--warning); }
+
+[hidden]{ display:none !important; }
+.banner{ border-radius:10px; padding:10px 14px; margin-bottom:16px; font-size:13px; display:flex; gap:12px; align-items:flex-start; justify-content:space-between; }
+.banner.warn{ background:var(--warning-soft); color:var(--warning); border:1px solid var(--warning); }
+.banner.err{ background:var(--danger-soft); color:var(--danger); border:1px solid var(--danger); }
+.banner span{ overflow-wrap:anywhere; }
+
+.tool-view-head{ display:flex; flex-wrap:wrap; gap:12px; align-items:center; margin-bottom:14px; }
+.tool-view-head .ttl{ display:flex; align-items:center; gap:10px; flex:1; min-width:180px; }
+.tool-view-head .ttl h2{ font-size:19px; overflow-wrap:anywhere; }
+.frame-wrap{ border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; background:var(--surface); box-shadow:var(--shadow); }
+.frame-wrap iframe{ display:block; width:100%; height:max(480px, calc(100dvh - 250px)); border:0; background:var(--surface); }
+
+.icon-picks{ display:flex; flex-wrap:wrap; gap:6px; margin-top:6px; }
+.icon-picks button{ background:var(--surface-alt); border:1px solid var(--border); width:34px; height:34px; border-radius:8px; font-size:17px; padding:0; }
+.icon-picks button[aria-pressed="true"]{ border-color:var(--accent); background:var(--accent-soft); }
+.field.narrow{ flex:0 1 150px; min-width:120px; }
+textarea{
+  font-family:var(--font-body); font-size:13.5px; padding:9px 10px; border-radius:8px; border:1px solid var(--border);
+  background:var(--surface); color:var(--ink); width:100%; resize:vertical; min-height:70px;
+}
+textarea:focus{ outline:2px solid var(--accent); outline-offset:1px; }
+.field-err{ min-height:16px; margin:0; }
+
+dialog{
+  border:1px solid var(--border); border-radius:var(--radius); background:var(--surface); color:var(--ink);
+  padding:22px; max-width:min(440px, calc(100vw - 32px)); box-shadow:var(--shadow);
+}
+dialog::backdrop{ background:color-mix(in srgb, var(--ink) 45%, transparent); }
+dialog h3{ font-size:18px; margin-bottom:8px; }
+dialog p{ margin:0; font-size:14px; color:var(--muted); overflow-wrap:anywhere; }
+.btn-danger{ background:var(--danger); color:var(--accent-ink); padding:11px 20px; }
+
+@media (max-width:900px){
+  .layout{ grid-template-columns:minmax(0,1fr); }
+  .sidebar{ display:none; position:static; max-height:none; }
+  .sidebar.is-open{ display:block; }
+  .menu-toggle{ display:inline-flex; }
+  .step-card{ padding:18px; }
+  .frame-wrap iframe{ height:max(420px, calc(100dvh - 220px)); }
+}
+@media (max-width:520px){
+  .brand h1{ font-size:16px; }
+  .brand p{ display:none; }
+  .tool-grid{ grid-template-columns:minmax(0,1fr); }
+}
+</style>
+</head>
+<body>
+<div class="app-shell">
+
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">SN</div>
+        <div>
+          <h1>Hospital São Nicolau — Painel de Automação</h1>
+          <p>Complexo Hospitalar São Nicolau</p>
+        </div>
+      </div>
+      <div class="topbar-tools">
+        <button type="button" class="btn-icon menu-toggle" id="btnMenu" aria-label="Abrir menu" aria-expanded="false" aria-controls="sidebar">☰</button>
+        <button type="button" class="btn-secondary" id="btnTema" title="Alternar tema">Tema: automático</button>
+      </div>
+    </div>
+  </header>
+
+  <div id="bannerArmazenamento" class="banner warn" hidden></div>
+
+  <div class="layout">
+    <nav class="sidebar" id="sidebar" aria-label="Menu principal"></nav>
+    <main id="main" tabindex="-1"></main>
+  </div>
+
+</div>
+
+<dialog id="dlgConfirmar" aria-labelledby="dlgTitulo">
+  <h3 id="dlgTitulo">Remover ferramenta</h3>
+  <p id="dlgTexto"></p>
+  <div class="actions-row">
+    <button type="button" class="btn-danger" id="dlgOk">Remover</button>
+    <button type="button" class="btn-secondary" id="dlgCancelar">Cancelar</button>
+  </div>
+</dialog>
+
+<div class="toast-host" id="toastHost" aria-live="polite"></div>
+
+<script>
+/* =========================================================
+   1. CONFIGURAÇÃO
+   ========================================================= */
+const APP_VERSION = "1.0.0";
+const APP_BUILD_DATE = "2026-10-01";
+const CFG = {
+  keyTools: 'sn-painel.v1.ferramentas',
+  keyTheme: 'sn-painel.v1.tema',
+  keyHtmlPrefix: 'sn-painel.v1.html.',
+  idbName: 'sn-painel-v1',
+  idbStore: 'html',
+  maxBytes: 8 * 1024 * 1024,        // tamanho máximo do HTML de uma ferramenta
+  maxTools: 80,
+  maxNome: 60, maxCategoria: 40, maxDescricao: 160,
+  iconePadrao: '🧰',
+  icones: ['🧰','📊','📄','🧾','💼','🏥','📁','🧮','🔎','📥','📤','⚙️'],
+  downloadMaxBytes: 300 * 1024 * 1024,
+  downloadJanelaMs: 10000, downloadMaxPorJanela: 20,
+  sandbox: 'allow-scripts allow-forms allow-modals allow-popups allow-popups-to-escape-sandbox allow-downloads'
+};
+
+/* =========================================================
+   1b. FERRAMENTAS FIXAS (registradas na pasta tools/)
+   ---------------------------------------------------------
+   COMO REGISTRAR UMA FERRAMENTA DEFINITIVA
+   1. Salve o arquivo .html da ferramenta dentro da pasta tools/,
+      ao lado deste painel-sao-nicolau.html (ex.: tools/conciliacao.html).
+   2. Copie o modelo abaixo para dentro do array TOOLS e ajuste:
+        id        -> identificador único, só letras minúsculas, números, - e _
+        nome      -> título mostrado no menu e no card
+        descricao -> frase curta explicando o que a ferramenta faz
+        icone     -> um emoji
+        categoria -> agrupamento no menu/Início (pode ser nova)
+        arquivo   -> caminho relativo, sempre dentro de tools/
+   3. Salve e recarregue o painel. Menu e cards são montados sozinhos.
+
+   Modelo (remova as barras para ativar):
+   {
+     id: 'exemplo',
+     nome: 'Nome da Ferramenta',
+     descricao: 'O que ela faz, em uma frase.',
+     icone: '🧰',
+     categoria: 'Categoria',
+     arquivo: 'tools/exemplo.html'
+   },
+
+   Ferramentas fixas valem para todos que usarem esta pasta e não têm
+   botão de remover. As adicionadas pelo botão "Adicionar nova ferramenta"
+   ficam só no navegador de quem adicionou.
+   ========================================================= */
+const TOOLS = [
+  {
+    id: 'extrair-dados-folha',
+    nome: 'Extrair Dados da Folha',
+    descricao: 'Lê o PDF da Relação de Cálculo da folha, cruza férias e rescisões com os CSVs de movimento bancário e monta o layout pronto para colar na planilha.',
+    icone: '📄',
+    categoria: 'Folha de Pagamento',
+    arquivo: 'tools/extrair-dados-folha.html'
+  },
+  {
+    id: 'faturamento-mensal-tasy',
+    nome: 'Faturamento Mensal Tasy',
+    descricao: 'Gera os lançamentos de faturamento bruto (particular, convênio e SUS) e o TXT de importação do Tasy a partir da Relação de Serviços e Deduções Federais.',
+    icone: '🧾',
+    categoria: 'Faturamento',
+    arquivo: 'tools/faturamento-mensal-tasy.html'
+  },
+  {
+    id: 'extratos-bancarios-tasy',
+    nome: 'Extratos Bancários Tasy',
+    descricao: 'Transforma os extratos do mês (CSV/XLSX) em lançamentos TXT para importar no Tasy, com validação de débito = crédito, de conta e de CR.',
+    icone: '🏦',
+    categoria: 'Conciliação',
+    arquivo: 'tools/extratos-bancarios-tasy.html'
+  },
+  {
+    id: 'resumo-estoque-balancete',
+    nome: 'Resumo de Estoque',
+    descricao: 'Lê o PDF do relatório Saldo de Estoque do Tasy e monta o resumo e os lançamentos de estoque conferidos com o Balancete.',
+    icone: '📦',
+    categoria: 'Conciliação',
+    arquivo: 'tools/resumo-estoque-balancete.html'
+  },
+  {
+    id: 'zerar-cr',
+    nome: 'Zerar CR',
+    descricao: 'Corrige o TXT de lançamentos do Tasy: zera o CR de lançamentos sem contrapartida em Ativo/Passivo, ajusta débito = crédito, remove duplicatas e aplica o fato contábil.',
+    icone: '🧹',
+    categoria: 'Folha de Pagamento',
+    arquivo: 'tools/zerar-cr.html'
+  },
+  {
+    id: 'balancete-verificacao',
+    nome: 'Balancete de Verificação',
+    descricao: 'Converte o CSV do balancete do sistema em relatório formatado no padrão do Balancete CM, com conferências automáticas, impressão em PDF e exportação para Excel.',
+    icone: '📒',
+    categoria: 'Relatórios Contábeis',
+    arquivo: 'tools/balancete-verificacao.html'
+  },
+  // -> as próximas ferramentas do Hospital São Nicolau entram aqui, seguindo o modelo acima.
+];
+
+/* =========================================================
+   2. ESTADO
+   ========================================================= */
+const state = {
+  fixas: [],            // ferramentas registradas em TOOLS (pasta tools/)
+  custom: [],           // ferramentas adicionadas pelo usuário (neste navegador)
+  frameDireto: false,   // true quando a ferramenta fixa abriu por src (sem sandbox)
+  theme: 'auto',        // auto | light | dark
+  lsOk: false,          // localStorage utilizável
+  idb: null,            // conexão IndexedDB (ou null)
+  metaPersistida: true, // metadados persistem entre recarregamentos?
+  pendingFile: null,    // arquivo escolhido no formulário de adicionar
+  iconeSel: CFG.iconePadrao,
+  busca: '',
+  frame: null,          // iframe da ferramenta aberta
+  frameToolId: null,
+  downloadsRecentes: [],
+  memHtml: new Map(),   // último recurso quando nada persiste
+  memMeta: null
+};
+
+/* =========================================================
+   3. UTILITÁRIOS
+   ========================================================= */
+const $ = (id) => document.getElementById(id);
+
+/** Cria elemento sem usar innerHTML (todo texto entra via textContent). */
+function h(tag, attrs, ...children){
+  const el = document.createElement(tag);
+  if (attrs) for (const k of Object.keys(attrs)){
+    const v = attrs[k];
+    if (v === null || v === undefined || v === false) continue;
+    if (k === 'class') el.className = v;
+    else if (k === 'text') el.textContent = v;
+    else if (k === 'dataset') for (const d of Object.keys(v)) el.dataset[d] = v[d];
+    else if (v === true) el.setAttribute(k, '');
+    else el.setAttribute(k, String(v));
+  }
+  for (const c of children){
+    if (c === null || c === undefined || c === false) continue;
+    el.appendChild(typeof c === 'string' ? document.createTextNode(c) : c);
+  }
+  return el;
+}
+
+/** Normaliza texto para comparação: sem acento, minúsculo, espaços únicos. */
+function norm(s){
+  return String(s == null ? '' : s).normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .toLowerCase().replace(/\s+/g, ' ').trim();
+}
+function limitar(s, n){ return String(s == null ? '' : s).replace(/\s+/g, ' ').trim().slice(0, n); }
+function primeiroGrafema(s){
+  s = String(s || '').trim();
+  if (!s) return '';
+  try{
+    if (window.Intl && Intl.Segmenter){
+      const it = new Intl.Segmenter(undefined, { granularity: 'grapheme' }).segment(s)[Symbol.iterator]().next();
+      return it.value ? it.value.segment : '';
+    }
+  }catch(_){ /* usa o fallback abaixo */ }
+  return Array.from(s).slice(0, 2).join('');
+}
+function novoId(){ return 't' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
+function fmtBytes(n){
+  if (n < 1024) return n + ' B';
+  if (n < 1048576) return (n / 1024).toFixed(1).replace('.', ',') + ' KB';
+  return (n / 1048576).toFixed(1).replace('.', ',') + ' MB';
+}
+function nomeArquivoSeguro(nome){
+  let s = String(nome == null ? '' : nome).replace(/[\\/:*?"<>|\u0000-\u001f]/g, '_').trim().slice(0, 150);
+  return s || 'arquivo';
+}
+
+function toast(msg, tipo){
+  const host = $('toastHost');
+  const el = h('div', { class: 'toast' + (tipo === 'err' ? ' toast-err' : tipo === 'ok' ? ' toast-ok' : ''), role: 'status', text: String(msg) });
+  host.appendChild(el);
+  while (host.children.length > 4) host.removeChild(host.firstChild);
+  setTimeout(() => { if (el.parentNode) el.parentNode.removeChild(el); }, tipo === 'err' ? 6500 : 4000);
+}
+
+/* =========================================================
+   4. PERSISTÊNCIA (localStorage / IndexedDB, sempre protegidos)
+   ========================================================= */
+const ls = {
+  get(k){ try{ return localStorage.getItem(k); }catch(_){ return null; } },
+  set(k, v){ try{ localStorage.setItem(k, v); return true; }catch(_){ return false; } },
+  del(k){ try{ localStorage.removeItem(k); }catch(_){ /* indisponível */ } }
+};
+
+function testarLocalStorage(){
+  const k = 'sn-painel.v1.__teste';
+  const ok = ls.set(k, '1') && ls.get(k) === '1';
+  ls.del(k);
+  return ok;
+}
+
+function idbAbrir(){
+  return new Promise((resolve, reject) => {
+    let fim = false;
+    const fail = (e) => { if (!fim){ fim = true; reject(e || new Error('IndexedDB indisponível')); } };
+    try{
+      if (!window.indexedDB) return fail();
+      const req = indexedDB.open(CFG.idbName, 1);
+      req.onupgradeneeded = () => { try{ req.result.createObjectStore(CFG.idbStore); }catch(e){ fail(e); } };
+      req.onsuccess = () => { if (!fim){ fim = true; resolve(req.result); } else { try{ req.result.close(); }catch(_){} } };
+      req.onerror = () => fail(req.error);
+      req.onblocked = () => fail(new Error('bloqueado'));
+      setTimeout(() => fail(new Error('tempo esgotado')), 4000);
+    }catch(e){ fail(e); }
+  });
+}
+function idbOp(modo, fn){
+  return new Promise((resolve, reject) => {
+    if (!state.idb) return reject(new Error('sem IndexedDB'));
+    try{
+      const tx = state.idb.transaction(CFG.idbStore, modo);
+      const req = fn(tx.objectStore(CFG.idbStore));
+      tx.oncomplete = () => resolve(req ? req.result : undefined);
+      tx.onerror = () => reject(tx.error);
+      tx.onabort = () => reject(tx.error || new Error('transação abortada'));
+    }catch(e){ reject(e); }
+  });
+}
+
+/** Armazém do conteúdo HTML das ferramentas: IndexedDB → localStorage → memória. */
+const conteudo = {
+  async put(id, html){
+    if (state.idb){
+      try{ await idbOp('readwrite', s => s.put(html, id)); return 'idb'; }catch(_){ /* tenta o próximo */ }
+    }
+    if (state.lsOk && ls.set(CFG.keyHtmlPrefix + id, html)) return 'ls';
+    state.memHtml.set(id, html);
+    return 'mem';
+  },
+  async get(id, store){
+    try{
+      if (store === 'idb') return (await idbOp('readonly', s => s.get(id))) || null;
+      if (store === 'ls') return ls.get(CFG.keyHtmlPrefix + id);
+      return state.memHtml.get(id) || null;
+    }catch(_){ return null; }
+  },
+  async del(id, store){
+    try{
+      if (store === 'idb') await idbOp('readwrite', s => s.delete(id));
+      else if (store === 'ls') ls.del(CFG.keyHtmlPrefix + id);
+      else state.memHtml.delete(id);
+    }catch(_){ /* nada a fazer: o metadado será removido de qualquer forma */ }
+  }
+};
+
+function todas(){ return state.fixas.concat(state.custom); }
+
+/** Valida o registro TOOLS: ignora entradas inválidas em vez de quebrar o painel. */
+function validarFixas(lista){
+  const out = [], vistos = new Set();
+  if (!Array.isArray(lista)) return out;
+  for (const m of lista){
+    if (!m || typeof m !== 'object') continue;
+    const idBase = typeof m.id === 'string' ? m.id.trim() : '';
+    const arquivo = typeof m.arquivo === 'string' ? m.arquivo.trim() : '';
+    const nome = limitar(m.nome, CFG.maxNome), categoria = limitar(m.categoria, CFG.maxCategoria);
+    const caminhoOk = /^[\w][\w ./()-]*\.html?$/i.test(arquivo) && !/(^|\/)\.\.(\/|$)/.test(arquivo) && !/^[a-z][a-z0-9+.-]*:/i.test(arquivo);
+    if (!/^[a-z0-9][a-z0-9_-]{0,40}$/.test(idBase) || !nome || !categoria || !caminhoOk) continue;
+    const id = 'fx-' + idBase;
+    if (vistos.has(id)) continue;
+    vistos.add(id);
+    out.push({ id, nome, categoria, icone: primeiroGrafema(m.icone) || CFG.iconePadrao, descricao: limitar(m.descricao, CFG.maxDescricao), arquivo, fixa: true });
+  }
+  return out;
+}
+
+function validarMeta(m){
+  if (!m || typeof m !== 'object') return null;
+  const id = typeof m.id === 'string' && /^[A-Za-z0-9_-]{3,40}$/.test(m.id) && !/^fx-/.test(m.id) ? m.id : null;
+  const nome = limitar(m.nome, CFG.maxNome);
+  const categoria = limitar(m.categoria, CFG.maxCategoria);
+  if (!id || !nome || !categoria) return null;
+  return {
+    id, nome, categoria,
+    icone: primeiroGrafema(m.icone) || CFG.iconePadrao,
+    descricao: limitar(m.descricao, CFG.maxDescricao),
+    arquivo: limitar(m.arquivo, 150),
+    bytes: Number.isFinite(m.bytes) ? m.bytes : 0,
+    store: m.store === 'idb' || m.store === 'ls' ? m.store : 'mem',
+    adicionadoEm: typeof m.adicionadoEm === 'string' ? m.adicionadoEm.slice(0, 30) : ''
+  };
+}
+
+function carregarFerramentas(){
+  const raw = state.lsOk ? ls.get(CFG.keyTools) : state.memMeta;
+  if (!raw) return [];
+  try{
+    const arr = JSON.parse(raw);
+    if (!Array.isArray(arr)) throw new Error('formato');
+    const vistos = new Set();
+    const lista = [];
+    for (const item of arr){
+      const m = validarMeta(item);
+      if (m && !vistos.has(m.id)){ vistos.add(m.id); lista.push(m); }
+    }
+    if (lista.length !== arr.length) toast('Alguns cadastros de ferramentas estavam inválidos e foram ignorados.', 'err');
+    return lista.slice(0, CFG.maxTools);
+  }catch(_){
+    ls.del(CFG.keyTools);
+    toast('O cadastro salvo estava corrompido e foi reiniciado.', 'err');
+    return [];
+  }
+}
+function salvarFerramentas(){
+  const json = JSON.stringify(state.custom);
+  state.memMeta = json;
+  if (state.lsOk && ls.set(CFG.keyTools, json)){ state.metaPersistida = true; return true; }
+  state.metaPersistida = false;
+  mostrarBannerArmazenamento();
+  return false;
+}
+function carregarTema(){
+  const v = state.lsOk ? ls.get(CFG.keyTheme) : null;
+  return v === 'light' || v === 'dark' ? v : 'auto';
+}
+function mostrarBannerArmazenamento(){
+  const b = $('bannerArmazenamento');
+  const falhouMeta = !state.metaPersistida;
+  const algumaMem = state.custom.some(t => t.store === 'mem');
+  if (falhouMeta || algumaMem){
+    b.textContent = 'O armazenamento do navegador está indisponível ou cheio: as ferramentas adicionadas valem apenas nesta sessão e não permanecerão após recarregar.';
+    b.hidden = false;
+  } else b.hidden = true;
+}
+
+/* =========================================================
+   5. TEMA
+   ========================================================= */
+const ROTULO_TEMA = { auto: 'Tema: automático', light: 'Tema: claro', dark: 'Tema: escuro' };
+function aplicarTema(){
+  const r = document.documentElement;
+  if (state.theme === 'auto') r.removeAttribute('data-theme'); else r.setAttribute('data-theme', state.theme);
+  $('btnTema').textContent = ROTULO_TEMA[state.theme];
+  enviarTemaAoFrame();
+}
+function alternarTema(){
+  state.theme = state.theme === 'auto' ? 'light' : state.theme === 'light' ? 'dark' : 'auto';
+  ls.set(CFG.keyTheme, state.theme);
+  aplicarTema();
+}
+function enviarTemaAoFrame(){
+  if (state.frame && state.frameDireto){
+    try{   // mesma origem: aplica direto no documento da ferramenta
+      const r = state.frame.contentDocument.documentElement;
+      if (state.theme === 'auto') r.removeAttribute('data-theme'); else r.setAttribute('data-theme', state.theme);
+      return;
+    }catch(_){ /* origem diferente: segue para postMessage */ }
+  }
+  try{
+    if (state.frame && state.frame.contentWindow)
+      state.frame.contentWindow.postMessage({ __ponteClaude: true, tipo: 'tema', tema: state.theme }, '*');
+  }catch(_){ /* frame indisponível */ }
+}
+
+/* =========================================================
+   6. VALIDAÇÃO DE ARQUIVO HTML
+   ========================================================= */
+function decodificar(buf){
+  try{ return new TextDecoder('utf-8', { fatal: true }).decode(buf); }
+  catch(_){ return new TextDecoder('windows-1252').decode(buf); }   // arquivos antigos em ANSI
+}
+async function lerTexto(file){ return decodificar(await file.arrayBuffer()); }
+function validarHtml(texto){
+  if (!texto || !texto.trim()) return { ok: false, erro: 'O arquivo está vazio.' };
+  if (texto.indexOf('\u0000') !== -1) return { ok: false, erro: 'O arquivo parece ser binário, não um HTML.' };
+  if (!/<\s*(!doctype|html|head|body|div|main|section|script|style|table|form|h[1-6]|p)\b/i.test(texto))
+    return { ok: false, erro: 'O arquivo não parece conter HTML válido.' };
+  let titulo = '';
+  try{ titulo = new DOMParser().parseFromString(texto, 'text/html').title || ''; }catch(_){ /* sem título */ }
+  const avisos = [];
+  if (!/--brand-navy/.test(texto)) avisos.push('A ferramenta não declara as variáveis do padrão São Nicolau (--brand-*); o visual pode ficar diferente das demais.');
+  return { ok: true, titulo: limitar(titulo, CFG.maxNome), avisos };
+}
+
+/* =========================================================
+   7. ROTAS
+   ========================================================= */
+function rota(){
+  const hsh = (location.hash || '').replace(/^#\/?/, '');
+  const [v, ...resto] = hsh.split('/');
+  let param = '';
+  try{ param = decodeURIComponent(resto.join('/')); }catch(_){ param = ''; }
+  if (v === 'categoria' && param) return { view: 'categoria', param };
+  if (v === 'ferramenta' && param) return { view: 'ferramenta', param };
+  if (v === 'adicionar') return { view: 'adicionar', param: '' };
+  return { view: 'inicio', param: '' };
+}
+function ir(destino){
+  if (location.hash === destino) { renderizar(); return; }
+  try{ location.hash = destino; }catch(_){ renderizar(); }
+}
+function hrefCategoria(c){ return '#/categoria/' + encodeURIComponent(c); }
+
+/* =========================================================
+   8. RENDERIZAÇÃO
+   ========================================================= */
+function categorias(){
+  const mapa = new Map();
+  for (const t of todas()){
+    const k = norm(t.categoria);
+    if (!mapa.has(k)) mapa.set(k, { nome: t.categoria, itens: [] });
+    mapa.get(k).itens.push(t);
+  }
+  return Array.from(mapa.values()).sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
+}
+
+function renderMenu(r){
+  const nav = $('sidebar');
+  const cats = categorias();
+  const link = (href, ico, label, count, ativo) => h('a', { class: 'nav-link', href, 'aria-current': ativo ? 'page' : null },
+    h('span', { class: 'nav-ico', 'aria-hidden': 'true', text: ico }),
+    h('span', { class: 'nav-label', text: label }),
+    count !== undefined ? h('span', { class: 'nav-count', text: String(count) }) : null);
+  const kids = [
+    link('#/inicio', '🏠', 'Início', undefined, r.view === 'inicio'),
+    h('div', { class: 'nav-title', text: 'Ferramentas' })
+  ];
+  if (!cats.length) kids.push(h('div', { class: 'nav-empty', text: 'Nenhuma ferramenta adicionada.' }));
+  for (const c of cats){
+    kids.push(link(hrefCategoria(c.nome), '📂', c.nome, c.itens.length, r.view === 'categoria' && norm(r.param) === norm(c.nome)));
+  }
+  kids.push(h('div', { class: 'nav-title', text: 'Gerenciar' }));
+  kids.push(link('#/adicionar', '➕', 'Adicionar nova ferramenta', undefined, r.view === 'adicionar'));
+  nav.replaceChildren(...kids);
+}
+
+function cardFerramenta(t){
+  const quebrada = t._ausente === true;
+  return h('article', { class: 'tool-card' + (quebrada ? ' is-broken' : ''), dataset: { id: t.id } },
+    h('div', { class: 'tool-top' },
+      h('div', { class: 'tool-ico', 'aria-hidden': 'true', text: t.icone }),
+      h('div', { style: 'min-width:0' },
+        h('h3', { text: t.nome }),
+        h('div', { style: 'margin-top:6px;display:flex;gap:6px;flex-wrap:wrap' },
+          h('span', { class: 'tag tag-neutral', text: t.categoria }),
+          quebrada ? h('span', { class: 'tag tag-warn', text: 'arquivo ausente' }) : null))),
+    h('p', { class: 'desc', text: t.descricao || 'Sem descrição.' }),
+    h('div', { class: 'tool-actions' },
+      h('a', { class: 'btn-primary', href: '#/ferramenta/' + encodeURIComponent(t.id), text: 'Abrir' }),
+      t.fixa ? null : h('button', { type: 'button', class: 'btn-icon', dataset: { action: 'remover', id: t.id }, title: 'Remover ferramenta', 'aria-label': 'Remover ' + t.nome, text: '🗑' })));
+}
+
+function renderCatalogo(container, filtroCategoria){
+  const q = norm(state.busca);
+  let lista = todas();
+  if (filtroCategoria) lista = lista.filter(t => norm(t.categoria) === norm(filtroCategoria));
+  if (q) lista = lista.filter(t => norm(t.nome + ' ' + t.descricao + ' ' + t.categoria).includes(q));
+  if (!lista.length){
+    const vazio = todas().length === 0;
+    container.replaceChildren(h('div', { class: 'step-card' },
+      h('div', { class: 'empty-state' },
+        h('div', { class: 'big', 'aria-hidden': 'true', text: vazio ? '🧰' : '🔎' }),
+        h('p', { text: vazio ? 'Nenhuma ferramenta adicionada ainda.' : 'Nenhuma ferramenta encontrada para esse filtro.' }),
+        vazio ? h('a', { class: 'btn-primary', href: '#/adicionar', text: 'Adicionar nova ferramenta' }) : null)));
+    return;
+  }
+  const grupos = new Map();
+  for (const t of lista){
+    const k = norm(t.categoria);
+    if (!grupos.has(k)) grupos.set(k, { nome: t.categoria, itens: [] });
+    grupos.get(k).itens.push(t);
+  }
+  const blocos = Array.from(grupos.values()).sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR')).map(g =>
+    h('section', { class: 'cat-block' },
+      filtroCategoria ? null : h('div', { class: 'cat-head' }, h('h3', { text: g.nome }), h('span', { class: 'tag tag-neutral', text: String(g.itens.length) })),
+      h('div', { class: 'tool-grid' }, ...g.itens.map(cardFerramenta))));
+  container.replaceChildren(...blocos);
+}
+
+function viewCatalogo(filtroCategoria){
+  const main = $('main');
+  const cats = categorias();
+  const slot = h('div', { id: 'catalogo-slot' });
+  const kids = [];
+  if (!filtroCategoria){
+    kids.push(h('div', { class: 'page-head' },
+      h('h2', { text: 'Início' }),
+      h('p', { text: 'Selecione uma ferramenta para abri-la ou adicione uma nova ao painel.' })));
+    kids.push(h('div', { class: 'summary-grid' },
+      h('div', { class: 'summary-tile accent' }, h('div', { class: 'n', text: String(todas().length) }), h('div', { class: 'l', text: 'Ferramentas' })),
+      h('div', { class: 'summary-tile' }, h('div', { class: 'n', text: String(cats.length) }), h('div', { class: 'l', text: 'Categorias' }))));
+  } else {
+    const real = cats.find(c => norm(c.nome) === norm(filtroCategoria));
+    kids.push(h('div', { class: 'page-head' },
+      h('h2', { text: real ? real.nome : filtroCategoria }),
+      h('p', { text: real ? 'Ferramentas desta categoria.' : 'Categoria sem ferramentas.' })));
+  }
+  if (todas().length){
+    const busca = h('input', { type: 'search', class: 'search', id: 'campoBusca', placeholder: 'Buscar ferramenta…', 'aria-label': 'Buscar ferramenta', maxlength: 60, value: state.busca });
+    kids.push(h('div', { class: 'toolbar-row' }, busca));
+  }
+  kids.push(slot);
+  main.replaceChildren(...kids);
+  renderCatalogo(slot, filtroCategoria);
+}
+
+async function viewFerramenta(id){
+  const main = $('main');
+  const t = todas().find(x => x.id === id);
+  if (!t){
+    toast('Ferramenta não encontrada.', 'err');
+    ir('#/inicio');
+    return;
+  }
+  const alerta = h('div', { class: 'banner err', id: 'alertaFerramenta', hidden: true, role: 'alert' },
+    h('span', { id: 'alertaTexto' }),
+    h('button', { type: 'button', class: 'btn-ghost', dataset: { action: 'fechar-alerta' }, text: 'Fechar' }));
+  const cabecalho = h('div', { class: 'tool-view-head' },
+    h('a', { class: 'btn-secondary', href: '#/inicio', text: '← Painel' }),
+    h('div', { class: 'ttl' }, h('span', { 'aria-hidden': 'true', style: 'font-size:22px', text: t.icone }), h('h2', { text: t.nome }), t.fixa ? h('span', { class: 'hint mono', text: t.arquivo }) : null),
+    h('button', { type: 'button', class: 'btn-ghost', dataset: { action: 'nova-aba' }, text: 'Abrir em nova aba' }),
+    h('button', { type: 'button', class: 'btn-ghost', dataset: { action: 'recarregar-ferramenta' }, text: 'Recarregar ferramenta' }),
+    t.fixa ? null : h('button', { type: 'button', class: 'btn-ghost', dataset: { action: 'remover', id: t.id }, text: 'Remover' }));
+  const wrap = h('div', { class: 'frame-wrap', id: 'frameWrap' });
+  main.replaceChildren(cabecalho, alerta, wrap);
+  await montarFrame(t, wrap);
+}
+
+/* =========================================================
+   9. FERRAMENTAS: ABERTURA ISOLADA
+   ========================================================= */
+/** Script injetado no início de cada ferramenta: recebe o tema do hub e reporta erros. */
+function scriptInjetado(){
+  const tema = JSON.stringify(state.theme);
+  const corpo = "(function(){try{var r=document.documentElement;" +
+    "function ap(t){if(t==='light'||t==='dark')r.setAttribute('data-theme',t);else r.removeAttribute('data-theme');}" +
+    "ap(" + tema + ");" +
+    "window.addEventListener('message',function(e){var m=e.data;if(!m||m.__ponteClaude!==true||m.tipo!=='tema'||e.source!==window.parent)return;ap(m.tema);});" +
+    "function rep(x){try{window.parent.postMessage({__ponteClaude:true,tipo:'erro-ferramenta',mensagem:String(x).slice(0,300)},'*');}catch(_){}}" +
+    "window.addEventListener('error',function(e){if(e&&e.message)rep(e.message);});" +
+    "window.addEventListener('unhandledrejection',function(e){var q=e&&e.reason;rep((q&&q.message)||q||'Promessa rejeitada');});" +
+    "}catch(_){}})();";
+  return '<scr' + 'ipt data-sn-hub>' + corpo + '</scr' + 'ipt>';
+}
+function prepararDocumento(html){
+  const inj = scriptInjetado();
+  const mHead = /<head(?=[\s>])[^>]*>/i.exec(html);
+  if (mHead) return html.slice(0, mHead.index + mHead[0].length) + inj + html.slice(mHead.index + mHead[0].length);
+  const mHtml = /<html(?=[\s>])[^>]*>/i.exec(html);
+  if (mHtml) return html.slice(0, mHtml.index + mHtml[0].length) + '<head>' + inj + '</head>' + html.slice(mHtml.index + mHtml[0].length);
+  const mDoc = /^\s*<!doctype[^>]*>/i.exec(html);
+  if (mDoc) return html.slice(0, mDoc[0].length) + inj + html.slice(mDoc[0].length);
+  return '<!doctype html>' + inj + html;
+}
+
+function destruirFrame(){
+  if (state.frame){
+    try{ state.frame.src = 'about:blank'; }catch(_){}
+    if (state.frame.parentNode) state.frame.parentNode.removeChild(state.frame);
+  }
+  state.frame = null;
+  state.frameToolId = null;
+  state.frameDireto = false;
+}
+
+/** Lê o HTML de uma ferramenta fixa na pasta tools/ (precisa de servidor local).
+ *  Retorna { html } se leu, { ausente:true } se o arquivo não existe, ou { direto:true }
+ *  quando o navegador não permite ler arquivos (abertura direta por file://). */
+async function lerFerramentaFixa(t){
+  if (location.protocol === 'file:') return { direto: true };   // navegador não deixa ler arquivos locais
+  try{
+    const r = await fetch(encodeURI(t.arquivo), { cache: 'no-store' });
+    if (!r.ok) return { ausente: true };
+    return { html: decodificar(await r.arrayBuffer()) };
+  }catch(_){ return { direto: true }; }
+}
+
+function mensagemAusente(wrap, texto){
+  wrap.replaceChildren(h('div', { class: 'empty-state', style: 'color:var(--danger)' },
+    h('div', { class: 'big', 'aria-hidden': 'true', text: '⚠️' }), h('p', { text: texto })));
+}
+
+async function montarFrame(t, wrap){
+  destruirFrame();
+  let html = null, direto = false;
+  if (t.fixa){
+    const r = await lerFerramentaFixa(t);
+    if (!wrap.isConnected) return;
+    if (r.ausente){ t._ausente = true; mensagemAusente(wrap, 'O arquivo ' + t.arquivo + ' não foi encontrado na pasta do painel.'); return; }
+    if (r.html){
+      if (!validarHtml(r.html).ok){ t._ausente = true; mensagemAusente(wrap, 'O arquivo ' + t.arquivo + ' está vazio ou não é um HTML válido.'); return; }
+      html = r.html;
+    } else direto = true;
+  } else {
+    html = await conteudo.get(t.id, t.store);
+    if (!wrap.isConnected) return;
+    if (!html){
+      t._ausente = true;
+      mensagemAusente(wrap, 'O arquivo desta ferramenta não está mais disponível neste navegador. Remova-a e adicione novamente.');
+      return;
+    }
+  }
+  if (!wrap.isConnected) return;   // o usuário já navegou para outra página
+  t._ausente = false;
+  const frame = h('iframe', { title: t.nome, referrerpolicy: 'no-referrer', loading: 'eager' });
+  if (!direto){
+    // Ferramentas fixas (pasta tools/, instaladas pelo administrador) mantêm a origem do painel para
+    // poderem guardar preferências no navegador. As adicionadas pela tela ficam totalmente isoladas.
+    frame.setAttribute('sandbox', CFG.sandbox + (t.fixa ? ' allow-same-origin' : ''));
+    frame.setAttribute('allow', 'clipboard-write');
+  }
+  frame.addEventListener('load', () => {
+    if (direto){
+      try{   // mesma origem (servidor local): reporta erros posteriores da ferramenta
+        frame.contentWindow.addEventListener('error', (e) => { if (e && e.message) mostrarAlertaFerramenta(limitar(e.message, 300)); });
+      }catch(_){ /* origem diferente: sem acesso */ }
+    }
+    enviarTemaAoFrame();
+  });
+  state.frame = frame;
+  state.frameToolId = t.id;
+  state.frameDireto = direto;
+  wrap.replaceChildren(frame);
+  if (direto) frame.src = encodeURI(t.arquivo); else frame.srcdoc = prepararDocumento(html);
+}
+
+async function abrirEmNovaAba(t){
+  if (t.fixa){ window.open(encodeURI(t.arquivo), '_blank', 'noopener'); return; }
+  const html = await conteudo.get(t.id, t.store);
+  if (!html){ toast('O arquivo desta ferramenta não está disponível.', 'err'); return; }
+  const url = URL.createObjectURL(new Blob([html], { type: 'text/html' }));
+  window.open(url, '_blank', 'noopener');
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
+}
+
+function mostrarAlertaFerramenta(msg){
+  const box = $('alertaFerramenta');
+  if (!box) return;
+  $('alertaTexto').textContent = 'A ferramenta reportou um erro: ' + msg + ' — o painel continua funcionando normalmente.';
+  box.hidden = false;
+}
+
+/* =========================================================
+   10. COMUNICAÇÃO COM O HUB (ponte de capacidades)
+   ========================================================= */
+function responder(src, id, resultado, erro){
+  try{
+    const m = { __ponteClaude: true, tipo: 'resposta', id };
+    if (erro) m.erro = erro; else m.resultado = resultado;
+    src.postMessage(m, '*');
+  }catch(_){ /* origem desapareceu */ }
+}
+
+async function salvarNoHub(filename, data){
+  let blob = null;
+  if (data instanceof Blob) blob = data;
+  else if (data instanceof ArrayBuffer || ArrayBuffer.isView(data)) blob = new Blob([data]);
+  else if (typeof data === 'string') blob = new Blob([data], { type: 'text/plain;charset=utf-8' });
+  if (!blob) throw { code: 'DADOS_INVALIDOS', message: 'Conteúdo do arquivo inválido.' };
+  if (blob.size > CFG.downloadMaxBytes) throw { code: 'ARQUIVO_GRANDE', message: 'Arquivo grande demais para download.' };
+  const nome = nomeArquivoSeguro(filename);
+  // Se o hub estiver hospedado onde existe a capacidade nativa de downloads, usa-a primeiro.
+  if (typeof window.claude !== 'undefined' && window.claude && typeof window.claude.use === 'function'){
+    try{
+      const d = await window.claude.use('downloads');
+      if (d){ await d.save({ filename: nome, data: blob }); return; }
+    }catch(_){ /* segue para o fallback nativo */ }
+  }
+  const url = URL.createObjectURL(blob);
+  const a = h('a', { href: url, download: nome, style: 'display:none' });
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { if (a.parentNode) a.parentNode.removeChild(a); URL.revokeObjectURL(url); }, 4000);
+}
+
+async function aoReceberMensagem(ev){
+  const msg = ev.data;
+  if (!msg || msg.__ponteClaude !== true) return;
+  // Só aceita mensagens da ferramenta atualmente aberta.
+  if (!state.frame || ev.source !== state.frame.contentWindow) return;
+
+  if (msg.tipo === 'erro-ferramenta'){
+    mostrarAlertaFerramenta(limitar(msg.mensagem, 300));
+    return;
+  }
+  if (msg.tipo !== 'chamada' || typeof msg.id !== 'number') return;
+
+  if (msg.acao !== 'downloads.save'){
+    responder(ev.source, msg.id, null, { code: 'ACAO_DESCONHECIDA', message: 'Ação não suportada pelo painel.' });
+    return;
+  }
+  const agora = Date.now();
+  state.downloadsRecentes = state.downloadsRecentes.filter(t => agora - t < CFG.downloadJanelaMs);
+  if (state.downloadsRecentes.length >= CFG.downloadMaxPorJanela){
+    responder(ev.source, msg.id, null, { code: 'LIMITE', message: 'Muitos downloads em sequência. Aguarde alguns segundos.' });
+    return;
+  }
+  state.downloadsRecentes.push(agora);
+  try{
+    const p = msg.payload || {};
+    await salvarNoHub(p.filename, p.data);
+    responder(ev.source, msg.id, { ok: true });
+  }catch(e){
+    responder(ev.source, msg.id, null, { code: (e && e.code) || 'ERRO', message: (e && e.message) || 'Falha ao salvar o arquivo.' });
+    toast('Não foi possível salvar o arquivo.', 'err');
+  }
+}
+
+/* =========================================================
+   11. ADICIONAR / REMOVER FERRAMENTAS
+   ========================================================= */
+function viewAdicionar(){
+  const main = $('main');
+  const dz = h('div', { class: 'dropzone', id: 'dropzone', role: 'button', tabindex: '0', 'aria-label': 'Selecionar arquivo HTML da ferramenta' },
+    h('strong', { text: 'Clique ou arraste o arquivo HTML da ferramenta' }),
+    h('span', { text: 'Apenas .html ou .htm, até ' + fmtBytes(CFG.maxBytes) }));
+  const fileInput = h('input', { type: 'file', id: 'arquivoHtml', accept: '.html,.htm,text/html', hidden: true });
+  const chipSlot = h('div', { id: 'chipArquivo' });
+  const cats = categorias();
+  const datalist = h('datalist', { id: 'listaCategorias' }, ...cats.map(c => h('option', { value: c.nome })));
+  const picks = h('div', { class: 'icon-picks', id: 'iconPicks' },
+    ...CFG.icones.map(i => h('button', { type: 'button', dataset: { icone: i }, 'aria-pressed': String(i === state.iconeSel), 'aria-label': 'Ícone ' + i, text: i })));
+
+  main.replaceChildren(
+    h('div', { class: 'page-head' }, h('h2', { text: 'Adicionar nova ferramenta' }),
+      h('p', { text: 'Informe o arquivo HTML e os dados que aparecerão no menu e no card da ferramenta.' })),
+    h('form', { id: 'formAdicionar', novalidate: true },
+      h('div', { class: 'step-card' },
+        h('div', { class: 'step-head' }, h('div', { class: 'step-num', text: '1' }),
+          h('div', {}, h('h2', { text: 'Arquivo' }), h('p', { class: 'step-sub', text: 'O HTML é guardado neste navegador e aberto de forma isolada dentro do painel.' }))),
+        dz, fileInput, chipSlot, h('p', { class: 'hint err field-err', id: 'erroArquivo' })),
+      h('div', { class: 'step-card' },
+        h('div', { class: 'step-head' }, h('div', { class: 'step-num', text: '2' }),
+          h('div', {}, h('h2', { text: 'Identificação' }), h('p', { class: 'step-sub', text: 'Nome, categoria e descrição aparecem no painel.' }))),
+        h('div', { class: 'field-row' },
+          h('div', { class: 'field' }, h('label', { for: 'campoNome', text: 'Nome' }),
+            h('input', { type: 'text', id: 'campoNome', maxlength: CFG.maxNome, autocomplete: 'off' }), h('p', { class: 'hint err field-err', id: 'erroNome' })),
+          h('div', { class: 'field' }, h('label', { for: 'campoCategoria', text: 'Categoria' }),
+            h('input', { type: 'text', id: 'campoCategoria', maxlength: CFG.maxCategoria, list: 'listaCategorias', autocomplete: 'off', placeholder: 'Ex.: Conciliação' }),
+            datalist, h('p', { class: 'hint err field-err', id: 'erroCategoria' }))),
+        h('div', { class: 'field-row' },
+          h('div', { class: 'field narrow' }, h('label', { for: 'campoIcone', text: 'Ícone' }),
+            h('input', { type: 'text', id: 'campoIcone', maxlength: 8, autocomplete: 'off', value: state.iconeSel }), picks),
+          h('div', { class: 'field' }, h('label', { for: 'campoDescricao', text: 'Descrição' }),
+            h('textarea', { id: 'campoDescricao', maxlength: CFG.maxDescricao, rows: 2, placeholder: 'Uma frase curta explicando o que a ferramenta faz' }))),
+        h('div', { class: 'actions-row' },
+          h('button', { type: 'submit', class: 'btn-primary', id: 'btnSalvarFerramenta', text: 'Adicionar ferramenta' }),
+          h('a', { class: 'btn-secondary', href: '#/inicio', text: 'Cancelar' })))));
+  if (state.pendingFile) mostrarChip();
+}
+
+function mostrarChip(){
+  const slot = $('chipArquivo');
+  if (!slot) return;
+  const f = state.pendingFile;
+  slot.replaceChildren(f ? h('span', { class: 'file-chip', text: '📄 ' + f.nome + ' · ' + fmtBytes(f.bytes) }) : '');
+}
+function setErro(id, msg){ const el = $(id); if (el) el.textContent = msg || ''; }
+
+async function aoEscolherArquivo(file){
+  setErro('erroArquivo', '');
+  state.pendingFile = null;
+  mostrarChip();
+  if (!file) return;
+  if (!/\.html?$/i.test(file.name)){ setErro('erroArquivo', 'Selecione um arquivo .html ou .htm.'); return; }
+  if (file.size === 0){ setErro('erroArquivo', 'O arquivo está vazio.'); return; }
+  if (file.size > CFG.maxBytes){ setErro('erroArquivo', 'O arquivo excede o limite de ' + fmtBytes(CFG.maxBytes) + '.'); return; }
+  let texto;
+  try{ texto = await lerTexto(file); }
+  catch(_){ setErro('erroArquivo', 'Não foi possível ler o arquivo.'); return; }
+  const v = validarHtml(texto);
+  if (!v.ok){ setErro('erroArquivo', v.erro); return; }
+  state.pendingFile = { nome: limitar(file.name, 150), bytes: file.size, html: texto };
+  mostrarChip();
+  const campoNome = $('campoNome');
+  if (campoNome && !campoNome.value.trim()){
+    campoNome.value = v.titulo || limitar(file.name.replace(/\.html?$/i, '').replace(/[_-]+/g, ' '), CFG.maxNome);
+  }
+  (v.avisos || []).forEach(a => toast(a, 'err'));
+}
+
+async function aoEnviarFormulario(ev){
+  ev.preventDefault();
+  const btn = $('btnSalvarFerramenta');
+  ['erroArquivo', 'erroNome', 'erroCategoria'].forEach(i => setErro(i, ''));
+  const nome = limitar($('campoNome').value, CFG.maxNome);
+  let categoria = limitar($('campoCategoria').value, CFG.maxCategoria);
+  const descricao = limitar($('campoDescricao').value, CFG.maxDescricao);
+  const icone = primeiroGrafema($('campoIcone').value) || CFG.iconePadrao;
+  let ok = true;
+  if (!state.pendingFile){ setErro('erroArquivo', 'Selecione o arquivo HTML da ferramenta.'); ok = false; }
+  if (!nome){ setErro('erroNome', 'Informe o nome.'); ok = false; }
+  else if (todas().some(t => norm(t.nome) === norm(nome))){ setErro('erroNome', 'Já existe uma ferramenta com esse nome.'); ok = false; }
+  if (!categoria){ setErro('erroCategoria', 'Informe a categoria.'); ok = false; }
+  if (state.custom.length >= CFG.maxTools){ toast('Limite de ' + CFG.maxTools + ' ferramentas atingido.', 'err'); ok = false; }
+  if (!ok) return;
+
+  const existente = categorias().find(c => norm(c.nome) === norm(categoria));
+  if (existente) categoria = existente.nome;
+
+  btn.disabled = true;
+  const id = novoId();
+  const store = await conteudo.put(id, state.pendingFile.html);
+  state.custom.push({
+    id, nome, categoria, icone, descricao,
+    arquivo: state.pendingFile.nome, bytes: state.pendingFile.bytes, store,
+    adicionadoEm: new Date().toISOString()
+  });
+  salvarFerramentas();
+  mostrarBannerArmazenamento();
+  state.pendingFile = null;
+  state.iconeSel = CFG.iconePadrao;
+  btn.disabled = false;
+  toast('Ferramenta "' + nome + '" adicionada.', 'ok');
+  ir('#/inicio');
+}
+
+function confirmarRemocao(t){
+  return new Promise(resolve => {
+    const dlg = $('dlgConfirmar');
+    $('dlgTexto').textContent = 'A ferramenta "' + t.nome + '" será removida deste navegador. As demais ferramentas não são afetadas.';
+    const fim = (v) => {
+      $('dlgOk').onclick = null; $('dlgCancelar').onclick = null; dlg.onclose = null;
+      try{ if (dlg.open) dlg.close(); }catch(_){ dlg.removeAttribute('open'); }
+      resolve(v);
+    };
+    $('dlgOk').onclick = () => fim(true);
+    $('dlgCancelar').onclick = () => fim(false);
+    dlg.onclose = () => fim(false);
+    try{ dlg.showModal(); }catch(_){ dlg.setAttribute('open', ''); }
+    $('dlgCancelar').focus();
+  });
+}
+
+async function removerFerramenta(id){
+  const t = state.custom.find(x => x.id === id);
+  if (!t) return;   // ferramentas fixas (pasta tools/) não são removidas pela interface
+  if (!(await confirmarRemocao(t))) return;
+  if (state.frameToolId === id) destruirFrame();
+  await conteudo.del(t.id, t.store);
+  state.custom = state.custom.filter(x => x.id !== id);
+  salvarFerramentas();
+  mostrarBannerArmazenamento();
+  toast('Ferramenta removida.', 'ok');
+  if (rota().view === 'ferramenta') ir('#/inicio'); else renderizar();
+}
+
+/* =========================================================
+   12. RENDER PRINCIPAL E EVENTOS
+   ========================================================= */
+async function renderizar(){
+  const r = rota();
+  if (r.view !== 'ferramenta') destruirFrame();
+  renderMenu(r);
+  $('sidebar').classList.remove('is-open');
+  $('btnMenu').setAttribute('aria-expanded', 'false');
+  try{
+    if (r.view === 'ferramenta') await viewFerramenta(r.param);
+    else if (r.view === 'adicionar') viewAdicionar();
+    else if (r.view === 'categoria') viewCatalogo(r.param);
+    else viewCatalogo(null);
+  }catch(_){
+    $('main').replaceChildren(h('div', { class: 'step-card' },
+      h('div', { class: 'empty-state', style: 'color:var(--danger)' }, h('p', { text: 'Não foi possível exibir esta página. Volte ao início.' }),
+        h('a', { class: 'btn-secondary', href: '#/inicio', text: 'Ir para o início' }))));
+  }
+}
+
+function ligarEventos(){
+  window.addEventListener('hashchange', () => { state.busca = ''; window.scrollTo(0, 0); renderizar(); });
+  window.addEventListener('message', aoReceberMensagem);
+  $('btnTema').addEventListener('click', alternarTema);
+  $('btnMenu').addEventListener('click', () => {
+    const aberto = $('sidebar').classList.toggle('is-open');
+    $('btnMenu').setAttribute('aria-expanded', String(aberto));
+  });
+
+  // Delegação de cliques (cards, formulário, ferramenta aberta)
+  document.addEventListener('click', (ev) => {
+    const alvo = ev.target instanceof Element ? ev.target : null;
+    if (!alvo) return;
+    const btn = alvo.closest('[data-action]');
+    if (btn){
+      const acao = btn.dataset.action;
+      if (acao === 'remover') removerFerramenta(btn.dataset.id);
+      else if (acao === 'recarregar-ferramenta'){
+        const t = todas().find(x => x.id === state.frameToolId);
+        const wrap = $('frameWrap');
+        const al = $('alertaFerramenta'); if (al) al.hidden = true;
+        if (t && wrap) montarFrame(t, wrap);
+      }
+      else if (acao === 'nova-aba'){
+        const t = todas().find(x => x.id === state.frameToolId);
+        if (t) abrirEmNovaAba(t);
+      }
+      else if (acao === 'fechar-alerta'){ const al = $('alertaFerramenta'); if (al) al.hidden = true; }
+      return;
+    }
+    const ic = alvo.closest('#iconPicks button');
+    if (ic){
+      state.iconeSel = ic.dataset.icone;
+      $('campoIcone').value = state.iconeSel;
+      document.querySelectorAll('#iconPicks button').forEach(b => b.setAttribute('aria-pressed', String(b === ic)));
+      return;
+    }
+    if (alvo.closest('#dropzone')) $('arquivoHtml').click();
+  });
+
+  document.addEventListener('keydown', (ev) => {
+    const dz = ev.target instanceof Element ? ev.target.closest('#dropzone') : null;
+    if (dz && (ev.key === 'Enter' || ev.key === ' ')){ ev.preventDefault(); $('arquivoHtml').click(); }
+  });
+  document.addEventListener('change', (ev) => {
+    if (ev.target && ev.target.id === 'arquivoHtml'){
+      const f = ev.target.files && ev.target.files[0];
+      aoEscolherArquivo(f);
+      ev.target.value = '';   // permite escolher o mesmo arquivo novamente
+    }
+    if (ev.target && ev.target.id === 'campoIcone'){
+      const g = primeiroGrafema(ev.target.value);
+      ev.target.value = g || CFG.iconePadrao;
+      state.iconeSel = ev.target.value;
+      document.querySelectorAll('#iconPicks button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.icone === state.iconeSel)));
+    }
+  });
+  document.addEventListener('input', (ev) => {
+    if (ev.target && ev.target.id === 'campoBusca'){
+      state.busca = ev.target.value;
+      const slot = $('catalogo-slot');
+      const r = rota();
+      if (slot) renderCatalogo(slot, r.view === 'categoria' ? r.param : null);
+    }
+  });
+  document.addEventListener('submit', (ev) => {
+    if (ev.target && ev.target.id === 'formAdicionar') aoEnviarFormulario(ev);
+  });
+  // Arrastar e soltar
+  document.addEventListener('dragover', (ev) => {
+    const dz = ev.target instanceof Element ? ev.target.closest('#dropzone') : null;
+    if (dz){ ev.preventDefault(); dz.classList.add('is-dragover'); }
+  });
+  document.addEventListener('dragleave', (ev) => {
+    const dz = ev.target instanceof Element ? ev.target.closest('#dropzone') : null;
+    if (dz) dz.classList.remove('is-dragover');
+  });
+  document.addEventListener('drop', (ev) => {
+    const dz = ev.target instanceof Element ? ev.target.closest('#dropzone') : null;
+    if (dz){
+      ev.preventDefault(); dz.classList.remove('is-dragover');
+      const f = ev.dataTransfer && ev.dataTransfer.files && ev.dataTransfer.files[0];
+      aoEscolherArquivo(f);
+    }
+  });
+}
+
+/* =========================================================
+   13. INICIALIZAÇÃO
+   ========================================================= */
+async function iniciar(){
+  state.lsOk = testarLocalStorage();
+  try{ state.idb = await idbAbrir(); }catch(_){ state.idb = null; }
+  state.theme = carregarTema();
+  aplicarTema();
+  state.fixas = validarFixas(TOOLS);
+  state.custom = carregarFerramentas();
+  if (!state.lsOk) state.metaPersistida = false;
+  mostrarBannerArmazenamento();
+  ligarEventos();
+  await renderizar();
+}
+iniciar().catch(() => {
+  $('main').replaceChildren(h('div', { class: 'step-card' },
+    h('div', { class: 'empty-state', style: 'color:var(--danger)' }, h('p', { text: 'Falha ao iniciar o painel. Recarregue a página.' }))));
+});
+</script>
+</body>
+</html>

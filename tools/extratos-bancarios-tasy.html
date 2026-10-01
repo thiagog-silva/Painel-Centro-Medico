@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- VERSÃO: 1.0.0 — finalizada em 01/10/2026 — Extratos Bancários Tasy (padrão Painel de Automação) -->
+<!-- VERSÃO: 1.1.0 (paleta Hospital São Nicolau) — finalizada em 01/10/2026 — Extratos Bancários Tasy (padrão Painel de Automação) -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -9,16 +9,17 @@
 <style>
 
 :root{
-  --bg:#f5f7f5;
+  /* Paleta exclusiva — Hospital São Nicolau Complexo Hospitalar (azul-marinho / ciano da marca) */
+  --bg:#f7f7fb;
   --surface:#ffffff;
-  --surface-alt:#eef2ef;
-  --ink:#182420;
-  --muted:#5c6f68;
-  --border:#dbe3de;
-  --accent:#0f5d52;
-  --accent-strong:#0b453d;
-  --accent-ink:#f4fbf9;
-  --accent-soft:#e0efec;
+  --surface-alt:#eef1f8;
+  --ink:#17254d;
+  --muted:#5f6f8f;
+  --border:#dbe2ee;
+  --accent:#28509c;
+  --accent-strong:#1c3a7a;
+  --accent-ink:#f5f8ff;
+  --accent-soft:#e3ebfa;
   --danger:#b3261e;
   --danger-soft:#fbe9e6;
   --warning:#8a5a00;
@@ -27,9 +28,13 @@
   --success-soft:#e5f4ea;
   --tag-debito-bg:#fff1d9;
   --tag-debito-ink:#8a5a00;
-  --tag-credito-bg:#e3edfb;
-  --tag-credito-ink:#1b4f8a;
-  --shadow: 0 1px 2px rgba(15,30,25,.06), 0 8px 24px -12px rgba(15,30,25,.22);
+  --tag-credito-bg:#dff1fa;
+  --tag-credito-ink:#17608f;
+  /* extras da marca (faixa do topo e destaques em gradiente) */
+  --brand-cyan:#2da6de;
+  --brand-mid:#2b76b9;
+  --brand-navy:#2a4291;
+  --shadow: 0 1px 2px rgba(20,40,100,.06), 0 8px 24px -12px rgba(20,40,100,.22);
   --radius:14px;
   --font-display:'IBM Plex Sans Condensed', 'IBM Plex Sans', sans-serif;
   --font-body:'IBM Plex Sans', system-ui, sans-serif;
@@ -37,20 +42,22 @@
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
-    --bg:#101614; --surface:#182120; --surface-alt:#1e2926; --ink:#e6ede9;
-    --muted:#94a6a0; --border:#2b3733; --accent:#57d9c1; --accent-strong:#8ee9d6;
-    --accent-ink:#08201b; --accent-soft:#1a332d; --danger:#ff9d93; --danger-soft:#3a201d;
+    --bg:#0d1426; --surface:#141d36; --surface-alt:#1a2542; --ink:#e6ecfa;
+    --muted:#93a3c7; --border:#27345a; --accent:#63a9ee; --accent-strong:#a4cdfa;
+    --accent-ink:#06142e; --accent-soft:#172a50; --danger:#ff9d93; --danger-soft:#3a201d;
     --warning:#ffcf70; --warning-soft:#3a2c12; --success:#8fe3ac; --success-soft:#173425;
-    --tag-debito-bg:#3a2c12; --tag-debito-ink:#ffcf70; --tag-credito-bg:#182b3d; --tag-credito-ink:#8fc2ff;
+    --tag-debito-bg:#3a2c12; --tag-debito-ink:#ffcf70; --tag-credito-bg:#12304a; --tag-credito-ink:#7fd0f5;
+    --brand-cyan:#38b4ea; --brand-mid:#3b8bd0; --brand-navy:#4a65c4;
     --shadow: 0 1px 2px rgba(0,0,0,.35), 0 12px 28px -14px rgba(0,0,0,.65);
   }
 }
 :root[data-theme="dark"]{
-  --bg:#101614; --surface:#182120; --surface-alt:#1e2926; --ink:#e6ede9;
-  --muted:#94a6a0; --border:#2b3733; --accent:#57d9c1; --accent-strong:#8ee9d6;
-  --accent-ink:#08201b; --accent-soft:#1a332d; --danger:#ff9d93; --danger-soft:#3a201d;
+  --bg:#0d1426; --surface:#141d36; --surface-alt:#1a2542; --ink:#e6ecfa;
+  --muted:#93a3c7; --border:#27345a; --accent:#63a9ee; --accent-strong:#a4cdfa;
+  --accent-ink:#06142e; --accent-soft:#172a50; --danger:#ff9d93; --danger-soft:#3a201d;
   --warning:#ffcf70; --warning-soft:#3a2c12; --success:#8fe3ac; --success-soft:#173425;
-  --tag-debito-bg:#3a2c12; --tag-debito-ink:#ffcf70; --tag-credito-bg:#182b3d; --tag-credito-ink:#8fc2ff;
+  --tag-debito-bg:#3a2c12; --tag-debito-ink:#ffcf70; --tag-credito-bg:#12304a; --tag-credito-ink:#7fd0f5;
+  --brand-cyan:#38b4ea; --brand-mid:#3b8bd0; --brand-navy:#4a65c4;
   --shadow: 0 1px 2px rgba(0,0,0,.35), 0 12px 28px -14px rgba(0,0,0,.65);
 }
 
@@ -68,6 +75,7 @@ h1,h2,h3{ font-family:var(--font-display); font-weight:700; text-wrap:balance; m
   background:color-mix(in srgb, var(--bg) 88%, transparent);
   backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
   border-bottom:1px solid var(--border); margin:-20px -16px 28px; padding:16px;
+  border-top:6px solid; border-image:linear-gradient(90deg,var(--brand-cyan),var(--brand-navy)) 1 0 0 0;
 }
 .topbar-inner{ max-width:1180px; margin:0 auto; display:flex; flex-wrap:wrap; align-items:center; gap:14px 24px; justify-content:space-between; }
 .brand{ display:flex; align-items:center; gap:12px; }
@@ -194,8 +202,8 @@ textarea#txtOutput{
 
 .toast-host{ position:fixed; right:16px; bottom:calc(16px + env(safe-area-inset-bottom,0px)); z-index:60; display:flex; flex-direction:column; gap:8px; max-width:min(360px, calc(100vw - 32px)); }
 .toast{ background:var(--ink); color:var(--bg); padding:11px 14px; border-radius:9px; font-size:13px; box-shadow:var(--shadow); animation:toast-in .18s ease-out; }
-.toast.toast-err{ background:var(--danger); color:#fff; }
-.toast.toast-ok{ background:var(--success); color:#08201b; }
+.toast.toast-err{ background:var(--danger); color:var(--accent-ink); }
+.toast.toast-ok{ background:var(--success); color:var(--accent-ink); }
 @keyframes toast-in{ from{ transform:translateY(6px); opacity:0; } to{ transform:none; opacity:1; } }
 
 code.k{ background:var(--surface-alt); border:1px solid var(--border); padding:1px 5px; border-radius:5px; font-family:var(--font-mono); font-size:12px; }
