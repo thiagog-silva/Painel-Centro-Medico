@@ -1,0 +1,974 @@
+<!doctype html>
+<!-- VERSÃO: 1.0.0 — Zerar CR no padrão do Painel de Automação (paleta São Nicolau) — finalizada em 01/10/2026 -->
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Zerar CR — Lançamentos sem contrapartida</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Sans+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  /* Paleta exclusiva — Hospital São Nicolau Complexo Hospitalar (azul-marinho / ciano da marca) */
+  --bg:#f7f7fb;
+  --surface:#ffffff;
+  --surface-alt:#eef1f8;
+  --ink:#17254d;
+  --muted:#5f6f8f;
+  --border:#dbe2ee;
+  --accent:#28509c;
+  --accent-strong:#1c3a7a;
+  --accent-ink:#f5f8ff;
+  --accent-soft:#e3ebfa;
+  --danger:#b3261e;
+  --danger-soft:#fbe9e6;
+  --warning:#8a5a00;
+  --warning-soft:#fff1d9;
+  --success:#1e7d4a;
+  --success-soft:#e5f4ea;
+  --tag-debito-bg:#fff1d9;
+  --tag-debito-ink:#8a5a00;
+  --tag-credito-bg:#dff1fa;
+  --tag-credito-ink:#17608f;
+  /* extras da marca (faixa do topo e destaques em gradiente) */
+  --brand-cyan:#2da6de;
+  --brand-mid:#2b76b9;
+  --brand-navy:#2a4291;
+  --shadow: 0 1px 2px rgba(20,40,100,.06), 0 8px 24px -12px rgba(20,40,100,.22);
+  --radius:14px;
+  --font-display:'IBM Plex Sans Condensed', 'IBM Plex Sans', sans-serif;
+  --font-body:'IBM Plex Sans', system-ui, sans-serif;
+  --font-mono:'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0d1426; --surface:#141d36; --surface-alt:#1a2542; --ink:#e6ecfa;
+    --muted:#93a3c7; --border:#27345a; --accent:#63a9ee; --accent-strong:#a4cdfa;
+    --accent-ink:#06142e; --accent-soft:#172a50; --danger:#ff9d93; --danger-soft:#3a201d;
+    --warning:#ffcf70; --warning-soft:#3a2c12; --success:#8fe3ac; --success-soft:#173425;
+    --tag-debito-bg:#3a2c12; --tag-debito-ink:#ffcf70; --tag-credito-bg:#12304a; --tag-credito-ink:#7fd0f5;
+    --brand-cyan:#38b4ea; --brand-mid:#3b8bd0; --brand-navy:#4a65c4;
+    --shadow: 0 1px 2px rgba(0,0,0,.35), 0 12px 28px -14px rgba(0,0,0,.65);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0d1426; --surface:#141d36; --surface-alt:#1a2542; --ink:#e6ecfa;
+  --muted:#93a3c7; --border:#27345a; --accent:#63a9ee; --accent-strong:#a4cdfa;
+  --accent-ink:#06142e; --accent-soft:#172a50; --danger:#ff9d93; --danger-soft:#3a201d;
+  --warning:#ffcf70; --warning-soft:#3a2c12; --success:#8fe3ac; --success-soft:#173425;
+  --tag-debito-bg:#3a2c12; --tag-debito-ink:#ffcf70; --tag-credito-bg:#12304a; --tag-credito-ink:#7fd0f5;
+  --brand-cyan:#38b4ea; --brand-mid:#3b8bd0; --brand-navy:#4a65c4;
+  --shadow: 0 1px 2px rgba(0,0,0,.35), 0 12px 28px -14px rgba(0,0,0,.65);
+}
+
+*{ box-sizing:border-box; }
+body{
+  background:var(--bg); color:var(--ink); font-family:var(--font-body);
+  margin:0; padding-inline:16px; padding-block:20px 60px;
+}
+h1,h2,h3{ font-family:var(--font-display); font-weight:700; text-wrap:balance; margin:0; }
+.mono{ font-family:var(--font-mono); font-variant-numeric:tabular-nums; }
+.app-shell{ max-width:1180px; margin:0 auto; }
+
+.topbar{
+  position:sticky; top:env(safe-area-inset-top,0px); z-index:30;
+  background:color-mix(in srgb, var(--bg) 88%, transparent);
+  backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
+  border-bottom:1px solid var(--border); margin:-20px -16px 28px; padding:16px;
+  border-top:6px solid; border-image:linear-gradient(90deg,var(--brand-cyan),var(--brand-navy)) 1 0 0 0;
+}
+.topbar-inner{ max-width:1180px; margin:0 auto; display:flex; flex-wrap:wrap; align-items:center; gap:14px 24px; justify-content:space-between; }
+.brand{ display:flex; align-items:center; gap:12px; }
+.brand-mark{
+  width:38px; height:38px; border-radius:10px; background:var(--accent); color:var(--accent-ink);
+  display:flex; align-items:center; justify-content:center; font-family:var(--font-mono); font-weight:700; font-size:15px;
+  box-shadow:var(--shadow); flex:none;
+}
+.brand h1{ font-size:19px; letter-spacing:.2px; }
+.brand p{ margin:2px 0 0; font-size:12.5px; color:var(--muted); }
+.steps-pills{ display:flex; gap:8px; flex-wrap:wrap; }
+.step-pill{
+  font-family:var(--font-mono); font-size:11.5px; letter-spacing:.03em; padding:6px 11px; border-radius:999px;
+  border:1px solid var(--border); color:var(--muted); background:var(--surface); white-space:nowrap;
+}
+.step-pill.is-active{ border-color:var(--accent); color:var(--accent-strong); background:var(--accent-soft); font-weight:600; }
+.step-pill.is-done{ color:var(--success); border-color:var(--success); }
+
+.step-card{
+  background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+  padding:26px; margin-bottom:22px; box-shadow:var(--shadow);
+}
+.step-card[data-locked="true"]{ opacity:.45; pointer-events:none; }
+.step-head{ display:flex; align-items:flex-start; gap:14px; margin-bottom:18px; }
+.step-num{
+  width:32px; height:32px; border-radius:9px; background:var(--surface-alt); color:var(--ink);
+  font-family:var(--font-mono); font-weight:600; font-size:14px; display:flex; align-items:center; justify-content:center; flex:none;
+  border:1px solid var(--border);
+}
+.step-head h2{ font-size:20px; }
+.step-head .step-sub{ margin:3px 0 0; color:var(--muted); font-size:13.5px; max-width:64ch; }
+
+.dropzone{
+  border:1.5px dashed var(--border); border-radius:12px; padding:30px 20px; text-align:center;
+  background:var(--surface-alt); cursor:pointer; transition:border-color .15s, background .15s;
+}
+.dropzone:hover, .dropzone.is-dragover{ border-color:var(--accent); background:var(--accent-soft); }
+.dropzone strong{ display:block; font-size:15px; margin-bottom:4px; }
+.dropzone span{ font-size:12.5px; color:var(--muted); }
+.file-chip{
+  display:inline-flex; align-items:center; gap:8px; margin-top:14px; padding:7px 12px; border-radius:9px;
+  background:var(--accent-soft); color:var(--accent-strong); font-size:13px; font-family:var(--font-mono);
+}
+.field-row{ display:flex; flex-wrap:wrap; gap:16px; margin-top:16px; }
+.field{ display:flex; flex-direction:column; gap:5px; min-width:190px; flex:1; }
+.field label{ font-size:12px; color:var(--muted); font-weight:600; letter-spacing:.02em; text-transform:uppercase; }
+select, input[type="text"], input[type="number"]{
+  font-family:var(--font-body); font-size:13.5px; padding:9px 10px; border-radius:8px; border:1px solid var(--border);
+  background:var(--surface); color:var(--ink); width:100%;
+}
+select:focus, input:focus, button:focus-visible{ outline:2px solid var(--accent); outline-offset:1px; }
+
+.table-wrap{ overflow-x:auto; border:1px solid var(--border); border-radius:10px; margin-top:14px; }
+table{ border-collapse:collapse; width:100%; font-size:13px; }
+thead th{
+  position:sticky; top:0; background:var(--surface-alt); text-align:left; padding:9px 10px; font-size:11.5px;
+  text-transform:uppercase; letter-spacing:.04em; color:var(--muted); border-bottom:1px solid var(--border); white-space:nowrap;
+}
+tbody td{ padding:8px 10px; border-bottom:1px solid var(--border); white-space:nowrap; }
+tbody tr:last-child td{ border-bottom:none; }
+
+button{ font-family:var(--font-body); cursor:pointer; border:none; border-radius:9px; font-weight:600; font-size:13.5px; }
+.btn-primary{ background:var(--accent); color:var(--accent-ink); padding:11px 20px; box-shadow:var(--shadow); }
+.btn-primary:disabled{ opacity:.45; cursor:not-allowed; box-shadow:none; }
+.btn-secondary{ background:var(--surface-alt); color:var(--ink); border:1px solid var(--border); padding:10px 16px; }
+.btn-ghost{ background:transparent; color:var(--muted); border:1px solid var(--border); padding:7px 10px; font-size:12px; }
+.btn-icon{ background:var(--surface-alt); border:1px solid var(--border); color:var(--ink); width:28px; height:28px; border-radius:7px; display:inline-flex; align-items:center; justify-content:center; padding:0; }
+.actions-row{ display:flex; flex-wrap:wrap; gap:12px; margin-top:18px; align-items:center; }
+.hint{ font-size:12.5px; color:var(--muted); }
+.hint.warn{ color:var(--warning); }
+.hint.err{ color:var(--danger); }
+
+.summary-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; margin-bottom:18px; }
+.summary-tile{ background:var(--surface-alt); border:1px solid var(--border); border-radius:10px; padding:14px 16px; }
+.summary-tile .n{ font-family:var(--font-mono); font-size:22px; font-weight:600; }
+.summary-tile .l{ font-size:11.5px; color:var(--muted); text-transform:uppercase; letter-spacing:.03em; margin-top:2px; }
+.summary-tile.accent{ background:var(--accent-soft); }
+.summary-tile.accent .n{ color:var(--accent-strong); }
+.summary-tile.warn .n{ color:var(--warning); }
+
+.tag{ display:inline-flex; align-items:center; gap:5px; font-family:var(--font-mono); font-size:11.5px; font-weight:600; padding:4px 9px; border-radius:999px; white-space:nowrap; }
+.tag-debito{ background:var(--tag-debito-bg); color:var(--tag-debito-ink); }
+.tag-credito{ background:var(--tag-credito-bg); color:var(--tag-credito-ink); }
+
+.empty-state{ text-align:center; padding:34px 16px; color:var(--success); }
+.empty-state .big{ font-size:28px; }
+
+fieldset{ border:1px solid var(--border); border-radius:10px; padding:16px; margin:0 0 16px; }
+legend{ padding:0 6px; font-size:12.5px; font-weight:700; color:var(--accent-strong); text-transform:uppercase; letter-spacing:.03em; }
+
+.toast-host{ position:fixed; right:16px; bottom:calc(16px + env(safe-area-inset-bottom,0px)); z-index:60; display:flex; flex-direction:column; gap:8px; max-width:min(360px, calc(100vw - 32px)); }
+.toast{ background:var(--ink); color:var(--bg); padding:11px 14px; border-radius:9px; font-size:13px; box-shadow:var(--shadow); animation:toast-in .18s ease-out; }
+.toast.toast-err{ background:var(--danger); color:var(--accent-ink); }
+.toast.toast-ok{ background:var(--success); color:var(--accent-ink); }
+@keyframes toast-in{ from{ transform:translateY(6px); opacity:0; } to{ transform:none; opacity:1; } }
+
+code.k{ background:var(--surface-alt); border:1px solid var(--border); padding:1px 5px; border-radius:5px; font-family:var(--font-mono); font-size:12px; }
+
+
+/* ---- específicos desta ferramenta (somente variáveis do padrão) ---- */
+section#step2, section#step3{ display:none; }
+input[type=file]{ display:none; }
+.files{ min-height:0; }
+.sub{ color:var(--muted); font-size:13px; margin:0 0 14px; }
+.block-title{ font-size:15px; margin:0 0 2px; }
+.block-head{ display:flex; justify-content:space-between; align-items:center; gap:12px; }
+.rule-box{ background:var(--surface-alt); border:1px solid var(--border); border-radius:10px; padding:14px 16px; font-size:13.5px; margin-top:16px; }
+.rule-box code{ background:var(--surface); border:1px solid var(--border); padding:1px 5px; border-radius:5px; font-family:var(--font-mono); font-size:12.5px; color:var(--accent-strong); }
+#errorBox{ display:none; margin-top:14px; padding:12px 14px; border-radius:8px; background:var(--danger-soft); color:var(--danger); font-size:13px; white-space:pre-wrap; }
+#statusBox{ display:none; margin-top:14px; padding:10px 14px; border-radius:8px; background:var(--surface-alt); color:var(--muted); font-size:13px; }
+.tag-ok{ background:var(--success-soft); color:var(--success); }
+.tag-warn{ background:var(--warning-soft); color:var(--warning); }
+.arrow{ color:var(--muted); margin:0 6px; }
+.old{ color:var(--danger); }
+.new{ color:var(--success); font-weight:600; }
+.empty-note{ color:var(--muted); font-size:13px; padding:6px 2px; }
+.toggle-all{ font-size:12.5px; color:var(--accent-strong); cursor:pointer; text-decoration:underline; background:none; border:none; padding:0; font-weight:600; }
+th.mono{ font-family:var(--font-mono); }
+.balance-box{ border:1px solid var(--border); border-radius:10px; padding:14px 16px; margin-top:16px; background:var(--surface-alt); }
+.balance-box h3{ margin:0 0 10px; font-size:13px; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; font-weight:600; font-family:var(--font-body); }
+.balance-row{ display:flex; gap:14px; flex-wrap:wrap; align-items:stretch; }
+.balance-col{ flex:1 1 140px; border:1px solid var(--border); border-radius:8px; padding:10px 12px; background:var(--surface); }
+.balance-col .l{ font-size:11.5px; color:var(--muted); text-transform:uppercase; letter-spacing:.03em; }
+.balance-col .v{ font-family:var(--font-mono); font-size:16px; margin-top:4px; }
+.balance-col.diff .v{ font-weight:700; }
+.balance-pill{ display:inline-flex; align-items:center; gap:6px; font-size:12.5px; padding:4px 10px; border-radius:999px; font-weight:600; margin-top:10px; }
+.balance-pill.ok{ background:var(--success-soft); color:var(--success); }
+.balance-pill.bad{ background:var(--danger-soft); color:var(--danger); }
+.balance-pill .dot{ width:7px; height:7px; border-radius:50%; background:currentColor; }
+#fatoContabilInput{ width:220px; font-family:var(--font-mono); font-size:14px; padding:9px 12px; }
+.status-ok{ font-size:13px; padding:10px 14px; border-radius:8px; background:var(--success-soft); color:var(--success); }
+.foot-note{ font-size:12px; color:var(--muted); margin-top:10px; }
+.summary-grid{ margin-top:16px; margin-bottom:4px; }
+.table-wrap td:first-child, .table-wrap th:first-child{ width:34px; }
+@media (max-width:640px){ .step-card{ padding:18px; } }
+
+</style>
+</head>
+<body>
+<div class="app-shell">
+
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <div class="brand-mark">CR</div>
+        <div>
+          <h1>Zerar CR</h1>
+          <p>Lançamentos de ativo/passivo sem contrapartida</p>
+        </div>
+      </div>
+      <div class="steps-pills">
+        <span class="step-pill is-active" id="pill1">1 · Arquivo</span>
+        <span class="step-pill" id="pill2">2 · Conferência</span>
+        <span class="step-pill" id="pill3">3 · Pronto</span>
+      </div>
+    </div>
+  </header>
+
+
+
+  <section id="step1" class="step-card">
+    <div class="step-head"><div class="step-num">1</div><div><h2>Suba o TXT de lançamentos</h2><p class="step-sub">O mesmo formato do arquivo mensal (linha principal + linha(s) de CR/estabelecimento).</p></div></div>
+    <div class="dropzone" id="dropzone"><strong>Arraste o arquivo aqui ou clique para escolher</strong><span>arquivo .txt de lançamentos</span></div>
+    <div class="files" id="filename"></div>
+    <input type="file" id="fileInput" accept=".txt">
+
+    <div class="rule-box" style="margin-top:16px;">
+      Regra aplicada: numa linha principal <code>0;data;débito;crédito;valor;clc;0;"descrição";seq</code>,
+      se <strong>débito</strong> ou <strong>crédito</strong> for <code>0</code> (sem contrapartida) e a conta preenchida for do <strong>Ativo</strong> ou <strong>Passivo</strong> segundo o plano de contas embutido,
+      a linha de CR logo abaixo (<code>0;CR;valor</code>) vira <code>0;0;valor</code>.
+      Linhas com débito <em>e</em> crédito preenchidos (contrapartida presente) nunca são alteradas.
+      Contas não encontradas no plano de contas caem por padrão em "conta começa com 1 ou 2" e ficam marcadas para você conferir.
+      Além disso, somo todo o Débito e todo o Crédito do arquivo (linhas principais) pra conferir se fecha em zero.
+      Campos de conta zerados (<code>0000</code>, <code>00</code> etc.) são normalizados para <code>0</code> em todo o arquivo,
+      e o último campo de cada linha principal (sequência) é substituído por um código único de <strong>fato contábil</strong> — igual em todos os lançamentos — que você pode conferir e ajustar no passo 2.
+    </div>
+    <div id="errorBox"></div>
+    <div id="statusBox"></div>
+  </section>
+
+  <section id="step2" class="step-card">
+    <div class="step-head"><div class="step-num">2</div><div><h2>Confira e selecione o que aplicar</h2><p class="step-sub" id="step2sub"></p></div></div>
+
+    <div class="summary-grid" id="stats"></div>
+
+    <div class="balance-box">
+      <h3>Validação Débito × Crédito — arquivo original</h3>
+      <div class="balance-row" id="balanceOriginal"></div>
+    </div>
+
+    <div class="balance-box">
+      <h3>Fato contábil (último campo de todas as linhas principais)</h3>
+      <p class="sub" style="margin:0 0 10px;">
+        Sugestão calculada a partir do mês/ano da primeira data encontrada no arquivo. Ajuste se precisar —
+        o mesmo valor será gravado no último campo de <strong>todos</strong> os lançamentos, substituindo a sequência atual.
+      </p>
+      <input type="text" id="fatoContabilInput" placeholder="Ex: 0000012026">
+      <div class="sub" style="margin-top:8px;">Será preenchido com zeros à esquerda até completar 10 dígitos ao gerar o arquivo.</div>
+    </div>
+
+    <div id="autoBlock" style="margin-top:18px;">
+      <div class="block-head">
+        <h3 class="block-title">Lançamentos com 1 linha de CR — aplicação direta</h3>
+        <button class="toggle-all" data-target="auto">desmarcar todos</button>
+      </div>
+      <p class="sub">Sem ambiguidade: cada lançamento tem só uma linha de CR abaixo dele.</p>
+      <div class="table-wrap">
+        <table id="autoTable">
+          <thead>
+            <tr>
+              <th></th>
+              <th>Seq</th>
+              <th>CLC</th>
+              <th>Descrição</th>
+              <th class="mono">Déb</th>
+              <th class="mono">Cré</th>
+              <th>Valor</th>
+              <th>CR</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="manualBlock" style="margin-top:26px;">
+      <div class="block-head">
+        <h3 class="block-title">Lançamentos com mais de 1 linha de CR — revisão caso a caso</h3>
+        <button class="toggle-all" data-target="manual">marcar todos</button>
+      </div>
+      <p class="sub">Rateio entre estabelecimentos. Desmarcados por padrão — marque linha a linha o que deve virar 0000.</p>
+      <div class="table-wrap">
+        <table id="manualTable">
+          <thead>
+            <tr>
+              <th></th>
+              <th>Seq</th>
+              <th>CLC</th>
+              <th>Descrição</th>
+              <th class="mono">Déb</th>
+              <th class="mono">Cré</th>
+              <th>Valor da linha CR</th>
+              <th>CR</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="mirrorBlock" style="margin-top:26px;">
+      <div class="block-head">
+        <h3 class="block-title">Lançamentos com Débito = Crédito (mesma conta nos dois lados)</h3>
+        <button class="toggle-all" data-target="mirror">desmarcar todos</button>
+      </div>
+      <p class="sub">Tipo do erro do Vale Transporte: a conta aparece nos dois lados da mesma linha. Sugestão é zerar o Débito, deixando só o Crédito (mesmo padrão já aplicado nos outros lançamentos desse CLC). Marcado por padrão.</p>
+      <div class="table-wrap">
+        <table id="mirrorTable">
+          <thead>
+            <tr>
+              <th></th>
+              <th>Seq</th>
+              <th>CLC</th>
+              <th>Descrição</th>
+              <th class="mono">Déb</th>
+              <th class="mono">Cré</th>
+              <th>Valor</th>
+              <th>Ação</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="dupBlock" style="margin-top:26px;">
+      <div class="block-head">
+        <h3 class="block-title">Prováveis lançamentos duplicados</h3>
+        <button class="toggle-all" data-target="dup">marcar todos</button>
+      </div>
+      <p class="sub">Tipo do erro do FGTS 13º: dois lançamentos com o mesmo CLC, mesma conta e mesmo valor, um completo (com contrapartida) e outro incompleto — sugestão é excluir o incompleto. Desmarcado por padrão, confira antes.</p>
+      <div class="table-wrap">
+        <table id="dupTable">
+          <thead>
+            <tr>
+              <th></th>
+              <th>Seq incompleto</th>
+              <th>CLC</th>
+              <th>Descrição</th>
+              <th class="mono">Déb</th>
+              <th class="mono">Cré</th>
+              <th>Valor</th>
+              <th>Duplica o Seq</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="actions-row">
+      <button class="btn-primary" id="generateBtn">Gerar TXT corrigido</button>
+      <button class="btn-secondary" id="resetBtn">Recomeçar</button>
+    </div>
+  </section>
+
+  <section id="step3" class="step-card">
+    <div class="step-head"><div class="step-num">3</div><div><h2>Pronto</h2></div></div>
+    <div class="status-ok" id="resultMsg"></div>
+
+    <div class="balance-box">
+      <h3>Validação Débito × Crédito — arquivo corrigido</h3>
+      <div class="balance-row" id="balanceFinal"></div>
+    </div>
+
+    <div class="actions-row">
+      <button class="btn-primary" id="downloadBtn">Baixar TXT corrigido</button>
+      <button class="btn-secondary" id="resetBtn2">Processar outro arquivo</button>
+    </div>
+    <p class="foot-note">Só as linhas marcadas foram alteradas (CR trocado por <code>0</code>, Débito espelhado zerado, ou duplicata removida), além da normalização de campos zerados e do preenchimento do fato contábil em todas as linhas principais. Todo o restante do arquivo — quebras de linha, ordem, demais campos — permanece idêntico ao original.</p>
+  </section>
+
+
+
+
+</div>
+<div class="toast-host" id="toastHost"></div>
+
+<script>
+/* Ponte de capacidades do painel + download seguro */
+(function(){
+  if (window.top === window.self) return;
+  if (window.claude && window.claude.use) return;
+  let proximoId = 1;
+  const pendentes = {};
+  window.addEventListener('message', (ev) => {
+    const msg = ev.data;
+    if (!msg || msg.__ponteClaude !== true || msg.tipo !== 'resposta') return;
+    const p = pendentes[msg.id];
+    if (!p) return;
+    delete pendentes[msg.id];
+    if (msg.erro) p.reject(msg.erro); else p.resolve(msg.resultado);
+  });
+  function chamarHub(acao, payload){
+    return new Promise((resolve, reject) => {
+      const id = proximoId++;
+      pendentes[id] = { resolve, reject };
+      window.parent.postMessage({ __ponteClaude: true, tipo: 'chamada', id, acao, payload }, '*');
+    });
+  }
+  window.claude = {
+    use: async (nome) => {
+      if (nome !== 'downloads') return null;
+      return { save: (req) => chamarHub('downloads.save', req) };
+    }
+  };
+})();
+async function salvarArquivo(filename, blob){
+  if (typeof window.claude !== 'undefined' && typeof window.claude.use === 'function'){
+    try{
+      const downloads = await window.claude.use('downloads');
+      if (downloads){ await downloads.save({ filename, data: blob }); return true; }
+    }catch(err){
+      alert('Não foi possível salvar o arquivo (' + (err && (err.code || err.message) || 'erro') + ').');
+      return false;
+    }
+  }
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+  return true;
+}
+window.salvarArquivo = salvarArquivo;
+</script>
+
+<script>
+(function(){
+  // Plano de contas embutido: código -> natureza (ativo/passivo/pl/resultado/resultado5/outro)
+  // Gerado a partir do arquivo Conta_contábil.csv fornecido.
+  const PLANO_CONTAS = {"1":"ativo","11":"ativo","111":"ativo","11101":"ativo","1110101":"ativo","1011":"ativo","1012":"ativo","1013":"ativo","1014":"ativo","1015":"ativo","1016":"ativo","11102":"ativo","1110201":"ativo","1050":"ativo","1051":"ativo","1052":"ativo","1053":"ativo","1054":"ativo","1055":"ativo","1056":"ativo","1057":"ativo","1058":"ativo","11103":"ativo","1110301":"ativo","1101":"ativo","1102":"ativo","1103":"ativo","1104":"ativo","1105":"ativo","1106":"ativo","1107":"ativo","112":"ativo","11201":"ativo","1120101":"ativo","1149":"ativo","1150":"ativo","1120102":"ativo","1201":"ativo","1202":"ativo","1203":"ativo","1204":"ativo","1205":"ativo","1206":"ativo","1207":"ativo","1208":"ativo","1209":"ativo","1210":"ativo","1211":"ativo","1212":"ativo","1213":"ativo","1214":"ativo","1215":"ativo","1216":"ativo","1217":"ativo","1218":"ativo","1219":"ativo","1220":"ativo","1221":"ativo","1222":"ativo","1223":"ativo","1224":"ativo","1225":"ativo","1226":"ativo","1227":"ativo","1228":"ativo","1229":"ativo","1230":"ativo","1231":"ativo","1232":"ativo","1233":"ativo","1120105":"ativo","1401":"ativo","1402":"ativo","1403":"ativo","1404":"ativo","1405":"ativo","1406":"ativo","1407":"ativo","1408":"ativo","1120107":"ativo","1501":"ativo","1502":"ativo","1503":"ativo","1504":"ativo","1505":"ativo","1506":"ativo","1507":"ativo","1508":"ativo","1509":"ativo","11202":"ativo","1120201":"ativo","1601":"ativo","1120202":"ativo","1651":"ativo","1652":"ativo","1653":"ativo","1120203":"ativo","1701":"ativo","11203":"ativo","1120301":"ativo","1721":"ativo","1722":"ativo","1723":"ativo","1724":"ativo","1725":"ativo","1726":"ativo","1727":"ativo","1728":"ativo","1729":"ativo","113":"ativo","11301":"ativo","1130101":"ativo","1801":"ativo","1802":"ativo","1803":"ativo","1130102":"ativo","1855":"ativo","1856":"ativo","1857":"ativo","1858":"ativo","1859":"ativo","1860":"ativo","1861":"ativo","1862":"ativo","1863":"ativo","1864":"ativo","1865":"ativo","1130103":"ativo","1852":"ativo","1854":"ativo","1130104":"ativo","1866":"ativo","1130105":"ativo","1804":"ativo","1130106":"ativo","1880":"ativo","1881":"ativo","1130107":"ativo","1889":"ativo","114":"ativo","11401":"ativo","1140101":"ativo","1901":"ativo","1902":"ativo","1903":"ativo","12":"ativo","121":"ativo","12101":"ativo","1210101":"ativo","1960":"ativo","122":"ativo","12201":"ativo","1220101":"ativo","1220102":"ativo","10020":"ativo","10021":"ativo","10022":"ativo","10023":"ativo","10024":"ativo","10025":"ativo","123":"ativo","12301":"ativo","1230101":"ativo","10100":"ativo","1230102":"ativo","10150":"ativo","10151":"ativo","1230103":"ativo","10200":"ativo","10201":"ativo","10202":"ativo","10203":"ativo","1230104":"ativo","10251":"ativo","10252":"ativo","1230105":"ativo","10301":"ativo","1230106":"ativo","10351":"ativo","1230107":"ativo","10401":"ativo","1230108":"ativo","10430":"ativo","12302":"ativo","1230201":"ativo","10451":"ativo","10452":"ativo","10453":"ativo","12303":"ativo","1230301":"ativo","10501":"ativo","10502":"ativo","10503":"ativo","10504":"ativo","1230302":"ativo","10551":"ativo","10552":"ativo","10553":"ativo","1230303":"ativo","10601":"ativo","10602":"ativo","1230304":"ativo","10651":"ativo","1230305":"ativo","10701":"ativo","1230306":"ativo","10751":"ativo","10752":"ativo","1230308":"ativo","124":"ativo","12401":"ativo","1240101":"ativo","10801":"ativo","1240102":"ativo","10851":"ativo","12402":"ativo","1240201":"ativo","10900":"ativo","1240202":"ativo","10950":"ativo","125":"ativo","12501":"ativo","2":"passivo","21":"passivo","211":"passivo","21101":"passivo","2110101":"passivo","2101":"passivo","2110102":"passivo","2150":"passivo","2110103":"passivo","2354":"passivo","2110104":"passivo","2355":"passivo","2365":"passivo","2356":"passivo","2357":"passivo","2358":"passivo","2359":"passivo","2361":"passivo","2362":"passivo","2363":"passivo","2364":"passivo","2367":"passivo","2368":"passivo","2110105":"passivo","2360":"passivo","2110106":"passivo","2369":"passivo","21102":"passivo","2110201":"passivo","2301":"passivo","2302":"passivo","2303":"passivo","2304":"passivo","21103":"passivo","2110301":"passivo","2401":"passivo","2402":"passivo","2403":"passivo","2404":"passivo","2405":"passivo","2406":"passivo","2407":"passivo","2408":"passivo","2409":"passivo","2410":"passivo","2411":"passivo","2110302":"passivo","2501":"passivo","2502":"passivo","2503":"passivo","210303":"passivo","2504":"passivo","21104":"passivo","2110401":"passivo","2701":"passivo","2702":"passivo","2703":"passivo","2704":"passivo","2705":"passivo","2706":"passivo","2707":"passivo","2708":"passivo","2709":"passivo","2710":"passivo","2110402":"passivo","2751":"passivo","2752":"passivo","2753":"passivo","2754":"passivo","2110403":"passivo","2801":"passivo","2802":"passivo","2803":"passivo","2110404":"passivo","2851":"passivo","2852":"passivo","2853":"passivo","21105":"passivo","2110501":"passivo","2901":"passivo","2902":"passivo","2903":"passivo","2904":"passivo","2905":"passivo","2906":"passivo","2907":"passivo","2908":"passivo","2909":"passivo","2910":"passivo","2911":"passivo","21106":"passivo","2110601":"passivo","2956":"passivo","2957":"passivo","2958":"passivo","2959":"passivo","2110602":"passivo","2991":"passivo","21107":"passivo","2110701":"passivo","3001":"passivo","3002":"passivo","3003":"passivo","3004":"passivo","3005":"passivo","3006":"passivo","3007":"passivo","3008":"passivo","21108":"passivo","2110801":"passivo","2960":"passivo","22":"passivo","221":"passivo","22101":"passivo","2210101":"passivo","22261":"passivo","22262":"passivo","22263":"passivo","22264":"passivo","22265":"passivo","22266":"passivo","22267":"passivo","22268":"passivo","22269":"passivo","22270":"passivo","22271":"passivo","22272":"passivo","22273":"passivo","2210102":"passivo","2210103":"passivo","22101104":"passivo","22360":"passivo","22103":"passivo","2210301":"passivo","20451":"passivo","20452":"passivo","20453":"passivo","20454":"passivo","20455":"passivo","2210302":"passivo","21000":"passivo","22104":"passivo","2210401":"passivo","22000":"passivo","23":"passivo","231":"passivo","23101":"passivo","2310101":"passivo","20510":"passivo","20511":"passivo","20512":"passivo","20513":"passivo","2310102":"passivo","20520":"passivo","232":"passivo","23201":"passivo","2320101":"passivo","26401":"passivo","2320102":"passivo","26451":"passivo","26452":"passivo","26453":"passivo","2320103":"passivo","27000":"passivo","233":"passivo","23301":"passivo","2330101":"passivo","27151":"passivo","27152":"passivo","27153":"passivo","2330102":"passivo","28501":"passivo","28502":"passivo","28503":"passivo","23302":"passivo","2330103":"passivo","29501":"passivo","29502":"passivo","29503":"passivo","234":"passivo","23401":"passivo","2340101":"passivo","28601":"passivo","28602":"passivo","3":"pl","31":"pl","311":"pl","31101":"pl","3110101":"pl","3000":"pl","3110102":"pl","3050":"pl","3110103":"pl","3070":"pl","3110104":"pl","3080":"pl","3081":"pl","3082":"pl","3083":"pl","3084":"pl","3085":"pl","3086":"pl","3087":"pl","3088":"pl","31102":"pl","3110201":"pl","3090":"pl","31103":"pl","3110301":"pl","3101":"pl","3102":"pl","3103":"pl","3110302":"pl","3151":"pl","31104":"pl","3110401":"pl","3201":"pl","3202":"pl","3203":"pl","3204":"pl","3205":"pl","3206":"pl","3207":"pl","3251":"pl","3252":"pl","31105":"pl","3110501":"pl","3301":"pl","3302":"pl","3303":"pl","3304":"pl","3305":"pl","3306":"pl","3307":"pl","31106":"pl","31107":"pl","4":"resultado","41":"resultado","411":"resultado","41101":"resultado","4110101":"resultado","4001":"resultado","4002":"resultado","4003":"resultado","4004":"resultado","4005":"resultado","4006":"resultado","4007":"resultado","4008":"resultado","4009":"resultado","4010":"resultado","4011":"resultado","4110102":"resultado","4151":"resultado","4110103":"resultado","4201":"resultado","4217":"resultado","4218":"resultado","4202":"resultado","4203":"resultado","4204":"resultado","4205":"resultado","4206":"resultado","4207":"resultado","4208":"resultado","4209":"resultado","4210":"resultado","4211":"resultado","4212":"resultado","4213":"resultado","4214":"resultado","4215":"resultado","4216":"resultado","4110104":"resultado","4301":"resultado","4302":"resultado","4303":"resultado","4304":"resultado","4305":"resultado","4306":"resultado","4307":"resultado","4308":"resultado","4309":"resultado","4310":"resultado","4110105":"resultado","4401":"resultado","4402":"resultado","4403":"resultado","4404":"resultado","4405":"resultado","4406":"resultado","4407":"resultado","4110106":"resultado","4501":"resultado","4502":"resultado","4110107":"resultado","4601":"resultado","4602":"resultado","4603":"resultado","4604":"resultado","4605":"resultado","4606":"resultado","4607":"resultado","4608":"resultado","4609":"resultado","4610":"resultado","4611":"resultado","4612":"resultado","42":"resultado","421":"resultado","42101":"resultado","4210101":"resultado","4801":"resultado","4802":"resultado","4210102":"resultado","4851":"resultado","4852":"resultado","4853":"resultado","4854":"resultado","4210103":"resultado","4901":"resultado","4902":"resultado","4903":"resultado","4904":"resultado","4905":"resultado","4906":"resultado","4210104":"resultado","40011":"resultado","40012":"resultado","40013":"resultado","40014":"resultado","40015":"resultado","40016":"resultado","40017":"resultado","40018":"resultado","4210105":"resultado","40051":"resultado","40052":"resultado","40075":"resultado","40053":"resultado","40054":"resultado","40055":"resultado","40056":"resultado","40057":"resultado","40058":"resultado","40059":"resultado","40060":"resultado","40061":"resultado","40062":"resultado","40063":"resultado","40064":"resultado","40065":"resultado","40066":"resultado","40067":"resultado","40068":"resultado","40069":"resultado","40070":"resultado","40071":"resultado","40072":"resultado","40073":"resultado","40074":"resultado","4210106":"resultado","40183":"resultado","40184":"resultado","40185":"resultado","4210107":"resultado","40251":"resultado","40252":"resultado","40253":"resultado","40254":"resultado","40255":"resultado","4210108":"resultado","40301":"resultado","40302":"resultado","40303":"resultado","4210109":"resultado","40351":"resultado","40352":"resultado","40353":"resultado","40354":"resultado","40355":"resultado","40356":"resultado","40357":"resultado","40358":"resultado","40359":"resultado","40360":"resultado","40361":"resultado","422":"resultado","42201":"resultado","423":"resultado","42301":"resultado","4230101":"resultado","4230102":"resultado","5":"resultado5","51":"resultado5","511":"resultado5","51101":"resultado5","5110101":"resultado5","5001":"resultado5"};
+
+  const dropzone = document.getElementById('dropzone');
+  const fileInput = document.getElementById('fileInput');
+  const filenameEl = document.getElementById('filename');
+  const step2 = document.getElementById('step2');
+  const step3 = document.getElementById('step3');
+  const step2sub = document.getElementById('step2sub');
+  const statsEl = document.getElementById('stats');
+  const balanceOriginalEl = document.getElementById('balanceOriginal');
+  const balanceFinalEl = document.getElementById('balanceFinal');
+  const autoTbody = document.querySelector('#autoTable tbody');
+  const manualTbody = document.querySelector('#manualTable tbody');
+  const autoBlock = document.getElementById('autoBlock');
+  const manualBlock = document.getElementById('manualBlock');
+  const mirrorTbody = document.querySelector('#mirrorTable tbody');
+  const dupTbody = document.querySelector('#dupTable tbody');
+  const mirrorBlock = document.getElementById('mirrorBlock');
+  const dupBlock = document.getElementById('dupBlock');
+  const generateBtn = document.getElementById('generateBtn');
+  const resetBtn = document.getElementById('resetBtn');
+  const resetBtn2 = document.getElementById('resetBtn2');
+  const resultMsg = document.getElementById('resultMsg');
+  const downloadBtn = document.getElementById('downloadBtn');
+  const errorBox = document.getElementById('errorBox');
+  const statusBox = document.getElementById('statusBox');
+
+  let origName = '';
+  let finalBlob = null, finalName = '012026_corrigido.txt';
+  let originalLines = [];  // raw lines, exactly as split
+  let lineEnding = '\r\n';
+  let candidates = [];     // {crLineIndex, checkboxEl, ...meta} — regra de CR
+  let mirrorCandidates = []; // Débito == Crédito na mesma linha
+  let dupCandidates = [];    // lançamentos duplicados (um incompleto)
+  const fatoContabilInput = document.getElementById('fatoContabilInput');
+  const FATO_CONTABIL_WIDTH = 10; // mesma largura do campo de sequência original (0000000001)
+
+  // a partir de uma data "DD/MM/AAAA", monta a sugestão de fato contábil: mês (sem zero à esquerda) + ano,
+  // preenchido com zeros à esquerda até FATO_CONTABIL_WIDTH dígitos. Ex: 31/01/2026 -> 0000012026
+  function sugerirFatoContabil(dataStr){
+    const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec((dataStr || '').trim());
+    if (!m) return '';
+    const mes = String(parseInt(m[2], 10));
+    const ano = m[3];
+    return (mes + ano).padStart(FATO_CONTABIL_WIDTH, '0');
+  }
+
+  function showError(msg){
+    errorBox.style.display = 'block';
+    errorBox.textContent = 'Deu erro ao processar o arquivo:\n' + msg + '\n\nManda esse texto pra eu corrigir.';
+    statusBox.style.display = 'none';
+  }
+  function showStatus(msg){
+    statusBox.style.display = 'block';
+    statusBox.textContent = msg;
+    errorBox.style.display = 'none';
+  }
+  function clearMsgs(){
+    errorBox.style.display = 'none';
+    statusBox.style.display = 'none';
+  }
+
+  // considera "vazio/zero" qualquer campo composto só por zeros ("0", "0000", etc.)
+  function isZeroField(v){
+    return /^0+$/.test(v || '');
+  }
+
+  function contaNatureza(codigo){
+    const info = PLANO_CONTAS[codigo];
+    if (info) return { nature: info, fromPlano: true };
+    // não achou no plano de contas: usa o primeiro dígito do próprio código como reserva
+    const d = codigo.charAt(0);
+    if (d === '1') return { nature: 'ativo', fromPlano: false };
+    if (d === '2') return { nature: 'passivo', fromPlano: false };
+    return { nature: 'outro', fromPlano: false };
+  }
+
+  dropzone.addEventListener('click', () => fileInput.click());
+  dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('is-dragover'); });
+  dropzone.addEventListener('dragleave', () => dropzone.classList.remove('is-dragover'));
+  dropzone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropzone.classList.remove('is-dragover');
+    if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+  });
+  fileInput.addEventListener('change', () => {
+    if (fileInput.files.length) handleFile(fileInput.files[0]);
+  });
+
+  function handleFile(file){
+    origName = file.name;
+    filenameEl.textContent = '';
+    const chipEl = document.createElement('span'); chipEl.className = 'file-chip'; chipEl.textContent = file.name; filenameEl.appendChild(chipEl);
+    clearMsgs();
+    showStatus('Lendo arquivo "' + file.name + '" (' + file.size + ' bytes)...');
+    readAsText(file, 'UTF-8', (text, err) => {
+      if (err){ showError(String(err)); return; }
+      const temSubstituicao = (text.match(/\uFFFD/g) || []).length > 2;
+      if (temSubstituicao){
+        // provavelmente não é UTF-8: relê como Latin-1/Windows-1252
+        readAsText(file, 'ISO-8859-1', (text2, err2) => {
+          if (err2){ showError(String(err2)); return; }
+          finishRead(text2);
+        });
+      } else {
+        finishRead(text);
+      }
+    });
+  }
+
+  function readAsText(file, encoding, cb){
+    try{
+      const reader = new FileReader();
+      reader.onload = () => cb(reader.result, null);
+      reader.onerror = () => cb(null, (reader.error && reader.error.message) || 'Falha ao ler o arquivo.');
+      reader.readAsText(file, encoding);
+    } catch (e){
+      cb(null, (e && e.message) || String(e));
+    }
+  }
+
+  function finishRead(text){
+    try{
+      if (!text || !text.trim()){
+        showError('O arquivo está vazio ou não pôde ser lido como texto.');
+        return;
+      }
+      lineEnding = text.indexOf('\r\n') !== -1 ? '\r\n' : '\n';
+      originalLines = text.split(/\r\n|\n/);
+      if (originalLines.length && originalLines[originalLines.length-1] === '') {
+        originalLines.pop();
+      }
+      clearMsgs();
+      processFile();
+    } catch(e){
+      showError((e && e.stack) ? e.stack : String(e));
+    }
+  }
+
+  function isMainLine(fields, raw){
+    return fields.length >= 8 && raw.includes('/');
+  }
+  function isCrLine(fields, raw){
+    return fields.length === 3 && !raw.includes('/');
+  }
+
+  // soma Débito e Crédito de todas as linhas principais de um array de linhas
+  function calcBalance(lines){
+    let totalDebito = 0, totalCredito = 0, nLinhas = 0;
+    for (let i = 0; i < lines.length; i++){
+      const raw = lines[i];
+      if (raw.trim() === '') continue;
+      const f = raw.split(';');
+      if (!isMainLine(f, raw)) continue;
+      const debito = f[2], credito = f[3];
+      const valor = parseFloat(f[4]) || 0;
+      if (!isZeroField(debito)) { totalDebito += valor; }
+      if (!isZeroField(credito)) { totalCredito += valor; }
+      nLinhas++;
+    }
+    const diff = Math.round((totalDebito - totalCredito) * 100) / 100;
+    return { totalDebito, totalCredito, diff, nLinhas };
+  }
+
+  function fmtMoeda(v){
+    return v.toLocaleString('pt-BR', { minimumFractionDigits:2, maximumFractionDigits:2 });
+  }
+
+  function renderBalance(container, balance){
+    const balanced = Math.abs(balance.diff) < 0.005;
+    container.innerHTML = `
+      <div class="balance-col">
+        <div class="l">Total Débito</div>
+        <div class="v">${fmtMoeda(balance.totalDebito)}</div>
+      </div>
+      <div class="balance-col">
+        <div class="l">Total Crédito</div>
+        <div class="v">${fmtMoeda(balance.totalCredito)}</div>
+      </div>
+      <div class="balance-col diff">
+        <div class="l">Diferença (Déb − Cré)</div>
+        <div class="v">${fmtMoeda(balance.diff)}</div>
+        <span class="balance-pill ${balanced ? 'ok' : 'bad'}">
+          <span class="dot"></span>${balanced ? 'Fecha em 0' : 'Não fecha'}
+        </span>
+      </div>
+    `;
+  }
+
+  function processFile(){
+   try{
+    candidates = [];
+    mirrorCandidates = [];
+    dupCandidates = [];
+    autoTbody.innerHTML = '';
+    manualTbody.innerHTML = '';
+    mirrorTbody.innerHTML = '';
+    dupTbody.innerHTML = '';
+
+    let i = 0;
+    let nRecords = 0;
+    let nCandidateLancamentos = 0;
+    let nAutoLines = 0;
+    let nManualLines = 0;
+    let nForaDoPlano = 0;
+    const allRecords = [];
+    let primeiraData = '';
+
+    while (i < originalLines.length){
+      const raw = originalLines[i];
+      if (raw.trim() === ''){ i++; continue; }
+      const mainFields = raw.split(';');
+      if (!isMainLine(mainFields, raw)){
+        // linha inesperada fora do padrão principal, pula
+        i++; continue;
+      }
+      const mainIndex = i;
+      i++;
+      const crLineIdxs = [];
+      while (i < originalLines.length){
+        const nxt = originalLines[i];
+        const f = nxt.split(';');
+        if (isCrLine(f, nxt)){
+          crLineIdxs.push(i);
+          i++;
+        } else break;
+      }
+      nRecords++;
+      if (!primeiraData) primeiraData = mainFields[1];
+
+      const debito = mainFields[2];
+      const credito = mainFields[3];
+      const valorPrincipal = mainFields[4];
+      const clc = mainFields[5];
+      const desc = (mainFields[7] || '').replace(/(^"|"$)/g,'');
+      const seq = mainFields[8];
+
+      allRecords.push({ mainIndex, debito, credito, valor: valorPrincipal, clc, desc, seq, crLineIdxs: crLineIdxs.slice() });
+
+      const hasContrapartida = !isZeroField(debito) && !isZeroField(credito);
+
+      if (hasContrapartida) continue;
+
+      const contaUsada = !isZeroField(debito) ? debito : credito;
+      if (isZeroField(contaUsada)) continue;
+
+      const { nature, fromPlano } = contaNatureza(contaUsada);
+      if (!fromPlano) nForaDoPlano++;
+      if (nature !== 'ativo' && nature !== 'passivo') continue;
+      if (crLineIdxs.length === 0) continue;
+
+      nCandidateLancamentos++;
+
+      if (crLineIdxs.length === 1){
+        nAutoLines++;
+        const crIdx = crLineIdxs[0];
+        const crFields = originalLines[crIdx].split(';');
+        candidates.push({
+          crIndex: crIdx, mode:'auto', seq, clc, desc, debito, credito,
+          nature, fromPlano, crCode: crFields[1], valor: crFields[2]
+        });
+      } else {
+        crLineIdxs.forEach(crIdx => {
+          nManualLines++;
+          const crFields = originalLines[crIdx].split(';');
+          candidates.push({
+            crIndex: crIdx, mode:'manual', seq, clc, desc, debito, credito,
+            nature, fromPlano, crCode: crFields[1], valor: crFields[2]
+          });
+        });
+      }
+    }
+
+    mirrorCandidates = detectMirror(allRecords);
+    dupCandidates = detectDuplicates(allRecords);
+
+    // render stats
+    statsEl.innerHTML = `
+      <div class="summary-tile"><div class="n">${nRecords}</div><div class="l">lançamentos no arquivo</div></div>
+      <div class="summary-tile"><div class="n">${nCandidateLancamentos}</div><div class="l">sem contrapartida em Ativo/Passivo</div></div>
+      <div class="summary-tile"><div class="n">${nAutoLines}</div><div class="l">linhas de CR — aplicação direta</div></div>
+      <div class="summary-tile"><div class="n">${nManualLines}</div><div class="l">linhas de CR — revisão caso a caso</div></div>
+      <div class="summary-tile"><div class="n">${mirrorCandidates.length}</div><div class="l">Débito = Crédito na mesma linha</div></div>
+      <div class="summary-tile"><div class="n">${dupCandidates.length}</div><div class="l">prováveis duplicatas</div></div>
+    `;
+    step2sub.textContent = `Arquivo com ${originalLines.length} linhas, ${nRecords} lançamentos.` +
+      (nForaDoPlano ? ` ${nForaDoPlano} conta(s) usada(s) não estão no plano de contas embutido (caiu no critério de reserva: primeiro dígito 1/2).` : '');
+
+    renderBalance(balanceOriginalEl, calcBalance(originalLines));
+    fatoContabilInput.value = sugerirFatoContabil(primeiraData);
+
+    autoBlock.style.display = nAutoLines ? '' : 'none';
+    manualBlock.style.display = nManualLines ? '' : 'none';
+    if (!nAutoLines) autoTbody.innerHTML = '<tr><td colspan="8" class="empty-note">Nenhum caso direto encontrado.</td></tr>';
+    if (!nManualLines) manualTbody.innerHTML = '<tr><td colspan="8" class="empty-note">Nenhum caso de rateio encontrado.</td></tr>';
+
+    candidates.forEach((c, idx) => {
+      const tr = document.createElement('tr');
+      const checked = c.mode === 'auto' ? 'checked' : '';
+      const natureLabel = c.nature === 'ativo' ? 'Ativo' : 'Passivo';
+      const origem = c.fromPlano
+        ? `<span class="tag tag-ok" style="margin-left:8px;">${natureLabel}</span>`
+        : `<span class="tag tag-warn" style="margin-left:8px;">${natureLabel} (fora do plano)</span>`;
+      tr.innerHTML = `
+        <td><input type="checkbox" data-idx="${idx}" ${checked}></td>
+        <td class="mono">${c.seq}</td>
+        <td class="mono">${c.clc}</td>
+        <td>${c.desc}${origem}</td>
+        <td class="mono">${c.debito}</td>
+        <td class="mono">${c.credito}</td>
+        <td class="mono">${c.valor}</td>
+        <td class="mono"><span class="old">${c.crCode}</span><span class="arrow">→</span><span class="new">0</span></td>
+      `;
+      (c.mode === 'auto' ? autoTbody : manualTbody).appendChild(tr);
+    });
+
+    mirrorBlock.style.display = mirrorCandidates.length ? '' : 'none';
+    if (!mirrorCandidates.length) mirrorTbody.innerHTML = '<tr><td colspan="8" class="empty-note">Nenhum caso encontrado.</td></tr>';
+    mirrorCandidates.forEach((c, idx) => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><input type="checkbox" data-mirror-idx="${idx}" checked></td>
+        <td class="mono">${c.seq}</td>
+        <td class="mono">${c.clc}</td>
+        <td>${c.desc}</td>
+        <td class="mono"><span class="old">${c.debito}</span><span class="arrow">→</span><span class="new">0</span></td>
+        <td class="mono">${c.credito}</td>
+        <td class="mono">${c.valor}</td>
+        <td>zerar Débito</td>
+      `;
+      mirrorTbody.appendChild(tr);
+    });
+
+    dupBlock.style.display = dupCandidates.length ? '' : 'none';
+    if (!dupCandidates.length) dupTbody.innerHTML = '<tr><td colspan="8" class="empty-note">Nenhum caso encontrado.</td></tr>';
+    dupCandidates.forEach((c, idx) => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><input type="checkbox" data-dup-idx="${idx}"></td>
+        <td class="mono">${c.seq}</td>
+        <td class="mono">${c.clc}</td>
+        <td>${c.desc}</td>
+        <td class="mono">${c.debito}</td>
+        <td class="mono">${c.credito}</td>
+        <td class="mono">${c.valor}</td>
+        <td class="mono">${c.matchSeq}</td>
+      `;
+      dupTbody.appendChild(tr);
+    });
+
+    document.querySelectorAll('.toggle-all').forEach(btn => {
+      btn.onclick = () => {
+        const target = btn.getAttribute('data-target');
+        let tbody;
+        if (target === 'auto') tbody = autoTbody;
+        else if (target === 'manual') tbody = manualTbody;
+        else if (target === 'mirror') tbody = mirrorTbody;
+        else if (target === 'dup') tbody = dupTbody;
+        const boxes = tbody.querySelectorAll('input[type=checkbox]');
+        const anyChecked = Array.from(boxes).some(b => b.checked);
+        boxes.forEach(b => b.checked = !anyChecked);
+        btn.textContent = anyChecked ? 'marcar todos' : 'desmarcar todos';
+      };
+    });
+
+    document.getElementById('step1').style.display = 'none';
+    step2.style.display = 'block';
+    setSteps(2);
+   } catch(e){
+     showError((e && e.stack) ? e.stack : String(e));
+   }
+  }
+
+  function detectMirror(allRecords){
+    const out = [];
+    allRecords.forEach(r => {
+      if (!isZeroField(r.debito) && !isZeroField(r.credito) && r.debito === r.credito){
+        out.push({ mainIndex: r.mainIndex, seq: r.seq, clc: r.clc, desc: r.desc, debito: r.debito, credito: r.credito, valor: r.valor });
+      }
+    });
+    return out;
+  }
+
+  function detectDuplicates(allRecords){
+    const out = [];
+    const used = new Set();
+    allRecords.forEach(r1 => {
+      const r1Incomplete = isZeroField(r1.debito) !== isZeroField(r1.credito); // exatamente um lado zerado
+      if (!r1Incomplete) return;
+      const ladoPreenchido = !isZeroField(r1.debito) ? 'debito' : 'credito';
+      const contaPreenchida = !isZeroField(r1.debito) ? r1.debito : r1.credito;
+      const match = allRecords.find(r2 => {
+        if (r2.mainIndex === r1.mainIndex) return false;
+        if (r2.clc !== r1.clc) return false;
+        if (r2.valor !== r1.valor) return false;
+        if (r2[ladoPreenchido] !== contaPreenchida) return false;
+        // r2 precisa estar completo (ambos os lados preenchidos) para ser a versão "boa"
+        if (!(!isZeroField(r2.debito) && !isZeroField(r2.credito))) return false;
+        // se r2 tem a mesma conta nos dois lados, é um "espelho" (divisão intencional tipo Vale Transporte),
+        // não uma versão completa do mesmo lançamento — não conta como duplicata
+        if (r2.debito === r2.credito) return false;
+        return true;
+      });
+      if (match && !used.has(r1.mainIndex)){
+        used.add(r1.mainIndex);
+        out.push({
+          mainIndex: r1.mainIndex, crLineIdxs: r1.crLineIdxs, seq: r1.seq, clc: r1.clc, desc: r1.desc,
+          debito: r1.debito, credito: r1.credito, valor: r1.valor, matchSeq: match.seq
+        });
+      }
+    });
+    return out;
+  }
+
+  generateBtn.addEventListener('click', () => {
+   try{
+    const outLines = originalLines.slice();
+    const toRemove = new Set();
+    let applied = 0;
+
+    // 1. Regra de CR
+    const checkedBoxes = document.querySelectorAll('#autoTable input[type=checkbox], #manualTable input[type=checkbox]');
+    checkedBoxes.forEach(box => {
+      if (!box.checked) return;
+      const c = candidates[Number(box.getAttribute('data-idx'))];
+      const fields = outLines[c.crIndex].split(';');
+      fields[1] = '0';
+      outLines[c.crIndex] = fields.join(';');
+      applied++;
+    });
+
+    // 2. Débito = Crédito na mesma linha → zera o Débito
+    let mirrorApplied = 0;
+    document.querySelectorAll('#mirrorTable input[type=checkbox]').forEach(box => {
+      if (!box.checked) return;
+      const c = mirrorCandidates[Number(box.getAttribute('data-mirror-idx'))];
+      const fields = outLines[c.mainIndex].split(';');
+      fields[2] = '0';
+      outLines[c.mainIndex] = fields.join(';');
+      mirrorApplied++;
+    });
+
+    // 3. Duplicatas → remove a linha principal incompleta e sua(s) linha(s) de CR
+    let dupApplied = 0;
+    document.querySelectorAll('#dupTable input[type=checkbox]').forEach(box => {
+      if (!box.checked) return;
+      const c = dupCandidates[Number(box.getAttribute('data-dup-idx'))];
+      toRemove.add(c.mainIndex);
+      c.crLineIdxs.forEach(idx => toRemove.add(idx));
+      dupApplied++;
+    });
+
+    let finalLines = outLines.filter((_, idx) => !toRemove.has(idx));
+
+    // 4. Normalização final: campos de débito/crédito totalmente zerados viram "0",
+    //    e o último campo (sequência) de toda linha principal vira o fato contábil único informado.
+    const fatoContabilRaw = (fatoContabilInput.value || '').trim();
+    const fatoContabil = fatoContabilRaw
+      ? fatoContabilRaw.padStart(FATO_CONTABIL_WIDTH, '0')
+      : '';
+    let fatoContabilAplicado = 0;
+    finalLines = finalLines.map(raw => {
+      const fields = raw.split(';');
+      if (!isMainLine(fields, raw)) return raw;
+      if (isZeroField(fields[2]) && fields[2] !== '0') fields[2] = '0';
+      if (isZeroField(fields[3]) && fields[3] !== '0') fields[3] = '0';
+      if (fatoContabil){
+        fields[8] = fatoContabil;
+        fatoContabilAplicado++;
+      }
+      return fields.join(';');
+    });
+
+    const outText = finalLines.join(lineEnding) + lineEnding;
+    const blob = new Blob([outText], {type:'text/plain'});
+    finalBlob = blob;
+    finalName = origName ? origName.replace(/\.txt$/i,'') + '_corrigido.txt' : '012026_corrigido.txt';
+
+    const parts = [`${applied} linha(s) de CR zerada(s)`];
+    if (mirrorApplied) parts.push(`${mirrorApplied} lançamento(s) com Débito=Crédito corrigido(s)`);
+    if (dupApplied) parts.push(`${dupApplied} lançamento(s) duplicado(s) removido(s)`);
+    if (fatoContabilAplicado) parts.push(`fato contábil "${fatoContabil}" aplicado em ${fatoContabilAplicado} lançamento(s)`);
+    resultMsg.textContent = parts.join(', ') + '. O restante do arquivo foi mantido exatamente como estava.';
+
+    renderBalance(balanceFinalEl, calcBalance(finalLines));
+
+    step2.style.display = 'none';
+    step3.style.display = 'block';
+    setSteps(3);
+   } catch(e){
+     showError((e && e.stack) ? e.stack : String(e));
+   }
+  });
+
+  function resetAll(){
+    step3.style.display = 'none';
+    step2.style.display = 'none';
+    document.getElementById('step1').style.display = 'block';
+    setSteps(1);
+    fileInput.value = '';
+    filenameEl.textContent = '';
+    originalLines = [];
+    candidates = [];
+  }
+  downloadBtn.addEventListener('click', () => { if (finalBlob) window.salvarArquivo(finalName, finalBlob); });
+  function setSteps(n){
+    ['pill1','pill2','pill3'].forEach((id, k) => {
+      document.getElementById(id).className = 'step-pill ' + (k + 1 === n ? 'is-active' : (k + 1 < n ? 'is-done' : ''));
+    });
+  }
+  resetBtn.addEventListener('click', resetAll);
+  resetBtn2.addEventListener('click', resetAll);
+})();
+</script>
+</body>
+</html>

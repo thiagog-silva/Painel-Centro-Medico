@@ -1,0 +1,4 @@
+Coloque aqui os arquivos .html das ferramentas do Hospital Sao Nicolau.
+
+Depois de salvar o arquivo nesta pasta, registre-o no array TOOLS, perto do
+topo do <script> do painel-sao-nicolau.html (o proprio arquivo traz o modelo comentado).

@@ -1,0 +1,826 @@
+<!doctype html>
+<!-- Faturamento Mensal Tasy — VERSÃO: 1.0.0 — finalizada em 01/10/2026 (base oficial estável; alterar somente o que for solicitado) -->
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Faturamento Mensal Tasy</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Sans+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  /* Paleta exclusiva — Hospital São Nicolau Complexo Hospitalar (azul-marinho / ciano da marca) */
+  --bg:#f7f7fb;
+  --surface:#ffffff;
+  --surface-alt:#eef1f8;
+  --ink:#17254d;
+  --muted:#5f6f8f;
+  --border:#dbe2ee;
+  --accent:#28509c;
+  --accent-strong:#1c3a7a;
+  --accent-ink:#f5f8ff;
+  --accent-soft:#e3ebfa;
+  --danger:#b3261e;
+  --danger-soft:#fbe9e6;
+  --warning:#8a5a00;
+  --warning-soft:#fff1d9;
+  --success:#1e7d4a;
+  --success-soft:#e5f4ea;
+  --tag-debito-bg:#fff1d9;
+  --tag-debito-ink:#8a5a00;
+  --tag-credito-bg:#dff1fa;
+  --tag-credito-ink:#17608f;
+  /* extras da marca (faixa do topo e destaques em gradiente) */
+  --brand-cyan:#2da6de;
+  --brand-mid:#2b76b9;
+  --brand-navy:#2a4291;
+  --shadow: 0 1px 2px rgba(20,40,100,.06), 0 8px 24px -12px rgba(20,40,100,.22);
+  --radius:14px;
+  --font-display:'IBM Plex Sans Condensed', 'IBM Plex Sans', sans-serif;
+  --font-body:'IBM Plex Sans', system-ui, sans-serif;
+  --font-mono:'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0d1426; --surface:#141d36; --surface-alt:#1a2542; --ink:#e6ecfa;
+    --muted:#93a3c7; --border:#27345a; --accent:#63a9ee; --accent-strong:#a4cdfa;
+    --accent-ink:#06142e; --accent-soft:#172a50; --danger:#ff9d93; --danger-soft:#3a201d;
+    --warning:#ffcf70; --warning-soft:#3a2c12; --success:#8fe3ac; --success-soft:#173425;
+    --tag-debito-bg:#3a2c12; --tag-debito-ink:#ffcf70; --tag-credito-bg:#12304a; --tag-credito-ink:#7fd0f5;
+    --brand-cyan:#38b4ea; --brand-mid:#3b8bd0; --brand-navy:#4a65c4;
+    --shadow: 0 1px 2px rgba(0,0,0,.35), 0 12px 28px -14px rgba(0,0,0,.65);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0d1426; --surface:#141d36; --surface-alt:#1a2542; --ink:#e6ecfa;
+  --muted:#93a3c7; --border:#27345a; --accent:#63a9ee; --accent-strong:#a4cdfa;
+  --accent-ink:#06142e; --accent-soft:#172a50; --danger:#ff9d93; --danger-soft:#3a201d;
+  --warning:#ffcf70; --warning-soft:#3a2c12; --success:#8fe3ac; --success-soft:#173425;
+  --tag-debito-bg:#3a2c12; --tag-debito-ink:#ffcf70; --tag-credito-bg:#12304a; --tag-credito-ink:#7fd0f5;
+  --brand-cyan:#38b4ea; --brand-mid:#3b8bd0; --brand-navy:#4a65c4;
+  --shadow: 0 1px 2px rgba(0,0,0,.35), 0 12px 28px -14px rgba(0,0,0,.65);
+}
+
+*{ box-sizing:border-box; }
+body{
+  background:var(--bg); color:var(--ink); font-family:var(--font-body);
+  margin:0; padding-inline:16px; padding-block:20px 60px;
+}
+h1,h2,h3{ font-family:var(--font-display); font-weight:700; text-wrap:balance; margin:0; }
+.mono{ font-family:var(--font-mono); font-variant-numeric:tabular-nums; }
+.app-shell{ max-width:1180px; margin:0 auto; }
+
+.topbar{
+  position:sticky; top:env(safe-area-inset-top,0px); z-index:30;
+  background:color-mix(in srgb, var(--bg) 88%, transparent);
+  backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
+  border-bottom:1px solid var(--border); margin:-20px -16px 28px; padding:16px;
+  border-top:6px solid; border-image:linear-gradient(90deg,var(--brand-cyan),var(--brand-navy)) 1 0 0 0;
+}
+.topbar-inner{ max-width:1180px; margin:0 auto; display:flex; flex-wrap:wrap; align-items:center; gap:14px 24px; justify-content:space-between; }
+.brand{ display:flex; align-items:center; gap:12px; }
+.brand-mark{
+  width:38px; height:38px; border-radius:10px; background:var(--accent); color:var(--accent-ink);
+  display:flex; align-items:center; justify-content:center; font-family:var(--font-mono); font-weight:700; font-size:15px;
+  box-shadow:var(--shadow); flex:none;
+}
+.brand h1{ font-size:19px; letter-spacing:.2px; }
+.brand p{ margin:2px 0 0; font-size:12.5px; color:var(--muted); }
+.steps-pills{ display:flex; gap:8px; flex-wrap:wrap; }
+.step-pill{
+  font-family:var(--font-mono); font-size:11.5px; letter-spacing:.03em; padding:6px 11px; border-radius:999px;
+  border:1px solid var(--border); color:var(--muted); background:var(--surface); white-space:nowrap;
+}
+.step-pill.is-active{ border-color:var(--accent); color:var(--accent-strong); background:var(--accent-soft); font-weight:600; }
+.step-pill.is-done{ color:var(--success); border-color:var(--success); }
+
+.step-card{
+  background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+  padding:26px; margin-bottom:22px; box-shadow:var(--shadow);
+}
+.step-card[data-locked="true"]{ opacity:.45; pointer-events:none; }
+.step-head{ display:flex; align-items:flex-start; gap:14px; margin-bottom:18px; }
+.step-num{
+  width:32px; height:32px; border-radius:9px; background:var(--surface-alt); color:var(--ink);
+  font-family:var(--font-mono); font-weight:600; font-size:14px; display:flex; align-items:center; justify-content:center; flex:none;
+  border:1px solid var(--border);
+}
+.step-head h2{ font-size:20px; }
+.step-head .step-sub{ margin:3px 0 0; color:var(--muted); font-size:13.5px; max-width:64ch; }
+
+.dropzone{
+  border:1.5px dashed var(--border); border-radius:12px; padding:30px 20px; text-align:center;
+  background:var(--surface-alt); cursor:pointer; transition:border-color .15s, background .15s;
+}
+.dropzone:hover, .dropzone.is-dragover{ border-color:var(--accent); background:var(--accent-soft); }
+.dropzone strong{ display:block; font-size:15px; margin-bottom:4px; }
+.dropzone span{ font-size:12.5px; color:var(--muted); }
+.file-chip{
+  display:inline-flex; align-items:center; gap:8px; margin-top:14px; padding:7px 12px; border-radius:9px;
+  background:var(--accent-soft); color:var(--accent-strong); font-size:13px; font-family:var(--font-mono);
+  max-width:100%; overflow-wrap:anywhere;
+}
+.field-row{ display:flex; flex-wrap:wrap; gap:16px; margin-top:16px; }
+.field{ display:flex; flex-direction:column; gap:5px; min-width:190px; flex:1; }
+.field label{ font-size:12px; color:var(--muted); font-weight:600; letter-spacing:.02em; text-transform:uppercase; }
+select, input[type="text"], input[type="number"]{
+  font-family:var(--font-body); font-size:13.5px; padding:9px 10px; border-radius:8px; border:1px solid var(--border);
+  background:var(--surface); color:var(--ink); width:100%;
+}
+select:focus, input:focus, button:focus-visible{ outline:2px solid var(--accent); outline-offset:1px; }
+
+.table-wrap{ overflow-x:auto; border:1px solid var(--border); border-radius:10px; margin-top:14px; max-height:460px; overflow-y:auto; }
+table{ border-collapse:collapse; width:100%; font-size:13px; }
+thead th{
+  position:sticky; top:0; background:var(--surface-alt); text-align:left; padding:9px 10px; font-size:11.5px;
+  text-transform:uppercase; letter-spacing:.04em; color:var(--muted); border-bottom:1px solid var(--border); white-space:nowrap;
+}
+tbody td{ padding:8px 10px; border-bottom:1px solid var(--border); white-space:nowrap; }
+tbody tr:last-child td{ border-bottom:none; }
+tbody tr:hover td{ background:var(--surface-alt); }
+td.num, th.num{ text-align:right; }
+
+button{ font-family:var(--font-body); cursor:pointer; border:none; border-radius:9px; font-weight:600; font-size:13.5px; }
+.btn-primary{ background:var(--accent); color:var(--accent-ink); padding:11px 20px; box-shadow:var(--shadow); }
+.btn-primary:disabled{ opacity:.45; cursor:not-allowed; box-shadow:none; }
+.btn-secondary{ background:var(--surface-alt); color:var(--ink); border:1px solid var(--border); padding:10px 16px; }
+.btn-secondary:disabled{ opacity:.45; cursor:not-allowed; }
+.btn-ghost{ background:transparent; color:var(--muted); border:1px solid var(--border); padding:7px 10px; font-size:12px; }
+.btn-icon{ background:var(--surface-alt); border:1px solid var(--border); color:var(--ink); width:28px; height:28px; border-radius:7px; display:inline-flex; align-items:center; justify-content:center; padding:0; }
+.actions-row{ display:flex; flex-wrap:wrap; gap:12px; margin-top:18px; align-items:center; }
+.hint{ font-size:12.5px; color:var(--muted); }
+.hint.warn{ color:var(--warning); }
+.hint.err{ color:var(--danger); }
+
+.summary-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; margin-bottom:18px; }
+.summary-tile{ background:var(--surface-alt); border:1px solid var(--border); border-radius:10px; padding:14px 16px; }
+.summary-tile .n{ font-family:var(--font-mono); font-size:20px; font-weight:600; }
+.summary-tile .l{ font-size:11.5px; color:var(--muted); text-transform:uppercase; letter-spacing:.03em; margin-top:2px; }
+.summary-tile.accent{ background:var(--accent-soft); }
+.summary-tile.accent .n{ color:var(--accent-strong); }
+.summary-tile.warn .n{ color:var(--warning); }
+
+.tag{ display:inline-flex; align-items:center; gap:5px; font-family:var(--font-mono); font-size:11.5px; font-weight:600; padding:4px 9px; border-radius:999px; white-space:nowrap; }
+.tag-debito{ background:var(--tag-debito-bg); color:var(--tag-debito-ink); }
+.tag-credito{ background:var(--tag-credito-bg); color:var(--tag-credito-ink); }
+.tag-ok{ background:var(--success-soft); color:var(--success); }
+.tag-warn{ background:var(--warning-soft); color:var(--warning); }
+.tag-err{ background:var(--danger-soft); color:var(--danger); }
+
+.empty-state{ text-align:center; padding:34px 16px; color:var(--success); }
+.empty-state .big{ font-size:28px; }
+
+fieldset{ border:1px solid var(--border); border-radius:10px; padding:16px; margin:0 0 16px; }
+legend{ padding:0 6px; font-size:12.5px; font-weight:700; color:var(--accent-strong); text-transform:uppercase; letter-spacing:.03em; }
+
+.toast-host{ position:fixed; right:16px; bottom:calc(16px + env(safe-area-inset-bottom,0px)); z-index:60; display:flex; flex-direction:column; gap:8px; max-width:min(360px, calc(100vw - 32px)); }
+.toast{ background:var(--ink); color:var(--bg); padding:11px 14px; border-radius:9px; font-size:13px; box-shadow:var(--shadow); animation:toast-in .18s ease-out; }
+.toast.toast-err{ background:var(--danger); color:var(--accent-ink); }
+.toast.toast-ok{ background:var(--success); color:var(--accent-ink); }
+@keyframes toast-in{ from{ transform:translateY(6px); opacity:0; } to{ transform:none; opacity:1; } }
+
+code.k{ background:var(--surface-alt); border:1px solid var(--border); padding:1px 5px; border-radius:5px; font-family:var(--font-mono); font-size:12px; }
+
+/* específicos desta ferramenta (só variáveis do padrão) */
+.checks{ list-style:none; margin:0 0 6px; padding:0; display:flex; flex-direction:column; gap:8px; }
+.checks li{ display:flex; gap:10px; align-items:flex-start; font-size:13.5px; }
+.checks li .tag{ flex:none; min-width:58px; justify-content:center; }
+.rules{ margin:0; padding-left:18px; color:var(--muted); font-size:13px; line-height:1.6; }
+.check-line{ display:flex; gap:8px; align-items:center; font-size:13.5px; margin-top:12px; }
+.txt-preview{
+  margin-top:14px; background:var(--surface-alt); border:1px solid var(--border); border-radius:10px; padding:12px;
+  font-family:var(--font-mono); font-size:12px; max-height:220px; overflow:auto; white-space:pre; color:var(--ink);
+}
+</style>
+</head>
+<body>
+<div class="app-shell">
+
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <div class="brand-mark">TX</div>
+        <div>
+          <h1>Faturamento Mensal Tasy</h1>
+          <p>Centro Médico Cirúrgico de Catalão — lançamentos de faturamento bruto para importação no Tasy</p>
+        </div>
+      </div>
+      <div class="steps-pills" id="pills">
+        <span class="step-pill is-active" data-pill="1">1 · Modelo</span>
+        <span class="step-pill" data-pill="2">2 · Relatório</span>
+        <span class="step-pill" data-pill="3">3 · Conferência</span>
+        <span class="step-pill" data-pill="4">4 · Arquivos</span>
+      </div>
+    </div>
+  </header>
+
+  <section class="step-card" id="card1" data-locked="false">
+    <div class="step-head">
+      <div class="step-num">1</div>
+      <div>
+        <h2>Modelo do mês anterior</h2>
+        <p class="step-sub">Envie o <code class="k">Implantacao_Tasy_MesNN_AAAA.xlsx</code> do último mês fechado. Dele são reaproveitados, sem alteração, as abas Plano de Contas, CR e Histórico e toda a estrutura de fórmulas da aba Lançamentos.</p>
+      </div>
+    </div>
+    <div class="dropzone" id="drop1" tabindex="0">
+      <strong>Clique ou arraste o arquivo do mês anterior</strong>
+      <span>.xlsx com as abas Lançamentos, TXT Importação, Plano de Contas, CR e Histórico</span>
+    </div>
+    <input type="file" id="file1" accept=".xlsx" hidden>
+    <div id="chip1"></div>
+    <p class="hint err" id="err1" hidden></p>
+    <div id="info1"></div>
+  </section>
+
+  <section class="step-card" id="card2" data-locked="true">
+    <div class="step-head">
+      <div class="step-num">2</div>
+      <div>
+        <h2>Relação de Serviços e Deduções Federais</h2>
+        <p class="step-sub">Envie o relatório do mês (formato <code class="k">mesNN.xlsx</code>, colunas NF, CNPJ/CPF, Nome, Data, VC, IF BC, INSS, PIS, COFINS, CSLL, IRRF).</p>
+      </div>
+    </div>
+    <div class="dropzone" id="drop2" tabindex="0">
+      <strong>Clique ou arraste o relatório do mês</strong>
+      <span>.xlsx no formato "Relação de Serviços e Deduções Federais"</span>
+    </div>
+    <input type="file" id="file2" accept=".xlsx" hidden>
+    <div id="chip2"></div>
+    <p class="hint err" id="err2" hidden></p>
+    <fieldset style="margin-top:18px">
+      <legend>Conta de INSS retido</legend>
+      <div class="field-row" style="margin-top:0">
+        <div class="field">
+          <label for="contaInss">Conta (débito) para INSS retido</label>
+          <input type="text" id="contaInss" placeholder="deixe em branco se não houver INSS no mês">
+        </div>
+      </div>
+      <p class="hint" style="margin:8px 0 0">O plano de contas só tem a 1722 (INSS a Compensar) e nunca houve INSS até agora. Se o relatório trouxer INSS e este campo estiver vazio, a NF fica pendente e não é lançada.</p>
+    </fieldset>
+  </section>
+
+  <section class="step-card" id="card3" data-locked="true">
+    <div class="step-head">
+      <div class="step-num">3</div>
+      <div>
+        <h2>Conferência</h2>
+        <p class="step-sub">Totais do relatório contra o rodapé, classificação das notas, contas do plano, capacidade da planilha e partidas dobradas.</p>
+      </div>
+    </div>
+    <div id="summary"></div>
+    <ul class="checks" id="checks"></ul>
+    <div class="field-row">
+      <div class="field">
+        <label for="filtroTipo">Classificação</label>
+        <select id="filtroTipo">
+          <option value="">Todas</option>
+          <option value="PART">Particular (1150 / 3000)</option>
+          <option value="CONV">Convênio (1233 / 3050)</option>
+          <option value="SUS">SUS (1401 / 3070)</option>
+          <option value="RET">Somente com retenção</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="filtroBusca">Buscar NF ou nome</label>
+        <input type="text" id="filtroBusca" placeholder="ex.: UNIMED ou 86.515">
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>Fato</th><th>NF</th><th>Data</th><th>Nome</th><th>Classe</th>
+          <th class="num">Valor NF</th><th class="num">Retenções</th><th class="num">Líquido a receber</th><th>Partidas</th>
+        </tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+    <div class="actions-row">
+      <button class="btn-ghost" id="btnMais" hidden>Mostrar mais</button>
+      <span class="hint" id="contagem"></span>
+    </div>
+  </section>
+
+  <section class="step-card" id="card4" data-locked="true">
+    <div class="step-head">
+      <div class="step-num">4</div>
+      <div>
+        <h2>Arquivos para o Tasy</h2>
+        <p class="step-sub">A planilha de implantação (mesmas abas e fórmulas do modelo, com a aba Lançamentos preenchida) e o TXT já no layout de importação.</p>
+      </div>
+    </div>
+    <label class="check-line" id="lblPend" hidden>
+      <input type="checkbox" id="chkPend"> Gerar mesmo assim, deixando de fora as NFs pendentes listadas na conferência
+    </label>
+    <div class="actions-row">
+      <button class="btn-primary" id="btnXlsx" disabled>Baixar planilha de implantação (.xlsx)</button>
+      <button class="btn-secondary" id="btnTxt" disabled>Baixar TXT de importação</button>
+      <button class="btn-secondary" id="btnCopia" disabled>Copiar TXT</button>
+    </div>
+    <p class="hint" id="hintGerar" style="margin-top:10px"></p>
+    <div class="txt-preview" id="txtPreview" hidden></div>
+    <details style="margin-top:18px">
+      <summary class="hint" style="cursor:pointer">Regras aplicadas pela ferramenta</summary>
+      <ol class="rules" style="margin-top:8px">
+        <li>Documento com 11 dígitos (CPF): Particular — débito 1150, crédito 3000, sem CR.</li>
+        <li>Nome contendo "FUNDO MUNICIPAL": SUS — débito 1401, crédito 3070, rateio no CR 501.</li>
+        <li>Demais (CNPJ): Convênio — débito 1233, crédito 3050, rateio no CR 501.</li>
+        <li>Nota com retenção: várias linhas com o mesmo Fato Contábil — débito do recebível pelo líquido (VC menos retenções), débitos 1723 (IRRF), 1725 (PIS), 1726 (COFINS) e 1727 (CSLL), e crédito da receita pelo VC cheio.</li>
+        <li>Cada linha de Lançamento é seguida por uma linha de Rateio com o mesmo valor; CR 501 quando há conta 3050/3070, senão 0. Histórico padrão 3.</li>
+        <li>Fato Contábil = ordem da nota no relatório (1, 2, 3...). Complemento = "NF - Nome". Códigos de conta gravados como texto; lado sem conta recebe o número 0.</li>
+        <li>Layout do TXT: <code class="k">0;DD/MM/AAAA;DEBITO;CREDITO;VALOR(15 díg.);HISTORICO;0;"COMPLEMENTO";FATO</code> e, no rateio, <code class="k">0;CR;VALOR</code>.</li>
+      </ol>
+    </details>
+  </section>
+
+  <div class="toast-host" id="toasts"></div>
+</div>
+
+<script>/* VERSÃO: 1.0.0 — 01/10/2026 */</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
+<script>
+(function(){
+  if (window.top === window.self) return;
+  if (window.claude && window.claude.use) return;
+  let proximoId = 1;
+  const pendentes = {};
+  window.addEventListener('message', (ev) => {
+    const msg = ev.data;
+    if (!msg || msg.__ponteClaude !== true || msg.tipo !== 'resposta') return;
+    const p = pendentes[msg.id];
+    if (!p) return;
+    delete pendentes[msg.id];
+    if (msg.erro) p.reject(msg.erro); else p.resolve(msg.resultado);
+  });
+  function chamarHub(acao, payload){
+    return new Promise((resolve, reject) => {
+      const id = proximoId++;
+      pendentes[id] = { resolve, reject };
+      window.parent.postMessage({ __ponteClaude: true, tipo: 'chamada', id, acao, payload }, '*');
+    });
+  }
+  window.claude = {
+    use: async (nome) => {
+      if (nome !== 'downloads') return null;
+      return { save: (req) => chamarHub('downloads.save', req) };
+    }
+  };
+})();
+
+async function salvarArquivo(filename, blob){
+  if (typeof window.claude !== 'undefined' && typeof window.claude.use === 'function'){
+    try{
+      const downloads = await window.claude.use('downloads');
+      if (downloads){ await downloads.save({ filename, data: blob }); return true; }
+    }catch(err){
+      alert('Não foi possível salvar o arquivo (' + (err && (err.code || err.message) || 'erro') + ').');
+      return false;
+    }
+  }
+  // fallback nativo — cobre o caso de abrir o arquivo sozinho, fora do painel
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+  return true;
+}
+
+/* ============================ ESTADO ============================ */
+const S = { tpl:null, tplName:'', plano:new Map(), crSet:new Set(), histSet:new Set(), capacidade:0, ultimaLinha:0,
+            rel:null, relName:'', res:null, vis:100 };
+
+const CLASSES = {
+  PART:{dev:'1150', rec:'3000', nome:'Particular'},
+  SUS :{dev:'1401', rec:'3070', nome:'SUS'},
+  CONV:{dev:'1233', rec:'3050', nome:'Convênio'}
+};
+const RETENCOES = [['irrf','1723','IRRF'],['pis','1725','PIS'],['cofins','1726','COFINS'],['csll','1727','CSLL']];
+const COL_HEAD = ['NF','CNPJ/CPF','Nome','Data','VC','IF BC','INSS','PIS','COFINS','CSLL','IRRF'];
+const PRIMEIRA = 5;           // primeira linha de dados da aba Lançamentos
+const CR_FISCAL = '501';
+const HISTORICO = '3';
+
+/* ============================ UTIL ============================ */
+const $ = (id) => document.getElementById(id);
+const brl = (c) => (c/100).toLocaleString('pt-BR',{minimumFractionDigits:2, maximumFractionDigits:2});
+const esc = (s) => String(s==null?'':s).replace(/[&<>"]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
+
+function toast(msg, tipo){
+  const el = document.createElement('div');
+  el.className = 'toast' + (tipo==='err' ? ' toast-err' : tipo==='ok' ? ' toast-ok' : '');
+  el.textContent = msg;
+  $('toasts').appendChild(el);
+  setTimeout(() => el.remove(), 5200);
+}
+function mostrarErro(id, msg){ const e=$(id); e.textContent = msg; e.hidden = !msg; }
+function trava(cardId, travado){ $(cardId).setAttribute('data-locked', travado ? 'true' : 'false'); }
+function pills(ativo, feitos){
+  document.querySelectorAll('[data-pill]').forEach(p => {
+    const n = Number(p.dataset.pill);
+    p.classList.toggle('is-active', n === ativo);
+    p.classList.toggle('is-done', feitos.includes(n));
+  });
+}
+function textoCelula(c){
+  if (!c) return '';
+  try{ const t = c.text; if (t != null) return String(t); }catch(e){}
+  const v = c.value;
+  return v == null ? '' : String(v);
+}
+function dinheiroParaCentavos(c){
+  const v = c ? c.value : null;
+  if (v == null || v === '') return 0;
+  if (typeof v === 'number') return Math.round(v*100);
+  if (typeof v === 'object' && v.result != null && typeof v.result === 'number') return Math.round(v.result*100);
+  const s = String(textoCelula(c)).trim();
+  if (!s) return 0;
+  if (!/^-?[\d.]*,?\d*$/.test(s)) return NaN;
+  return Math.round(Number(s.replace(/\./g,'').replace(',','.'))*100);
+}
+function fmt15(cents){
+  const s = String(cents).padStart(15,'0');
+  return s.slice(0,13) + '.' + s.slice(13);
+}
+function dataIso(str){ const [d,m,a] = str.split('/').map(Number); return new Date(Date.UTC(a, m-1, d)); }
+
+function ligaDropzone(dropId, inputId, handler){
+  const dz = $(dropId), inp = $(inputId);
+  dz.addEventListener('click', () => inp.click());
+  dz.addEventListener('keydown', e => { if (e.key==='Enter' || e.key===' '){ e.preventDefault(); inp.click(); } });
+  ['dragenter','dragover'].forEach(ev => dz.addEventListener(ev, e => { e.preventDefault(); dz.classList.add('is-dragover'); }));
+  ['dragleave','drop'].forEach(ev => dz.addEventListener(ev, e => { e.preventDefault(); dz.classList.remove('is-dragover'); }));
+  dz.addEventListener('drop', e => { const f = e.dataTransfer.files[0]; if (f) handler(f); });
+  inp.addEventListener('change', () => { const f = inp.files[0]; if (f) handler(f); inp.value=''; });
+}
+
+/* ============================ ETAPA 1 — MODELO ============================ */
+async function lerModelo(file){
+  mostrarErro('err1','');
+  $('info1').innerHTML = '';
+  $('chip1').innerHTML = '';
+  S.tpl = null; limpaRelatorio(); trava('card2', true); pills(1, []);
+  try{
+    if (typeof ExcelJS === 'undefined') throw new Error('A biblioteca ExcelJS não carregou (sem internet?). Recarregue a página.');
+    if (!/\.xlsx$/i.test(file.name)) throw new Error('Formato incompatível: envie um arquivo .xlsx.');
+    const wb = new ExcelJS.Workbook();
+    await wb.xlsx.load(await file.arrayBuffer());
+    const exigidas = ['Lançamentos','TXT Importação','Plano de Contas','CR','Histórico'];
+    const faltam = exigidas.filter(n => !wb.getWorksheet(n));
+    if (faltam.length) throw new Error('Arquivo não parece ser a planilha de implantação. Abas ausentes: ' + faltam.join(', ') + '.');
+    const ws = wb.getWorksheet('Lançamentos');
+    if (textoCelula(ws.getCell('A4')).trim() !== 'Tipo' || textoCelula(ws.getCell('I4')).trim() !== 'Nº Lançamento')
+      throw new Error('A aba Lançamentos não está no layout esperado (cabeçalho na linha 4: Tipo ... Nº Lançamento).');
+
+    const plano = new Map();
+    wb.getWorksheet('Plano de Contas').eachRow((row, n) => {
+      if (n === 1) return;
+      const cod = textoCelula(row.getCell(1)).trim();
+      if (cod) plano.set(cod, { nome:textoCelula(row.getCell(2)).trim(), exige:textoCelula(row.getCell(3)).trim().toUpperCase()==='S' });
+    });
+    const cr = new Set();
+    wb.getWorksheet('CR').eachRow((row, n) => { if (n>1){ const c=textoCelula(row.getCell(1)).trim(); if(c) cr.add(c); } });
+    const hist = new Set();
+    wb.getWorksheet('Histórico').eachRow((row, n) => { if (n>1){ const c=textoCelula(row.getCell(1)).trim(); if(c) hist.add(c); } });
+    if (!plano.size) throw new Error('A aba Plano de Contas está vazia.');
+
+    S.tpl = wb; S.tplName = file.name; S.plano = plano; S.crSet = cr; S.histSet = hist;
+    S.ultimaLinha = ws.rowCount;
+    S.capacidade = Math.floor((S.ultimaLinha - PRIMEIRA + 1) / 2);   // cada lançamento ocupa 2 linhas (Lançamento + Rateio)
+
+    $('chip1').innerHTML = '<span class="file-chip">' + esc(file.name) + '</span>';
+    $('info1').innerHTML = '<div class="summary-grid" style="margin:16px 0 0">' +
+      tile(plano.size, 'Contas no plano') + tile(cr.size, 'Centros de resultado') + tile(hist.size, 'Históricos') +
+      tile(S.capacidade, 'Lançamentos (capacidade)', 'accent') + '</div>';
+    trava('card2', false); pills(2, [1]);
+    toast('Modelo carregado.', 'ok');
+  }catch(err){
+    mostrarErro('err1', err.message || String(err));
+    toast('Modelo inválido.', 'err');
+  }
+}
+function tile(n, l, cls){ return '<div class="summary-tile ' + (cls||'') + '"><div class="n">' + esc(n) + '</div><div class="l">' + esc(l) + '</div></div>'; }
+
+/* ============================ ETAPA 2 — RELATÓRIO ============================ */
+function limpaRelatorio(){
+  S.rel = null; S.relName = ''; S.res = null;
+  $('chip2').innerHTML = ''; mostrarErro('err2','');
+  trava('card3', true); trava('card4', true);
+  ['btnXlsx','btnTxt','btnCopia'].forEach(i => $(i).disabled = true);
+  $('txtPreview').hidden = true; $('hintGerar').textContent=''; $('lblPend').hidden = true;
+}
+
+async function lerRelatorio(file){
+  mostrarErro('err2','');
+  S.rel = null; S.res = null; trava('card3', true); trava('card4', true);
+  $('chip2').innerHTML = '';
+  try{
+    if (!S.tpl) throw new Error('Carregue primeiro o modelo do mês anterior (etapa 1).');
+    if (!/\.xlsx$/i.test(file.name)) throw new Error('Formato incompatível: envie um arquivo .xlsx.');
+    const wb = new ExcelJS.Workbook();
+    await wb.xlsx.load(await file.arrayBuffer());
+    const ws = wb.worksheets[0];
+    if (!ws) throw new Error('O arquivo não possui planilhas.');
+
+    // cabeçalho do relatório
+    const tit = textoCelula(ws.getCell('A1'));
+    if (!/Relac|Relaç/i.test(tit) || !/Dedu/i.test(tit)) throw new Error('Formato incompatível: a linha 1 deveria ser "Relação de Serviços e Deduções Federais".');
+    const mref = textoCelula(ws.getCell('A2')).trim().match(/(\d{2})\/(\d{4})\s*$/);
+    if (!mref) throw new Error('Não encontrei o mês de referência (MM/AAAA) no fim da linha 2 do relatório.');
+    const mes = mref[1], ano = mref[2];
+
+    // cabeçalho de colunas
+    let linhaCab = 0;
+    for (let r=1; r<=12; r++){ if (textoCelula(ws.getCell(r,1)).trim() === 'NF'){ linhaCab = r; break; } }
+    if (!linhaCab) throw new Error('Não encontrei o cabeçalho de colunas (NF, CNPJ/CPF, Nome, ...).');
+    const cab = []; for (let c=1; c<=11; c++) cab.push(textoCelula(ws.getCell(linhaCab,c)).trim());
+    const difere = COL_HEAD.filter((h,i) => cab[i] !== h);
+    if (difere.length) throw new Error('Colunas diferentes do esperado. Esperado: ' + COL_HEAD.join(' | ') + '. Encontrado: ' + cab.join(' | ') + '.');
+
+    const notas = []; const ignoradas = []; const invalidos = []; let rodape = null;
+    ws.eachRow({includeEmpty:false}, (row, n) => {
+      const nf = textoCelula(row.getCell(1)).trim();
+      const dt = textoCelula(row.getCell(4)).trim();
+      if (/^[\d.]+$/.test(nf) && /^\d{2}\/\d{2}\/\d{4}$/.test(dt)){
+        const x = {
+          linha:n, nf, doc:textoCelula(row.getCell(2)).replace(/\D/g,''), nome:textoCelula(row.getCell(3)).trim(), data:dt,
+          vc:dinheiroParaCentavos(row.getCell(5)), bc:dinheiroParaCentavos(row.getCell(6)),
+          inss:dinheiroParaCentavos(row.getCell(7)), pis:dinheiroParaCentavos(row.getCell(8)),
+          cofins:dinheiroParaCentavos(row.getCell(9)), csll:dinheiroParaCentavos(row.getCell(10)), irrf:dinheiroParaCentavos(row.getCell(11))
+        };
+        if (['vc','bc','inss','pis','cofins','csll','irrf'].some(k => Number.isNaN(x[k]))) invalidos.push(n);
+        else notas.push(x);
+      } else if (!nf && !dt && !textoCelula(row.getCell(3)).trim()){
+        const v = textoCelula(row.getCell(5)).trim();
+        if (/\d/.test(v) && !/^-+$/.test(v) && n > linhaCab){
+          rodape = { vc:dinheiroParaCentavos(row.getCell(5)), inss:dinheiroParaCentavos(row.getCell(7)), pis:dinheiroParaCentavos(row.getCell(8)),
+                     cofins:dinheiroParaCentavos(row.getCell(9)), csll:dinheiroParaCentavos(row.getCell(10)), irrf:dinheiroParaCentavos(row.getCell(11)) };
+        }
+      } else if (/^[\d.]+$/.test(nf)){ ignoradas.push(n); }
+    });
+    if (invalidos.length) throw new Error('Valores numéricos inválidos nas linhas: ' + invalidos.slice(0,15).join(', ') + (invalidos.length>15?' ...':'') + '.');
+    if (!notas.length) throw new Error('Nenhuma nota encontrada no relatório.');
+
+    S.rel = { notas, ignoradas, rodape, mes, ano };
+    S.relName = file.name;
+    $('chip2').innerHTML = '<span class="file-chip">' + esc(file.name) + ' · ' + mes + '/' + ano + ' · ' + notas.length + ' notas</span>';
+    processar();
+  }catch(err){
+    mostrarErro('err2', err.message || String(err));
+    toast('Relatório inválido.', 'err');
+  }
+}
+
+/* ============================ PROCESSAMENTO (mesma lógica do processo atual) ============================ */
+function classificar(x){
+  if (x.doc.length === 11) return 'PART';
+  if (x.nome.toUpperCase().includes('FUNDO MUNICIPAL')) return 'SUS';
+  return 'CONV';
+}
+
+function processar(){
+  const { notas, rodape, ignoradas, mes, ano } = S.rel;
+  const contaInss = $('contaInss').value.trim();
+  const checks = []; const add = (lvl, msg) => checks.push({lvl, msg});
+  const legs = []; const linhas = []; const pendentes = [];
+  const cont = { PART:0, CONV:0, SUS:0 };
+
+  notas.forEach((x, idx) => {
+    const fato = idx + 1;
+    const cls = classificar(x);
+    x.cls = cls; x.fato = fato; x.pendente = null; x.partidas = ''; x.rets = 0; x.liq = x.vc;   // zera estado de processamentos anteriores
+    const k = CLASSES[cls];
+    const rets = RETENCOES.filter(([campo]) => x[campo] > 0).map(([campo, conta, rot]) => ({conta, v:x[campo], rot}));
+    if (x.inss > 0){
+      if (!contaInss){ x.pendente = 'INSS de R$ ' + brl(x.inss) + ' sem conta definida'; pendentes.push(x); x.rets = 0; x.liq = x.vc; return; }
+      rets.push({conta:contaInss, v:x.inss, rot:'INSS'});
+    }
+    cont[cls]++;
+    const somaRet = rets.reduce((s,r) => s + r.v, 0);
+    const liq = x.vc - somaRet;
+    x.rets = somaRet; x.liq = liq;
+    const comp = x.nf + ' - ' + x.nome;
+    const dt = dataIso(x.data);
+    const partidas = [];
+    if (rets.length){
+      partidas.push({d:k.dev, c:0, v:liq});
+      rets.forEach(r => partidas.push({d:r.conta, c:0, v:r.v}));
+      partidas.push({d:0, c:k.rec, v:x.vc});
+    } else {
+      partidas.push({d:k.dev, c:k.rec, v:x.vc});
+    }
+    x.partidas = partidas.map(p => (p.d||'—') + (p.c ? ' / ' + p.c : '')).join(' · ');
+    partidas.forEach(p => {
+      const cr = (p.c === '3050' || p.c === '3070' || p.d === '3050' || p.d === '3070') ? CR_FISCAL : 0;
+      const L = { fato, dt, dataTxt:x.data, d:p.d, c:p.c, v:p.v, comp, cr };
+      legs.push(L);
+    });
+  });
+
+  // ---- verificações ----
+  add('ok', 'Relatório de ' + mes + '/' + ano + ' lido: ' + notas.length + ' notas.');
+  if (ignoradas.length) add('warn', 'Linhas com NF mas sem data válida foram ignoradas: ' + ignoradas.slice(0,10).join(', ') + '.');
+
+  const som = (k) => notas.reduce((s,x) => s + x[k], 0);
+  const camposRod = [['vc','VC (total das notas)'],['inss','INSS'],['pis','PIS'],['cofins','COFINS'],['csll','CSLL'],['irrf','IRRF']];
+  if (!rodape){
+    add('warn', 'Não encontrei a linha de totais do rodapé; os totais não puderam ser conferidos.');
+  } else {
+    camposRod.forEach(([k, rot]) => {
+      const a = som(k), b = rodape[k];
+      if (a === b) add('ok', rot + ': soma das notas confere com o rodapé (R$ ' + brl(a) + ').');
+      else add('err', rot + ': soma das notas R$ ' + brl(a) + ' difere do rodapé R$ ' + brl(b) + ' (diferença R$ ' + brl(a-b) + ').');
+    });
+  }
+
+  const fora = notas.filter(x => x.data.slice(3) !== mes + '/' + ano);
+  if (fora.length) add('warn', fora.length + ' nota(s) com data fora de ' + mes + '/' + ano + ' (ex.: NF ' + fora[0].nf + ', ' + fora[0].data + ').');
+  else add('ok', 'Todas as datas estão dentro de ' + mes + '/' + ano + '.');
+
+  const cNf = {}; notas.forEach(x => cNf[x.nf] = (cNf[x.nf]||0) + 1);
+  const dup = Object.keys(cNf).filter(k => cNf[k] > 1);
+  if (dup.length) add('warn', 'NFs repetidas no relatório: ' + dup.slice(0,10).join(', ') + '.');
+  else add('ok', 'Sem NFs duplicadas.');
+
+  const docEstranho = notas.filter(x => x.doc.length !== 11 && x.doc.length !== 14);
+  if (docEstranho.length) add('warn', docEstranho.length + ' nota(s) com documento que não tem 11 nem 14 dígitos (ex.: NF ' + docEstranho[0].nf + '); foram tratadas como convênio/SUS.');
+  const bcDif = notas.filter(x => x.bc !== x.vc);
+  if (bcDif.length) add('warn', bcDif.length + ' nota(s) com IF BC diferente de VC; o lançamento usa o VC.');
+  const corrompidos = notas.filter(x => /Ã[\u0080-¿‰‡ƒ“”™]|Â[\u0080-¿]/.test(x.nome));
+  if (corrompidos.length) add('warn', corrompidos.length + ' nome(s) com acentuação corrompida (ex.: NF ' + corrompidos[0].nf + '). O texto foi mantido como veio no relatório.');
+
+  add('ok', 'Classificação: ' + cont.PART + ' particulares, ' + cont.CONV + ' convênios, ' + cont.SUS + ' SUS.');
+  const comRet = notas.filter(x => x.rets > 0).length;
+  add('ok', comRet + ' nota(s) com retenção, lançadas em várias linhas com o mesmo Fato Contábil.');
+  if (pendentes.length) add('err', pendentes.length + ' nota(s) pendente(s): ' + pendentes.slice(0,5).map(x => 'NF ' + x.nf + ' (' + x.pendente + ')').join('; ') + '. Informe a conta de INSS na etapa 2 ou marque para gerar sem elas.');
+
+  // contas, CR e histórico existem no modelo
+  const usadas = new Set(); legs.forEach(l => { if (l.d) usadas.add(l.d); if (l.c) usadas.add(l.c); });
+  const sem = [...usadas].filter(c => !S.plano.has(c));
+  if (sem.length) add('err', 'Contas que não existem na aba Plano de Contas do modelo: ' + sem.join(', ') + '.');
+  else add('ok', 'Todas as contas usadas existem no Plano de Contas (' + [...usadas].sort().join(', ') + ').');
+  if (!S.crSet.has(CR_FISCAL)) add('err', 'O CR ' + CR_FISCAL + ' (Fiscal) não existe na aba CR do modelo.');
+  if (!S.histSet.has(HISTORICO)) add('err', 'O histórico ' + HISTORICO + ' não existe na aba Histórico do modelo.');
+
+  // capacidade
+  if (legs.length > S.capacidade) add('err', 'Volume acima da capacidade da planilha: ' + legs.length + ' lançamentos para ' + S.capacidade + ' disponíveis (' + (S.ultimaLinha - PRIMEIRA + 1) + ' linhas). Amplie as linhas do modelo.');
+  else add('ok', 'Capacidade da planilha: ' + (legs.length*2) + ' de ' + (S.ultimaLinha - PRIMEIRA + 1) + ' linhas usadas.');
+
+  // partidas dobradas
+  const deb = legs.reduce((s,l) => s + (l.d ? l.v : 0), 0);
+  const cre = legs.reduce((s,l) => s + (l.c ? l.v : 0), 0);
+  const porFato = {}; legs.forEach(l => { const f = porFato[l.fato] || (porFato[l.fato] = [0,0]); if (l.d) f[0]+=l.v; if (l.c) f[1]+=l.v; });
+  const desbal = Object.keys(porFato).filter(f => porFato[f][0] !== porFato[f][1]);
+  if (deb !== cre) add('err', 'Débito R$ ' + brl(deb) + ' difere do crédito R$ ' + brl(cre) + '.');
+  else add('ok', 'Débito = Crédito = R$ ' + brl(deb) + '.');
+  if (desbal.length) add('err', 'Fatos Contábeis desbalanceados: ' + desbal.slice(0,10).join(', ') + '.');
+  else add('ok', 'Todos os ' + Object.keys(porFato).length + ' Fatos Contábeis estão balanceados.');
+
+  // alerta de CR (mesma regra da coluna "Alerta CR": conta de resultado => CR obrigatório; senão CR = 0)
+  let alertas = 0;
+  legs.forEach(l => {
+    const exige = (S.plano.get(l.d) && S.plano.get(l.d).exige) || (S.plano.get(l.c) && S.plano.get(l.c).exige) || false;
+    const tem = l.cr !== 0 && l.cr !== '';
+    if (exige !== tem) alertas++;
+  });
+  if (alertas) add('err', alertas + ' alerta(s) de CR (conta que exige CR sem rateio, ou rateio em conta que não exige).');
+  else add('ok', 'Zero alertas de CR.');
+
+  // monta as linhas finais (Lançamento + Rateio)
+  legs.forEach(l => {
+    linhas.push({tipo:'Lançamento', l});
+    linhas.push({tipo:'Rateio', l});
+  });
+
+  S.res = { legs, linhas, pendentes, checks, totais:{ vc:som('vc'), deb, cre, nfs:notas.length, lanc:legs.length, rets:som('pis')+som('cofins')+som('csll')+som('irrf')+som('inss') }, cont };
+  desenhaConferencia();
+}
+
+/* ============================ ETAPA 3 — CONFERÊNCIA ============================ */
+function desenhaConferencia(){
+  const r = S.res; if (!r) return;
+  const erros = r.checks.filter(c => c.lvl === 'err').length;
+  const avisos = r.checks.filter(c => c.lvl === 'warn').length;
+  $('summary').innerHTML = '<div class="summary-grid">' +
+    tile(r.totais.nfs, 'Notas no relatório') +
+    tile(r.totais.lanc, 'Lançamentos (linhas de débito/crédito)') +
+    tile(brl(r.totais.vc), 'Faturamento bruto (R$)', 'accent') +
+    tile(brl(r.totais.rets), 'Retenções (R$)') +
+    tile(avisos, 'Avisos', avisos ? 'warn' : '') +
+    tile(erros, 'Erros bloqueantes', erros ? 'warn' : '') + '</div>';
+  $('checks').innerHTML = r.checks.map(c => '<li><span class="tag tag-' + c.lvl + '">' + (c.lvl==='ok'?'OK':c.lvl==='warn'?'AVISO':'ERRO') + '</span><span>' + esc(c.msg) + '</span></li>').join('');
+  S.vis = 100; desenhaTabela();
+  trava('card3', false); pills(3, [1,2]);
+  atualizaGeracao();
+}
+
+function notasFiltradas(){
+  const t = $('filtroTipo').value; const q = $('filtroBusca').value.trim().toUpperCase();
+  return S.rel.notas.filter(x => {
+    if (t === 'RET' ? !(x.rets > 0) : (t && x.cls !== t)) return false;
+    if (q && !(x.nf.toUpperCase().includes(q) || x.nome.toUpperCase().includes(q))) return false;
+    return true;
+  });
+}
+function desenhaTabela(){
+  if (!S.rel) return;
+  const lista = notasFiltradas();
+  const fatia = lista.slice(0, S.vis);
+  $('tbody').innerHTML = fatia.length ? fatia.map(x =>
+    '<tr><td class="mono">' + x.fato + '</td><td class="mono">' + esc(x.nf) + '</td><td class="mono">' + esc(x.data) + '</td><td>' + esc(x.nome) + '</td>' +
+    '<td><span class="tag ' + (x.cls==='PART' ? 'tag-credito' : x.cls==='SUS' ? 'tag-debito' : 'tag-ok') + '">' + CLASSES[x.cls].nome + '</span>' + (x.pendente ? ' <span class="tag tag-err">PENDENTE</span>' : '') + '</td>' +
+    '<td class="num mono">' + brl(x.vc) + '</td><td class="num mono">' + (x.rets ? brl(x.rets) : '—') + '</td><td class="num mono">' + brl(x.liq != null ? x.liq : x.vc) + '</td>' +
+    '<td class="mono">' + esc(x.partidas || '—') + '</td></tr>').join('')
+    : '<tr><td colspan="9"><div class="empty-state">Nenhuma nota com esse filtro.</div></td></tr>';
+  $('btnMais').hidden = lista.length <= S.vis;
+  $('contagem').textContent = 'Mostrando ' + Math.min(S.vis, lista.length) + ' de ' + lista.length + ' notas.';
+}
+
+/* ============================ ETAPA 4 — ARQUIVOS ============================ */
+function podeGerar(){
+  const r = S.res; if (!r) return {ok:false, msg:''};
+  const errosDuros = r.checks.filter(c => c.lvl === 'err' && !/pendente/i.test(c.msg));
+  if (errosDuros.length) return {ok:false, msg:'Corrija os erros da conferência antes de gerar os arquivos.'};
+  if (r.pendentes.length && !$('chkPend').checked) return {ok:false, msg:'Há NFs pendentes: informe a conta de INSS na etapa 2 ou marque a opção acima para gerá-las de fora.'};
+  return {ok:true, msg:''};
+}
+function atualizaGeracao(){
+  const r = S.res; if (!r) return;
+  $('lblPend').hidden = !r.pendentes.length;
+  const p = podeGerar();
+  trava('card4', false);
+  ['btnXlsx','btnTxt','btnCopia'].forEach(i => $(i).disabled = !p.ok);
+  $('hintGerar').textContent = p.msg;
+  $('hintGerar').className = 'hint' + (p.ok ? '' : ' err');
+  if (p.ok){ const t = montaTxt(); $('txtPreview').textContent = t.split('\r\n').slice(0,12).join('\n') + (r.linhas.length>12 ? '\n...' : ''); $('txtPreview').hidden = false; pills(4,[1,2,3]); }
+  else $('txtPreview').hidden = true;
+}
+
+function linhaTxt(item){
+  const l = item.l;
+  if (item.tipo === 'Lançamento'){
+    return ['0', l.dataTxt, String(l.d), String(l.c), fmt15(l.v), HISTORICO, '0', '"' + l.comp + '"', String(l.fato)].join(';');
+  }
+  return ['0', String(l.cr), fmt15(l.v)].join(';');
+}
+function montaTxt(){ return S.res.linhas.map(linhaTxt).join('\r\n'); }
+function nomeBase(){ return 'Implantacao_Tasy_Mes' + S.rel.mes + '_' + S.rel.ano; }
+
+async function gerarXlsx(){
+  const btn = $('btnXlsx'); btn.disabled = true;
+  try{
+    const wb = S.tpl; const ws = wb.getWorksheet('Lançamentos'); const txt = wb.getWorksheet('TXT Importação');
+    ws.getCell('A1').value = 'IMPLANTAÇÃO TASY — LANÇAMENTOS CONTÁBEIS (MÊS ' + S.rel.mes + '/' + S.rel.ano + ')';
+    // limpa entradas A:I (as fórmulas J:P ficam) e remove resultados em cache das fórmulas
+    for (let r = PRIMEIRA; r <= S.ultimaLinha; r++){
+      for (let c = 1; c <= 9; c++) ws.getCell(r, c).value = null;
+      for (let c = 10; c <= 16; c++){ const cell = ws.getCell(r, c); const v = cell.value; if (v && typeof v === 'object' && v.formula) cell.value = { formula: v.formula }; }
+    }
+    for (let r = PRIMEIRA; r <= (txt.rowCount || S.ultimaLinha); r++){
+      for (let c = 1; c <= 2; c++){ const cell = txt.getCell(r, c); const v = cell.value; if (v && typeof v === 'object' && v.formula) cell.value = { formula: v.formula }; }
+    }
+    let r = PRIMEIRA;
+    S.res.legs.forEach(l => {
+      ws.getCell(r,1).value = 'Lançamento';
+      ws.getCell(r,2).value = l.dt;
+      ws.getCell(r,3).value = l.d;            // texto (ou número 0 quando o lado não tem conta)
+      ws.getCell(r,4).value = l.c;
+      ws.getCell(r,6).value = l.v / 100;
+      ws.getCell(r,7).value = HISTORICO;
+      ws.getCell(r,8).value = l.comp;
+      ws.getCell(r,9).value = l.fato;
+      ws.getCell(r+1,1).value = 'Rateio';
+      ws.getCell(r+1,5).value = l.cr;
+      ws.getCell(r+1,6).value = l.v / 100;
+      r += 2;
+    });
+    wb.calcProperties = Object.assign(wb.calcProperties || {}, { fullCalcOnLoad:true });
+    const buf = await wb.xlsx.writeBuffer();
+    const ok = await salvarArquivo(nomeBase() + '.xlsx', new Blob([buf], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}));
+    if (ok) toast('Planilha gerada: ' + nomeBase() + '.xlsx', 'ok');
+  }catch(err){
+    toast('Falha ao gerar a planilha: ' + (err.message || err), 'err');
+  }finally{ btn.disabled = !podeGerar().ok; }
+}
+async function gerarTxt(){
+  try{
+    const ok = await salvarArquivo(nomeBase() + '.txt', new Blob([montaTxt()], {type:'text/plain;charset=utf-8'}));
+    if (ok) toast('TXT gerado: ' + nomeBase() + '.txt', 'ok');
+  }catch(err){ toast('Falha ao gerar o TXT: ' + (err.message || err), 'err'); }
+}
+async function copiarTxt(){
+  try{ await navigator.clipboard.writeText(montaTxt()); toast('TXT copiado.', 'ok'); }
+  catch(err){ toast('Não foi possível copiar; use o botão de baixar.', 'err'); }
+}
+
+/* ============================ EVENTOS ============================ */
+ligaDropzone('drop1','file1', lerModelo);
+ligaDropzone('drop2','file2', lerRelatorio);
+$('filtroTipo').addEventListener('change', () => { S.vis = 100; desenhaTabela(); });
+$('filtroBusca').addEventListener('input', () => { S.vis = 100; desenhaTabela(); });
+$('btnMais').addEventListener('click', () => { S.vis += 200; desenhaTabela(); });
+$('btnXlsx').addEventListener('click', gerarXlsx);
+$('btnTxt').addEventListener('click', gerarTxt);
+$('btnCopia').addEventListener('click', copiarTxt);
+$('chkPend').addEventListener('change', atualizaGeracao);
+$('contaInss').addEventListener('change', () => { if (S.rel){ try{ processar(); }catch(e){ mostrarErro('err2', e.message||String(e)); } } });
+</script>
+</body>
+</html>

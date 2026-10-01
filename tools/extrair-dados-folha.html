@@ -1,0 +1,820 @@
+<!doctype html>
+<!-- VERSÃO: 1.3.0 — padrão do Painel de Automação com paleta exclusiva São Nicolau, aplicado em 01/10/2026; 1.2.0 paleta; 1.1.0 layout da planilha; 1.0.0 base -->
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Folha × Banco — Pagamento de Férias e Rescisões</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Sans+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  /* Paleta exclusiva — Hospital São Nicolau Complexo Hospitalar (azul-marinho / ciano da marca) */
+  --bg:#f7f7fb;
+  --surface:#ffffff;
+  --surface-alt:#eef1f8;
+  --ink:#17254d;
+  --muted:#5f6f8f;
+  --border:#dbe2ee;
+  --accent:#28509c;
+  --accent-strong:#1c3a7a;
+  --accent-ink:#f5f8ff;
+  --accent-soft:#e3ebfa;
+  --danger:#b3261e;
+  --danger-soft:#fbe9e6;
+  --warning:#8a5a00;
+  --warning-soft:#fff1d9;
+  --success:#1e7d4a;
+  --success-soft:#e5f4ea;
+  --tag-debito-bg:#fff1d9;
+  --tag-debito-ink:#8a5a00;
+  --tag-credito-bg:#dff1fa;
+  --tag-credito-ink:#17608f;
+  /* extras da marca (faixa do topo e destaques em gradiente) */
+  --brand-cyan:#2da6de;
+  --brand-mid:#2b76b9;
+  --brand-navy:#2a4291;
+  --shadow: 0 1px 2px rgba(20,40,100,.06), 0 8px 24px -12px rgba(20,40,100,.22);
+  --radius:14px;
+  --font-display:'IBM Plex Sans Condensed', 'IBM Plex Sans', sans-serif;
+  --font-body:'IBM Plex Sans', system-ui, sans-serif;
+  --font-mono:'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0d1426; --surface:#141d36; --surface-alt:#1a2542; --ink:#e6ecfa;
+    --muted:#93a3c7; --border:#27345a; --accent:#63a9ee; --accent-strong:#a4cdfa;
+    --accent-ink:#06142e; --accent-soft:#172a50; --danger:#ff9d93; --danger-soft:#3a201d;
+    --warning:#ffcf70; --warning-soft:#3a2c12; --success:#8fe3ac; --success-soft:#173425;
+    --tag-debito-bg:#3a2c12; --tag-debito-ink:#ffcf70; --tag-credito-bg:#12304a; --tag-credito-ink:#7fd0f5;
+    --brand-cyan:#38b4ea; --brand-mid:#3b8bd0; --brand-navy:#4a65c4;
+    --shadow: 0 1px 2px rgba(0,0,0,.35), 0 12px 28px -14px rgba(0,0,0,.65);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0d1426; --surface:#141d36; --surface-alt:#1a2542; --ink:#e6ecfa;
+  --muted:#93a3c7; --border:#27345a; --accent:#63a9ee; --accent-strong:#a4cdfa;
+  --accent-ink:#06142e; --accent-soft:#172a50; --danger:#ff9d93; --danger-soft:#3a201d;
+  --warning:#ffcf70; --warning-soft:#3a2c12; --success:#8fe3ac; --success-soft:#173425;
+  --tag-debito-bg:#3a2c12; --tag-debito-ink:#ffcf70; --tag-credito-bg:#12304a; --tag-credito-ink:#7fd0f5;
+  --brand-cyan:#38b4ea; --brand-mid:#3b8bd0; --brand-navy:#4a65c4;
+  --shadow: 0 1px 2px rgba(0,0,0,.35), 0 12px 28px -14px rgba(0,0,0,.65);
+}
+
+*{ box-sizing:border-box; }
+body{
+  background:var(--bg); color:var(--ink); font-family:var(--font-body);
+  margin:0; padding-inline:16px; padding-block:20px 60px;
+}
+h1,h2,h3{ font-family:var(--font-display); font-weight:700; text-wrap:balance; margin:0; }
+.mono{ font-family:var(--font-mono); font-variant-numeric:tabular-nums; }
+.app-shell{ max-width:1180px; margin:0 auto; }
+
+.topbar{
+  position:sticky; top:env(safe-area-inset-top,0px); z-index:30;
+  background:color-mix(in srgb, var(--bg) 88%, transparent);
+  backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
+  border-bottom:1px solid var(--border); margin:-20px -16px 28px; padding:16px;
+  border-top:6px solid; border-image:linear-gradient(90deg,var(--brand-cyan),var(--brand-navy)) 1 0 0 0;
+}
+.topbar-inner{ max-width:1180px; margin:0 auto; display:flex; flex-wrap:wrap; align-items:center; gap:14px 24px; justify-content:space-between; }
+.brand{ display:flex; align-items:center; gap:12px; }
+.brand-mark{
+  width:38px; height:38px; border-radius:10px; background:var(--accent); color:var(--accent-ink);
+  display:flex; align-items:center; justify-content:center; font-family:var(--font-mono); font-weight:700; font-size:15px;
+  box-shadow:var(--shadow); flex:none;
+}
+.brand h1{ font-size:19px; letter-spacing:.2px; }
+.brand p{ margin:2px 0 0; font-size:12.5px; color:var(--muted); }
+.steps-pills{ display:flex; gap:8px; flex-wrap:wrap; }
+.step-pill{
+  font-family:var(--font-mono); font-size:11.5px; letter-spacing:.03em; padding:6px 11px; border-radius:999px;
+  border:1px solid var(--border); color:var(--muted); background:var(--surface); white-space:nowrap;
+}
+.step-pill.is-active{ border-color:var(--accent); color:var(--accent-strong); background:var(--accent-soft); font-weight:600; }
+.step-pill.is-done{ color:var(--success); border-color:var(--success); }
+
+.step-card{
+  background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+  padding:26px; margin-bottom:22px; box-shadow:var(--shadow);
+}
+.step-card[data-locked="true"]{ opacity:.45; pointer-events:none; }
+.step-head{ display:flex; align-items:flex-start; gap:14px; margin-bottom:18px; }
+.step-num{
+  width:32px; height:32px; border-radius:9px; background:var(--surface-alt); color:var(--ink);
+  font-family:var(--font-mono); font-weight:600; font-size:14px; display:flex; align-items:center; justify-content:center; flex:none;
+  border:1px solid var(--border);
+}
+.step-head h2{ font-size:20px; }
+.step-head .step-sub{ margin:3px 0 0; color:var(--muted); font-size:13.5px; max-width:64ch; }
+
+.dropzone{
+  border:1.5px dashed var(--border); border-radius:12px; padding:30px 20px; text-align:center;
+  background:var(--surface-alt); cursor:pointer; transition:border-color .15s, background .15s;
+}
+.dropzone:hover, .dropzone.is-dragover{ border-color:var(--accent); background:var(--accent-soft); }
+.dropzone strong{ display:block; font-size:15px; margin-bottom:4px; }
+.dropzone span{ font-size:12.5px; color:var(--muted); }
+.file-chip{
+  display:inline-flex; align-items:center; gap:8px; margin-top:14px; padding:7px 12px; border-radius:9px;
+  background:var(--accent-soft); color:var(--accent-strong); font-size:13px; font-family:var(--font-mono);
+}
+.field-row{ display:flex; flex-wrap:wrap; gap:16px; margin-top:16px; }
+.field{ display:flex; flex-direction:column; gap:5px; min-width:190px; flex:1; }
+.field label{ font-size:12px; color:var(--muted); font-weight:600; letter-spacing:.02em; text-transform:uppercase; }
+select, input[type="text"], input[type="number"]{
+  font-family:var(--font-body); font-size:13.5px; padding:9px 10px; border-radius:8px; border:1px solid var(--border);
+  background:var(--surface); color:var(--ink); width:100%;
+}
+select:focus, input:focus, button:focus-visible{ outline:2px solid var(--accent); outline-offset:1px; }
+
+.table-wrap{ overflow-x:auto; border:1px solid var(--border); border-radius:10px; margin-top:14px; }
+table{ border-collapse:collapse; width:100%; font-size:13px; }
+thead th{
+  position:sticky; top:0; background:var(--surface-alt); text-align:left; padding:9px 10px; font-size:11.5px;
+  text-transform:uppercase; letter-spacing:.04em; color:var(--muted); border-bottom:1px solid var(--border); white-space:nowrap;
+}
+tbody td{ padding:8px 10px; border-bottom:1px solid var(--border); white-space:nowrap; }
+tbody tr:last-child td{ border-bottom:none; }
+
+button{ font-family:var(--font-body); cursor:pointer; border:none; border-radius:9px; font-weight:600; font-size:13.5px; }
+.btn-primary{ background:var(--accent); color:var(--accent-ink); padding:11px 20px; box-shadow:var(--shadow); }
+.btn-primary:disabled{ opacity:.45; cursor:not-allowed; box-shadow:none; }
+.btn-secondary{ background:var(--surface-alt); color:var(--ink); border:1px solid var(--border); padding:10px 16px; }
+.btn-ghost{ background:transparent; color:var(--muted); border:1px solid var(--border); padding:7px 10px; font-size:12px; }
+.btn-icon{ background:var(--surface-alt); border:1px solid var(--border); color:var(--ink); width:28px; height:28px; border-radius:7px; display:inline-flex; align-items:center; justify-content:center; padding:0; }
+.actions-row{ display:flex; flex-wrap:wrap; gap:12px; margin-top:18px; align-items:center; }
+.hint{ font-size:12.5px; color:var(--muted); }
+.hint.warn{ color:var(--warning); }
+.hint.err{ color:var(--danger); }
+
+.summary-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; margin-bottom:18px; }
+.summary-tile{ background:var(--surface-alt); border:1px solid var(--border); border-radius:10px; padding:14px 16px; }
+.summary-tile .n{ font-family:var(--font-mono); font-size:22px; font-weight:600; }
+.summary-tile .l{ font-size:11.5px; color:var(--muted); text-transform:uppercase; letter-spacing:.03em; margin-top:2px; }
+.summary-tile.accent{ background:var(--accent-soft); }
+.summary-tile.accent .n{ color:var(--accent-strong); }
+.summary-tile.warn .n{ color:var(--warning); }
+
+.tag{ display:inline-flex; align-items:center; gap:5px; font-family:var(--font-mono); font-size:11.5px; font-weight:600; padding:4px 9px; border-radius:999px; white-space:nowrap; }
+.tag-debito{ background:var(--tag-debito-bg); color:var(--tag-debito-ink); }
+.tag-credito{ background:var(--tag-credito-bg); color:var(--tag-credito-ink); }
+
+.empty-state{ text-align:center; padding:34px 16px; color:var(--success); }
+.empty-state .big{ font-size:28px; }
+
+fieldset{ border:1px solid var(--border); border-radius:10px; padding:16px; margin:0 0 16px; }
+legend{ padding:0 6px; font-size:12.5px; font-weight:700; color:var(--accent-strong); text-transform:uppercase; letter-spacing:.03em; }
+
+.toast-host{ position:fixed; right:16px; bottom:calc(16px + env(safe-area-inset-bottom,0px)); z-index:60; display:flex; flex-direction:column; gap:8px; max-width:min(360px, calc(100vw - 32px)); }
+.toast{ background:var(--ink); color:var(--bg); padding:11px 14px; border-radius:9px; font-size:13px; box-shadow:var(--shadow); animation:toast-in .18s ease-out; }
+.toast.toast-err{ background:var(--danger); color:var(--accent-ink); }
+.toast.toast-ok{ background:var(--success); color:var(--accent-ink); }
+@keyframes toast-in{ from{ transform:translateY(6px); opacity:0; } to{ transform:none; opacity:1; } }
+
+code.k{ background:var(--surface-alt); border:1px solid var(--border); padding:1px 5px; border-radius:5px; font-family:var(--font-mono); font-size:12px; }
+
+
+/* ---- específicos desta ferramenta (somente variáveis do padrão) ---- */
+.step-card#results{ display:none; }
+.dropzone.filled{ border-style:solid; border-color:var(--accent); background:var(--accent-soft); }
+.drops{ display:flex; gap:16px; flex-wrap:wrap; }
+.drop{ flex:1 1 320px; }
+.files{ margin-top:4px; display:flex; flex-wrap:wrap; gap:6px; }
+.files .file-chip{ margin-top:10px; word-break:break-all; }
+.field input[type="number"]{ width:130px; font-family:var(--font-mono); }
+.field{ min-width:0; flex:none; }
+.progress-wrap{ margin-top:16px; display:none; }
+.progress-bar-bg{ background:var(--surface-alt); border-radius:6px; height:8px; overflow:hidden; border:1px solid var(--border); }
+.progress-bar{ background:linear-gradient(90deg,var(--brand-cyan),var(--brand-navy)); height:100%; width:0%; transition:width .15s; }
+.progress-label{ font-size:12.5px; color:var(--muted); margin-top:6px; }
+#errorBox{ display:none; margin-top:14px; padding:12px 14px; border-radius:8px; background:var(--danger-soft); color:var(--danger); font-size:13px; white-space:pre-wrap; }
+.notice{ margin-top:14px; padding:10px 14px; border-radius:8px; background:var(--warning-soft); color:var(--warning); font-size:13px; display:none; }
+.tabs{ display:flex; gap:6px; border-bottom:1px solid var(--border); margin-bottom:14px; flex-wrap:wrap; }
+.tab{ background:none; border:none; border-bottom:2px solid transparent; border-radius:0; padding:9px 14px; color:var(--muted); font-weight:600; font-size:14px; }
+.tab.active{ color:var(--accent-strong); border-bottom-color:var(--brand-cyan); }
+.tab .c{ display:inline-block; margin-left:6px; font-size:11px; background:var(--surface-alt); color:var(--ink); border:1px solid var(--border); border-radius:999px; padding:1px 7px; font-family:var(--font-mono); }
+.pane{ display:none; }
+.pane.active{ display:block; }
+.table-wrap{ max-height:560px; overflow:auto; }
+td.num, th.num{ text-align:right; font-variant-numeric:tabular-nums; }
+td.mono{ font-family:var(--font-mono); }
+tr.nomatch td{ background:var(--surface-alt); color:var(--muted); }
+.small{ display:block; font-size:11.5px; color:var(--muted); font-weight:400; }
+.tag-ok{ background:var(--success-soft); color:var(--success); }
+.tag-warn{ background:var(--warning-soft); color:var(--warning); }
+.tag-bad{ background:var(--danger-soft); color:var(--danger); }
+.tag-info{ background:var(--tag-credito-bg); color:var(--tag-credito-ink); }
+.tag-mute{ background:var(--surface-alt); color:var(--muted); border:1px solid var(--border); }
+.prevh{ margin:18px 0 0; font-size:13px; color:var(--muted); font-weight:600; font-family:var(--font-body); }
+.copy-preview{ width:100%; min-height:150px; font-family:var(--font-mono); font-size:12px; border:1px solid var(--border); border-radius:10px; padding:10px; margin-top:8px; white-space:pre; overflow:auto; background:var(--surface-alt); color:var(--ink); }
+.note{ font-size:12.5px; color:var(--muted); margin-top:10px; max-width:900px; }
+.step-card .summary-grid{ margin-top:6px; }
+.toast-host{ pointer-events:none; }
+@media (max-width:640px){ .step-card{ padding:18px; } }
+
+</style>
+</head>
+<body>
+<div class="app-shell">
+
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <div class="brand-mark">SN</div>
+        <div>
+          <h1>Folha × Banco</h1>
+          <p>Pagamento de férias e rescisões</p>
+        </div>
+      </div>
+      <div class="steps-pills">
+        <span class="step-pill is-active" id="pill1">1 · Arquivos</span>
+        <span class="step-pill" id="pill2">2 · Resultado</span>
+      </div>
+    </div>
+  </header>
+
+  <section id="step1" class="step-card">
+    <div class="step-head">
+      <div class="step-num">1</div>
+      <div>
+        <h2>Arquivos</h2>
+        <p class="step-sub">Sobe o PDF da folha (Relação de Cálculo) e os CSVs de movimento bancário. O sistema lê o resumo "Relação de Funcionários em Gozo de Férias" e o "Líquido Rescisão" e cruza cada pessoa com o lançamento do banco. Os CSVs podem ser vários de uma vez; o tipo é identificado pelo texto de cada lançamento.</p>
+      </div>
+    </div>
+    <div class="drops">
+      <div class="drop">
+        <div class="dropzone" id="dzPdf"><strong>PDF da folha</strong><span>arraste aqui ou clique para escolher</span></div>
+        <input type="file" id="pdfInput" accept=".pdf,application/pdf" hidden>
+        <div class="files" id="pdfName"></div>
+      </div>
+      <div class="drop">
+        <div class="dropzone" id="dzCsv"><strong>CSVs do banco (Movimentos)</strong><span>arraste aqui ou clique para escolher</span></div>
+        <input type="file" id="csvInput" accept=".csv,text/csv" multiple hidden>
+        <div class="files" id="csvNames"></div>
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label for="thrField">Alertar se a diferença passar de (dias)</label><input type="number" id="thrField" value="5" min="0"></div>
+      <div class="field"><label for="winField">Janela para pagamentos em lote (dias)</label><input type="number" id="winField" value="7" min="0"></div>
+    </div>
+    <div class="actions-row">
+      <button class="btn-primary" id="runBtn" disabled>Processar</button>
+      <button class="btn-secondary" id="resetBtn">Recomeçar</button>
+    </div>
+    <div class="progress-wrap" id="progressWrap">
+      <div class="progress-bar-bg"><div class="progress-bar" id="progressBar"></div></div>
+      <div class="progress-label" id="progressLabel"></div>
+    </div>
+    <div id="errorBox"></div>
+    <div class="notice" id="notice"></div>
+  </section>
+
+  <section id="results" class="step-card">
+    <div class="step-head">
+      <div class="step-num">2</div>
+      <div>
+        <h2 id="resTitle">Resultado</h2>
+        <p class="step-sub" id="resSub"></p>
+      </div>
+    </div>
+    <div class="summary-grid" id="stats"></div>
+
+    <div class="tabs">
+      <button class="tab active" data-pane="ferias">Férias <span class="c" id="cFerias">0</span></button>
+      <button class="tab" data-pane="resc">Rescisões <span class="c" id="cResc">0</span></button>
+      <button class="tab" data-pane="orf">Banco sem par na folha <span class="c" id="cOrf">0</span></button>
+    </div>
+
+      <div class="pane active" id="pane-ferias">
+        <div class="table-wrap"><table id="tblFerias"></table></div>
+        <h3 class="prevh">Layout da planilha — Data | Histórico | Valor (desconto em negativo, banco em positivo) | Líquido pago</h3>
+        <textarea class="copy-preview" id="prev-ferias" readonly></textarea>
+        <div class="actions-row">
+          <button class="btn-primary" data-plan="ferias">Copiar no layout da planilha</button>
+          <button class="btn-secondary" data-copy="ferias">Copiar tabela acima</button>
+          <button class="btn-ghost" data-csv="ferias">Baixar CSV</button>
+        </div>
+        <p class="note">Ordem do layout: (1) funcionários com pagamento encontrado no banco, linhas da folha seguidas da linha do banco, por data de pagamento; (2) uma linha em branco e as linhas da folha sem pagamento no mês (só provisão, já pagas antes), em ordem alfabética; (3) uma linha em branco e os pagamentos do banco sem provisão na folha, por data. A coluna "Líquido pago" só é preenchida quando difere do desconto do mês. Pares com diferença acima do alerta ficam nos blocos 2 e 3 para você conferir. Desc. Adto Férias = valor descontado na folha do mês; Líquido pago = valor do resumo de gozo (é o que sai no banco); Restante = parcela que ainda será descontada na folha seguinte. Diferença de dias = data do banco − data da folha (negativo = pago antes).</p>
+      </div>
+
+      <div class="pane" id="pane-resc">
+        <div class="table-wrap"><table id="tblResc"></table></div>
+        <h3 class="prevh">Layout da planilha — Data | Histórico | Valor (líquido em negativo, banco em positivo)</h3>
+        <textarea class="copy-preview" id="prev-resc" readonly></textarea>
+        <div class="actions-row">
+          <button class="btn-primary" data-plan="resc">Copiar no layout da planilha</button>
+          <button class="btn-secondary" data-copy="resc">Copiar tabela acima</button>
+          <button class="btn-ghost" data-csv="resc">Baixar CSV</button>
+        </div>
+        <p class="note">A folha não traz data de pagamento da rescisão; a referência é a data de demissão. O match é por nome e valor do líquido. Mesma ordem do layout de férias: pareados por data do banco, depois (linha em branco) rescisões da folha sem pagamento no mês em ordem alfabética, depois (linha em branco) pagamentos do banco sem rescisão na folha.</p>
+      </div>
+
+      <div class="pane" id="pane-orf">
+        <div class="table-wrap"><table id="tblOrf"></table></div>
+        <div class="actions-row">
+          <button class="btn-secondary" data-copy="orf">Copiar tabela acima</button>
+          <button class="btn-ghost" data-csv="orf">Baixar CSV</button>
+        </div>
+        <p class="note">Lançamentos de férias ou rescisão do banco que não encontraram ninguém na folha carregada (por exemplo, pagamentos de competência futura).</p>
+      </div>
+  </section>
+
+</div>
+<div class="toast-host" id="toastHost"></div>
+
+<script>
+/* Ponte de capacidades do painel + download seguro */
+(function(){
+  if (window.top === window.self) return;
+  if (window.claude && window.claude.use) return;
+  let proximoId = 1;
+  const pendentes = {};
+  window.addEventListener('message', (ev) => {
+    const msg = ev.data;
+    if (!msg || msg.__ponteClaude !== true || msg.tipo !== 'resposta') return;
+    const p = pendentes[msg.id];
+    if (!p) return;
+    delete pendentes[msg.id];
+    if (msg.erro) p.reject(msg.erro); else p.resolve(msg.resultado);
+  });
+  function chamarHub(acao, payload){
+    return new Promise((resolve, reject) => {
+      const id = proximoId++;
+      pendentes[id] = { resolve, reject };
+      window.parent.postMessage({ __ponteClaude: true, tipo: 'chamada', id, acao, payload }, '*');
+    });
+  }
+  window.claude = {
+    use: async (nome) => {
+      if (nome !== 'downloads') return null;
+      return { save: (req) => chamarHub('downloads.save', req) };
+    }
+  };
+})();
+async function salvarArquivo(filename, blob){
+  if (typeof window.claude !== 'undefined' && typeof window.claude.use === 'function'){
+    try{
+      const downloads = await window.claude.use('downloads');
+      if (downloads){ await downloads.save({ filename, data: blob }); return true; }
+    }catch(err){
+      alert('Não foi possível salvar o arquivo (' + (err && (err.code || err.message) || 'erro') + ').');
+      return false;
+    }
+  }
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+  return true;
+}
+window.salvarArquivo = salvarArquivo;
+</script>
+
+<script type="module">
+import * as pdfjsLib from 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/6.1.200/pdf.mjs';
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/6.1.200/pdf.worker.mjs';
+
+const $ = id => document.getElementById(id);
+const dzPdf=$('dzPdf'), dzCsv=$('dzCsv'), pdfInput=$('pdfInput'), csvInput=$('csvInput');
+function setSteps(n){
+  $('pill1').className='step-pill '+(n===1?'is-active':'is-done');
+  $('pill2').className='step-pill '+(n===2?'is-active':'');
+}
+const runBtn=$('runBtn'), errorBox=$('errorBox'), notice=$('notice');
+const progressWrap=$('progressWrap'), progressBar=$('progressBar'), progressLabel=$('progressLabel');
+
+let pdfFile=null, csvFiles=[];
+let tables={ferias:{head:[],rows:[]},resc:{head:[],rows:[]},orf:{head:[],rows:[]}};
+
+/* ---------- utilitários ---------- */
+const norm = s => (s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().replace(/\s+/g,' ').trim();
+const toCents = s => Math.round(parseFloat(String(s).replace(/\./g,'').replace(',','.'))*100);
+const fmtBRL = c => (c/100).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+const parseDate = s => { const [d,m,y]=s.split('/').map(Number); return Date.UTC(y,m-1,d); };
+const WD=['dom','seg','ter','qua','qui','sex','sáb'];
+const fmtDate = ms => String(new Date(ms).getUTCDate()).padStart(2,'0')+'/'+String(new Date(ms).getUTCMonth()+1).padStart(2,'0')+'/'+new Date(ms).getUTCFullYear();
+const fmtDateWd = ms => fmtDate(ms)+' ('+WD[new Date(ms).getUTCDay()]+')';
+const dayDiff = (a,b) => Math.round((b-a)/86400000);
+const esc = s => String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const tokKey = s => norm(s).split(' ').filter(Boolean).sort().join(' ');
+const CONECTORES=new Set(['DE','DA','DO','DOS','DAS','E']);
+function truncarNome(nomeCompleto){
+  const words=nomeCompleto.trim().split(/\s+/).filter(Boolean), partes=[];
+  let i=0,count=0;
+  while(i<words.length&&count<2){
+    const w=words[i];
+    if(CONECTORES.has(w.toUpperCase())&&i+1<words.length){
+      let parte=w; i++;
+      while(i<words.length&&CONECTORES.has(words[i].toUpperCase())){ parte+=' '+words[i]; i++; }
+      if(i<words.length){ parte+=' '+words[i]; i++; }
+      partes.push(parte);
+    } else { partes.push(w); i++; }
+    count++;
+  }
+  return partes.join(' ');
+}
+const planilha={ferias:'',resc:''};
+
+function showError(msg){ errorBox.style.display='block'; errorBox.textContent='Deu erro ao processar:\n'+msg+'\n\nManda esse texto pra eu corrigir.'; }
+function clearError(){ errorBox.style.display='none'; errorBox.textContent=''; }
+function showNotice(msg){ notice.style.display=msg?'block':'none'; notice.innerHTML=msg||''; }
+const tick = () => new Promise(r=>setTimeout(r,0));
+
+/* ---------- upload ---------- */
+function bindDrop(dz, input, onFiles){
+  dz.addEventListener('click',()=>input.click());
+  dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('is-dragover');});
+  dz.addEventListener('dragleave',()=>dz.classList.remove('is-dragover'));
+  dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('is-dragover');if(e.dataTransfer.files.length)onFiles(Array.from(e.dataTransfer.files));});
+  input.addEventListener('change',()=>{if(input.files.length)onFiles(Array.from(input.files));});
+}
+function refreshFiles(){
+  $('pdfName').innerHTML = pdfFile ? `<span class="file-chip">${esc(pdfFile.name)}</span>` : '';
+  dzPdf.classList.toggle('filled',!!pdfFile);
+  $('csvNames').innerHTML = csvFiles.map(f=>`<span class="file-chip">${esc(f.name)}</span>`).join(' ');
+  dzCsv.classList.toggle('filled',csvFiles.length>0);
+  runBtn.disabled = !pdfFile;
+}
+bindDrop(dzPdf,pdfInput,fs=>{ pdfFile=fs.find(f=>/\.pdf$/i.test(f.name))||fs[0]; refreshFiles(); });
+bindDrop(dzCsv,csvInput,fs=>{
+  fs.filter(f=>/\.csv$/i.test(f.name)).forEach(f=>{ if(!csvFiles.some(x=>x.name===f.name&&x.size===f.size)) csvFiles.push(f); });
+  refreshFiles();
+});
+runBtn.addEventListener('click',run);
+$('resetBtn').addEventListener('click',()=>{
+  pdfFile=null; csvFiles=[]; pdfInput.value=''; csvInput.value='';
+  refreshFiles(); clearError(); showNotice(''); progressWrap.style.display='none'; $('results').style.display='none'; setSteps(1);
+});
+
+/* ---------- CSV ---------- */
+function decodeBuf(buf){
+  const u=new Uint8Array(buf);
+  if(u[0]===0xFF&&u[1]===0xFE) return new TextDecoder('utf-16le').decode(buf.slice(2));
+  if(u[0]===0xFE&&u[1]===0xFF) return new TextDecoder('utf-16be').decode(buf.slice(2));
+  if(u.length>3&&u[1]===0&&u[3]===0) return new TextDecoder('utf-16le').decode(buf);
+  if(u[0]===0xEF&&u[1]===0xBB&&u[2]===0xBF) return new TextDecoder('utf-8').decode(buf.slice(3));
+  try{ return new TextDecoder('utf-8',{fatal:true}).decode(buf); }catch(e){ return new TextDecoder('windows-1252').decode(buf); }
+}
+function parseCSV(text){
+  const rows=[]; let row=[], f='', q=false;
+  for(let i=0;i<text.length;i++){
+    const c=text[i];
+    if(q){ if(c==='"'){ if(text[i+1]==='"'){f+='"';i++;} else q=false; } else f+=c; }
+    else if(c==='"') q=true;
+    else if(c===';'){ row.push(f); f=''; }
+    else if(c==='\n'||c==='\r'){
+      if(c==='\r'&&text[i+1]==='\n') i++;
+      row.push(f); f='';
+      if(row.length>1||row[0]!=='') rows.push(row);
+      row=[];
+    } else f+=c;
+  }
+  if(f!==''||row.length){ row.push(f); rows.push(row); }
+  return rows;
+}
+async function readBank(files){
+  const out=[], seen=new Set(); let ignoradas=0;
+  for(const file of files){
+    const rows=parseCSV(decodeBuf(await file.arrayBuffer()));
+    if(!rows.length) continue;
+    const head=rows[0].map(norm);
+    const ix=(name,fb)=>{ const i=head.findIndex(h=>h===name); return i>=0?i:fb; };
+    const iL=ix('LANCAMENTO',1), iD=ix('DATA MOVIMENTO',2), iV=ix('VALOR',5), iH=ix('HISTORICO',7), iC=ix('COMPLEMENTO',8), iA=ix('CONTA',11);
+    for(const r of rows.slice(1)){
+      const data=(r[iD]||'').trim(), val=(r[iV]||'').trim();
+      if(!/^\d{2}\/\d{2}\/\d{4}$/.test(data)||!/\d/.test(val)){ ignoradas++; continue; }
+      const texto=[r[iH],r[iC],r[iA]].map(x=>(x||'').replace(/\s+/g,' ').trim()).join(' ');
+      const nt=norm(texto);
+      let tipo=null, nome='';
+      if(/PAGAMENTO DE RESCISAO/.test(nt)){
+        tipo='resc';
+        const m=texto.match(/Pagamento de Rescis[^\s-]*\s*-\s*(.+?)(?:\s{2,}|$)/i);
+        nome=m?m[1].replace(/\s+(Rescis.*A Pagar)$/i,'').trim():'';
+      } else if(/FERIAS/.test(nt)) tipo='ferias';
+      else tipo='outro';
+      const bm=texto.match(/\[([^\]]+)\]/);
+      const rec={ lanc:(r[iL]||'').trim(), ms:parseDate(data), cents:toCents(val), banco:bm?bm[1]:'', tipo, nome, texto, compl:((r[iC]||'').replace(/\s+/g,' ').trim()||texto), arquivo:file.name };
+      const key=rec.lanc+'|'+data+'|'+rec.cents;
+      if(seen.has(key)) continue; seen.add(key);
+      out.push(rec);
+    }
+  }
+  return {bank:out, ignoradas};
+}
+
+/* ---------- PDF ---------- */
+async function getLines(page){
+  const content=await page.getTextContent();
+  const items=content.items.filter(it=>it.str!==undefined&&it.str.trim()!=='').map(it=>({str:it.str,x:it.transform[4],y:it.transform[5]}));
+  items.sort((a,b)=>b.y-a.y||a.x-b.x);
+  const lines=[]; let cur=null;
+  for(const it of items){
+    if(cur&&Math.abs(cur.y-it.y)<2) cur.items.push(it); else { cur={y:it.y,items:[it]}; lines.push(cur); }
+  }
+  lines.forEach(l=>{ l.items.sort((a,b)=>a.x-b.x); l.text=l.items.map(i=>i.str).join(' ').replace(/\s+/g,' ').trim(); });
+  return lines;
+}
+const RE_GOZO=/^(\d{3,6})\s+(.*?)\s*(\d{2}\/\d{2}\/\d{4})\s+a\s+(\d{2}\/\d{2}\/\d{4})\s+(\d{2}\/\d{2}\/\d{4})\s+a\s+(\d{2}\/\d{2}\/\d{4})\s+(\d{2}\/\d{2}\/\d{4})\s+(\d{2}\/\d{2}\/\d{4})\s+([\d.]+,\d{2})$/;
+
+async function readFolha(file){
+  const buf=await file.arrayBuffer();
+  const doc=await pdfjsLib.getDocument({data:buf}).promise;
+  const ferias=[], resc=[], desc=[];
+  let periodo=null, setor='', cur=null, cc='';
+  for(let p=1;p<=doc.numPages;p++){
+    const page=await doc.getPage(p);
+    const lines=await getLines(page);
+    const texts=lines.map(l=>l.text);
+    const isGozo=texts.some(t=>/Rela[çc][ãa]o de Funcion[áa]rios em Gozo de F[ée]rias/i.test(t));
+    const temColab=texts.some(t=>/Colaborador:/.test(t));
+    let cargoX=null;
+    if(isGozo){
+      for(const l of lines){ const it=l.items.find(i=>i.str.trim()==='Cargo'); if(it&&/Cadastro/.test(l.text)){ cargoX=it.x; break; } }
+    }
+    for(const l of lines){
+      const t=l.text;
+      if(!periodo){ const m=t.match(/Per[ií]odo:\s*(\d{2}\/\d{2}\/\d{4})\s*a\s*(\d{2}\/\d{2}\/\d{4})/); if(m) periodo={ini:m[1],fim:m[2]}; }
+      if(isGozo){
+        const ml=t.match(/Local:\s*(\d+)\s*,\s*(.+)$/); if(ml){ setor=ml[1]+' - '+ml[2].trim(); continue; }
+        const m=t.match(RE_GOZO);
+        if(m){
+          let nomeCargo=m[2], nome=nomeCargo, cargo='';
+          if(cargoX!==null){
+            const firstDate=l.items.findIndex(i=>/\d{2}\/\d{2}\/\d{4}/.test(i.str));
+            const pre=firstDate>0?l.items.slice(0,firstDate):l.items;
+            const n=pre.filter(i=>i.x<cargoX-2).map(i=>i.str).join(' ').replace(/^\s*\d{3,6}\s+/,'').trim();
+            const c=pre.filter(i=>i.x>=cargoX-2).map(i=>i.str).join(' ').trim();
+            if(n){ nome=n; cargo=c; }
+          }
+          ferias.push({ page:p, cad:m[1], nome:nome.replace(/\s+/g,' ').trim(), cargo, setor,
+            gozoIni:m[5], gozoFim:m[6], retorno:m[7], pagFolha:m[8], pagMs:parseDate(m[8]), cents:toCents(m[9]) });
+        }
+        continue;
+      }
+      if(!temColab) continue;
+      const cc1=t.match(/C\.Custo:\s*(\d+)\s*(.*)$/); if(cc1) cc=(cc1[1]+' '+cc1[2]).trim();
+      const mc=t.match(/Colaborador:\s*\d+\s*-\s*(\d+)\s*-\s*(.+?)\s+Admiss[ãa]o:/);
+      if(mc){
+        const dm=t.match(/Demiss[ãa]o:\s*(\d{2}\/\d{2}\/\d{4})/);
+        cur={ cad:mc[1], nome:mc[2].replace(/\s+/g,' ').trim(), demissao:dm?dm[1]:'', cc };
+      }
+      const id2=t.indexOf('Desconto Adto Férias');
+      if(id2!==-1&&cur){
+        const dv=t.slice(id2+'Desconto Adto Férias'.length).match(/([\d.]+,\d{2})/);
+        if(dv) desc.push({ page:p, cad:cur.cad, nome:cur.nome, cc:cur.cc, cents:toCents(dv[1]) });
+      }
+      const idx=t.indexOf('Líquido Rescisão');
+      if(idx!==-1&&cur){
+        const vm=t.slice(idx+'Líquido Rescisão'.length).match(/([\d.]+,\d{2})/);
+        if(vm) resc.push({ page:p, ...cur, cents:toCents(vm[1]) });
+      }
+    }
+    if(p%5===0||p===doc.numPages){
+      progressBar.style.width=Math.round(p/doc.numPages*100)+'%';
+      progressLabel.textContent=`Lendo página ${p} de ${doc.numPages}...`;
+      await tick();
+    }
+  }
+  return {ferias, resc, desc, periodo};
+}
+
+/* ---------- match: férias ---------- */
+function subsetSum(cands,target,maxK){
+  const sols=[], n=cands.length, suffix=new Array(n+1).fill(0);
+  for(let i=n-1;i>=0;i--) suffix[i]=suffix[i+1]+cands[i].cents;
+  const path=[]; let nodes=0;
+  (function dfs(i,rem){
+    if(sols.length>=200||nodes++>2e6) return;
+    if(rem===0){ if(path.length>=2) sols.push(path.slice()); return; }
+    if(i>=n||path.length>=maxK||suffix[i]<rem) return;
+    for(let j=i;j<n;j++){
+      if(cands[j].cents>rem) continue;
+      if(suffix[j]<rem) break;
+      path.push(cands[j]); dfs(j+1,rem-cands[j].cents); path.pop();
+    }
+  })(0,target);
+  return sols;
+}
+function matchFerias(folha,bank,thr,win){
+  const rows=folha.map((f,i)=>({f,i,b:null,tipo:null,lote:null,ambiguo:false}));
+  const bk=bank.filter(b=>b.tipo==='ferias').map((b,j)=>({...b,j,used:false}));
+  const pairPass=(maxDays)=>{
+    const cand=[];
+    rows.forEach(r=>{ if(r.b) return;
+      bk.forEach(b=>{ if(b.used||b.cents!==r.f.cents) return;
+        const ad=Math.abs(dayDiff(r.f.pagMs,b.ms));
+        if(maxDays===null||ad<=maxDays) cand.push({r,b,ad});
+      });
+    });
+    cand.sort((a,b)=>a.ad-b.ad||a.r.i-b.r.i);
+    cand.forEach(c=>{ if(c.r.b||c.b.used) return; c.r.b=c.b; c.b.used=true; c.r.tipo='individual'; });
+  };
+  pairPass(thr);                                        // A: valor igual e data próxima
+  [...bk].sort((a,b)=>a.ms-b.ms).forEach(b=>{           // B: lotes (soma)
+    if(b.used) return;
+    const cands=rows.filter(r=>!r.b&&r.f.cents<b.cents&&Math.abs(dayDiff(r.f.pagMs,b.ms))<=win)
+                    .map(r=>({r,cents:r.f.cents,ad:Math.abs(dayDiff(r.f.pagMs,b.ms))}))
+                    .sort((x,y)=>y.cents-x.cents);
+    if(cands.length<2) return;
+    const sols=subsetSum(cands,b.cents,8);
+    if(!sols.length) return;
+    const score=s=>s.reduce((a,c)=>a+c.ad,0);
+    sols.sort((x,y)=>score(x)-score(y)||x.length-y.length);
+    const best=sols[0];
+    const empate=sols.filter(s=>score(s)===score(best)&&s.length===best.length).length>1;
+    b.used=true;
+    best.forEach(c=>{ c.r.b=b; c.r.tipo='lote'; c.r.lote={n:best.length,total:b.cents,ref:b.lanc}; c.r.ambiguo=empate; });
+  });
+  pairPass(null);                                       // C: valor igual, qualquer data
+  return {rows,orfaos:bk.filter(b=>!b.used)};
+}
+
+/* ---------- match: rescisão ---------- */
+function matchResc(folha,bank){
+  const rows=folha.map((f,i)=>({f,i,b:null,tipo:null}));
+  const bk=bank.filter(b=>b.tipo==='resc').map(b=>({...b,used:false,key:tokKey(b.nome)}));
+  rows.forEach(r=>{ const k=tokKey(r.f.nome);
+    const b=bk.find(x=>!x.used&&x.key===k&&x.cents===r.f.cents);
+    if(b){ b.used=true; r.b=b; r.tipo='ok'; } });
+  rows.forEach(r=>{ if(r.b) return; const k=tokKey(r.f.nome);
+    const b=bk.find(x=>!x.used&&x.key===k);
+    if(b){ b.used=true; r.b=b; r.tipo='valor'; } });
+  return {rows,orfaos:bk.filter(b=>!b.used)};
+}
+
+/* ---------- render ---------- */
+function chip(cls,txt){ return `<span class="tag tag-${cls}">${esc(txt)}</span>`; }
+function setTable(key,tableEl,head,rows,htmlRows){
+  tables[key]={head,rows};
+  tableEl.innerHTML='<thead><tr>'+head.map(h=>`<th${h.num?' class="num"':''}>${esc(h.t)}</th>`).join('')+'</tr></thead><tbody>'+htmlRows.join('')+'</tbody>';
+}
+function render(folha,bank,thr,win,mf,mr){
+  const per=folha.periodo, iniMs=per?parseDate(per.ini):null;
+
+  /* férias */
+  const mesAno = per ? per.fim.slice(3).replace('/','.') : '';
+  const dataPl = per ? per.fim : '';
+  const descMap = new Map(); (folha.desc||[]).forEach(d=>descMap.set(d.cad,d));
+  const gozoCads = new Set(mf.rows.map(r=>r.f.cad));
+  const hist = nome => `FOLHA DE PAGAMENTO ${mesAno} - ${truncarNome(nome)}`;
+  const tsv = a => a.join('\t');
+  const blocos = bl => bl.filter(x=>x.length).map(x=>x.join('\n')).join('\n\n');
+  const bankLine = b => tsv([fmtDate(b.ms), b.compl||b.texto, fmtBRL(b.cents), '']);
+  const folhaLine = (nome,d,liq) => tsv([dataPl, hist(nome), '-'+fmtBRL(d.cents), (liq&&liq!==d.cents)?'-'+fmtBRL(liq):'']);
+  const byDate = (x,y) => x.ms-y.ms||x.cents-y.cents;
+  const alfa = (x,y) => x.localeCompare(y,'pt-BR');
+
+  // pares aceitos para a planilha: todos os funcionários do lançamento dentro do limite de alerta
+  const grpF=new Map();
+  mf.rows.forEach(r=>{ if(r.b){ if(!grpF.has(r.b)) grpF.set(r.b,[]); grpF.get(r.b).push(r); } });
+  const demB=new Set();
+  grpF.forEach((rs,b)=>{ if(!rs.every(r=>Math.abs(dayDiff(r.f.pagMs,b.ms))<=thr)) demB.add(b); });
+
+  const hF=[{t:'Cad.'},{t:'Funcionário'},{t:'Histórico (planilha)'},{t:'Desc. Adto Férias (folha)',num:1},{t:'Período de gozo'},{t:'Pgto folha'},{t:'Líquido pago',num:1},{t:'Restante a descontar',num:1},{t:'Pgto banco'},{t:'Histórico do pagamento (banco)'},{t:'Dif. dias',num:1},{t:'Tipo'},{t:'Situação'}];
+  const rowsF=[], htmlF=[]; let cOk=0,cAnt=0,cAtr=0,cRev=0,cSem=0,cAnterior=0,cSoDesc=0;
+  const pushRow = o=>{
+    rowsF.push([o.cad,o.nome,o.hist,o.desc,o.gozo,o.pgf,o.liq,o.rest,o.pb,o.hb,o.diff,o.tipo,o.sitTxt]);
+    htmlF.push(`<tr${o.cls}><td class="mono">${esc(o.cad)}</td><td>${esc(o.nome)}${o.sub?`<span class="small">${esc(o.sub)}</span>`:''}</td><td class="mono">${esc(o.hist)}</td><td class="num mono">${o.desc}</td><td class="mono">${esc(o.gozo)}</td><td class="mono">${o.pgf}</td><td class="num mono">${o.liq}</td><td class="num mono">${o.rest}</td><td class="mono">${esc(o.pb)}</td><td>${esc(o.hb)}</td><td class="num mono">${o.diff===''?'':(o.diff>0?'+':'')+o.diff}</td><td>${esc(o.tipo)}</td><td>${o.sit}</td></tr>`);
+  };
+  mf.rows.forEach(r=>{
+    const f=r.f, b=r.b, d=descMap.get(f.cad); let diff='', sit='', tipo='', pb='', hb='', cls='';
+    if(b){
+      diff=dayDiff(f.pagMs,b.ms); pb=fmtDateWd(b.ms); hb=b.compl||'';
+      tipo = r.tipo==='lote' ? `Lote: ${r.lote.n} func. = R$ ${fmtBRL(r.lote.total)}` : 'Individual';
+      if(Math.abs(diff)>thr){ sit=chip('bad',`Revisar · ${diff>0?'+':''}${diff} dias`); cRev++; }
+      else if(diff===0){ sit=chip('ok','No dia'); cOk++; }
+      else if(diff<0){ sit=chip('info',`Antecipado ${-diff} dia${-diff>1?'s':''}`); cAnt++; }
+      else { sit=chip('warn',`Atrasado ${diff} dia${diff>1?'s':''}`); cAtr++; }
+      if(r.ambiguo) sit+=' '+chip('warn','lote ambíguo');
+    } else {
+      cls=' class="nomatch"';
+      if(iniMs!==null&&f.pagMs<iniMs){ sit=chip('mute','Sem lançamento · pgto em mês anterior'); cAnterior++; }
+      else { sit=chip('bad','Sem lançamento no banco'); cSem++; }
+    }
+    const rest = d ? f.cents-d.cents : null;
+    pushRow({cad:f.cad,nome:f.nome,sub:f.cargo,hist:d?hist(f.nome):'',desc:d?fmtBRL(d.cents):'',gozo:`${f.gozoIni} a ${f.gozoFim}`,pgf:fmtDate(f.pagMs),liq:fmtBRL(f.cents),rest:rest!==null&&rest>0?fmtBRL(rest):'',pb,hb,diff,tipo,sit,sitTxt:sit.replace(/<[^>]+>/g,''),cls});
+  });
+  (folha.desc||[]).filter(d=>!gozoCads.has(d.cad)).forEach(d=>{
+    cSoDesc++;
+    const sit=chip('mute','Sem resumo de gozo · pago em competência anterior');
+    pushRow({cad:d.cad,nome:d.nome,sub:'',hist:hist(d.nome),desc:fmtBRL(d.cents),gozo:'',pgf:'',liq:'',rest:'',pb:'',hb:'',diff:'',tipo:'',sit,sitTxt:sit.replace(/<[^>]+>/g,''),cls:' class="nomatch"'});
+  });
+  setTable('ferias',$('tblFerias'),hF,rowsF,htmlF);
+
+  // layout da planilha — férias
+  const blkF1=[...grpF.entries()].filter(([b])=>!demB.has(b)).sort((x,y)=>byDate(x[0],y[0]))
+    .flatMap(([b,rs])=>[...rs.slice().sort((x,y)=>x.i-y.i).filter(r=>descMap.get(r.f.cad)).map(r=>folhaLine(r.f.nome,descMap.get(r.f.cad),r.f.cents)), bankLine(b)]);
+  const un=[];
+  mf.rows.forEach(r=>{ const d=descMap.get(r.f.cad); if(d&&!(r.b&&!demB.has(r.b))) un.push({h:hist(r.f.nome),nome:r.f.nome,d,liq:r.f.cents}); });
+  (folha.desc||[]).filter(d=>!gozoCads.has(d.cad)).forEach(d=>un.push({h:hist(d.nome),nome:d.nome,d,liq:0}));
+  const blkF2=un.sort((x,y)=>alfa(x.h,y.h)).map(u=>folhaLine(u.nome,u.d,u.liq));
+  const blkF3=[...mf.orfaos,...demB].sort(byDate).map(bankLine);
+  planilha.ferias=blocos([blkF1,blkF2,blkF3]);
+  $('prev-ferias').value=planilha.ferias;
+
+  /* rescisões */
+  const hR=[{t:'Cad.'},{t:'Funcionário'},{t:'C. custo'},{t:'Demissão'},{t:'Líquido folha',num:1},{t:'Pgto banco'},{t:'Histórico do pagamento (banco)'},{t:'Dias após demissão',num:1},{t:'Valor banco',num:1},{t:'Situação'}];
+  const rowsR=[], htmlR=[]; let rOk=0,rVal=0,rSem=0;
+  mr.rows.forEach(r=>{
+    const f=r.f,b=r.b; let sit='',pb='',hb='',dd='',vb='',cls='';
+    if(b){
+      pb=fmtDateWd(b.ms); hb=b.compl||''; vb=fmtBRL(b.cents);
+      if(f.demissao) dd=dayDiff(parseDate(f.demissao),b.ms);
+      if(r.tipo==='ok'){ sit=chip('ok','Conferido'); rOk++; }
+      else { sit=chip('bad',`Valor diferente (${fmtBRL(b.cents-f.cents)})`); rVal++; }
+    } else { cls=' class="nomatch"'; sit=chip('bad','Sem lançamento no banco'); rSem++; }
+    rowsR.push([f.cad,f.nome,f.cc,f.demissao,fmtBRL(f.cents),pb,hb,dd,vb,sit.replace(/<[^>]+>/g,'')]);
+    htmlR.push(`<tr${cls}><td class="mono">${esc(f.cad)}</td><td>${esc(f.nome)}</td><td>${esc(f.cc)}</td><td class="mono">${esc(f.demissao)}</td><td class="num mono">${fmtBRL(f.cents)}</td><td class="mono">${esc(pb)}</td><td>${esc(hb)}</td><td class="num mono">${dd}</td><td class="num mono">${vb}</td><td>${sit}</td></tr>`);
+  });
+  setTable('resc',$('tblResc'),hR,rowsR,htmlR);
+
+  // layout da planilha — rescisões
+  const folhaLineR = f => tsv([dataPl, hist(f.nome), '-'+fmtBRL(f.cents), '']);
+  const blkR1=mr.rows.filter(r=>r.b).sort((x,y)=>byDate(x.b,y.b)).flatMap(r=>[folhaLineR(r.f),bankLine(r.b)]);
+  const blkR2=mr.rows.filter(r=>!r.b).map(r=>({h:hist(r.f.nome),f:r.f})).sort((x,y)=>alfa(x.h,y.h)).map(o=>folhaLineR(o.f));
+  const blkR3=[...mr.orfaos].sort(byDate).map(bankLine);
+  planilha.resc=blocos([blkR1,blkR2,blkR3]);
+  $('prev-resc').value=planilha.resc;
+
+  /* banco sem par */
+  const orf=[...mf.orfaos.map(b=>({...b,t:'Férias'})),...mr.orfaos.map(b=>({...b,t:'Rescisão'}))].sort((a,b)=>a.ms-b.ms);
+  const hO=[{t:'Tipo'},{t:'Data banco'},{t:'Valor',num:1},{t:'Conta / lanç.'},{t:'Descrição'}];
+  const rowsO=orf.map(b=>[b.t,fmtDateWd(b.ms),fmtBRL(b.cents),`${b.banco||''} · lanç. ${b.lanc}`,b.nome||b.texto.replace(/^Valor ref\.\s*/i,'').replace(/\[[^\]]*\]\s*/,'')]);
+  const htmlO=orf.map(b=>`<tr><td>${chip('mute',b.t)}</td><td class="mono">${fmtDateWd(b.ms)}</td><td class="num mono">${fmtBRL(b.cents)}</td><td>${esc((b.banco||'')+' · lanç. '+b.lanc)}</td><td class="wrap">${esc(b.nome||b.texto.replace(/^Valor ref\.\s*/i,'').replace(/\[[^\]]*\]\s*/,''))}</td></tr>`);
+  setTable('orf',$('tblOrf'),hO,rowsO,htmlO);
+
+  $('cFerias').textContent=rowsF.length; $('cResc').textContent=mr.rows.length; $('cOrf').textContent=orf.length;
+  const totalF=mf.rows.reduce((a,r)=>a+r.f.cents,0);
+  const tot = (n,l)=>`<div class="summary-tile"><div class="n">${n}</div><div class="l">${l}</div></div>`;
+  $('stats').innerHTML =
+    tot(mf.rows.length,`funcionários em gozo de férias (R$ ${fmtBRL(totalF)})`) +
+    tot(cOk,'férias pagas no dia') + tot(cAnt,'férias antecipadas') + tot(cAtr,'férias atrasadas') +
+    tot(cRev,`férias para revisar (> ${thr} dias)`) + tot(cSem+cAnterior,'férias sem lançamento') + tot((folha.desc||[]).length,`descontos de adto férias na folha (${cSoDesc} sem resumo de gozo)`) +
+    tot(`${rOk}/${mr.rows.length}`,'rescisões conferidas') + tot(orf.length,'lançamentos do banco sem par');
+  $('resSub').textContent = (per?`Competência ${per.ini} a ${per.fim}. `:'')+
+    (cAnterior?`${cAnterior} funcionário(s) com pagamento na folha em mês anterior ao período não aparecem nos CSVs carregados. `:'')+
+    `${bank.length} lançamentos lidos dos CSVs.`;
+}
+
+/* ---------- fluxo ---------- */
+async function run(){
+  clearError(); showNotice('');
+  runBtn.disabled=true;
+  progressWrap.style.display='block'; progressBar.style.width='0%'; progressLabel.textContent='Lendo arquivos...';
+  try{
+    const thr=Math.max(0,parseInt($('thrField').value||'5',10));
+    const win=Math.max(0,parseInt($('winField').value||'7',10));
+    const {bank,ignoradas}=await readBank(csvFiles);
+    const folha=await readFolha(pdfFile);
+    const avisos=[];
+    if(!folha.ferias.length) avisos.push('Não encontrei o relatório "Relação de Funcionários em Gozo de Férias" neste PDF.');
+    if(!folha.resc.length) avisos.push('Não encontrei nenhum "Líquido Rescisão" neste PDF.');
+    if(!folha.periodo) avisos.push('Não achei a linha "Período:" no PDF.');
+    if(!csvFiles.length) avisos.push('Nenhum CSV do banco foi carregado: só o resumo da folha será mostrado.');
+    const outros=bank.filter(b=>b.tipo==='outro').length;
+    if(outros) avisos.push(`${outros} lançamento(s) dos CSVs não são de férias nem de rescisão e foram ignorados.`);
+    if(ignoradas) avisos.push(`${ignoradas} linha(s) dos CSVs sem data/valor válidos foram ignoradas.`);
+    showNotice(avisos.join('<br>'));
+    const mf=matchFerias(folha.ferias,bank,thr,win);
+    const mr=matchResc(folha.resc,bank);
+    render(folha,bank,thr,win,mf,mr);
+    $('results').style.display='block';
+    progressWrap.style.display='none';
+    setSteps(2);
+  }catch(e){ showError((e&&e.stack)?e.stack:String(e)); }
+  runBtn.disabled=!pdfFile;
+}
+
+/* ---------- abas, cópia, CSV ---------- */
+document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
+  document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x===t));
+  document.querySelectorAll('.pane').forEach(p=>p.classList.toggle('active',p.id==='pane-'+t.dataset.pane));
+}));
+const toTSV = k => [tables[k].head.map(h=>h.t),...tables[k].rows].map(r=>r.map(c=>String(c??'').replace(/[\t\n\r]+/g,' ')).join('\t')).join('\n');
+const toCSVtxt = k => [tables[k].head.map(h=>h.t),...tables[k].rows].map(r=>r.map(c=>'"'+String(c??'').replace(/"/g,'""')+'"').join(';')).join('\r\n');
+function flash(k,msg){
+  const el=document.createElement('div');
+  el.className='toast toast-ok'; el.textContent=msg; $('toastHost').appendChild(el);
+  setTimeout(()=>el.remove(),4000);
+}
+document.querySelectorAll('button[data-copy]').forEach(b=>b.addEventListener('click',async()=>{
+  const k=b.dataset.copy, txt=toTSV(k);
+  try{ await navigator.clipboard.writeText(txt); flash(k,`${tables[k].rows.length} linha(s) copiada(s). Já pode colar no Excel.`); }
+  catch(e){ const ta=document.createElement('textarea'); ta.value=txt; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); flash(k,`${tables[k].rows.length} linha(s) copiada(s).`); }
+}));
+document.querySelectorAll('button[data-csv]').forEach(b=>b.addEventListener('click',async()=>{
+  const k=b.dataset.csv, blob=new Blob(['\ufeff'+toCSVtxt(k)],{type:'text/csv;charset=utf-8'});
+  const nome={ferias:'ferias_folha_x_banco.csv',resc:'rescisoes_folha_x_banco.csv',orf:'banco_sem_par.csv'}[k];
+  await window.salvarArquivo(nome,blob);
+}));
+document.querySelectorAll('button[data-plan]').forEach(b=>b.addEventListener('click',async()=>{
+  const k=b.dataset.plan, txt=planilha[k];
+  try{ await navigator.clipboard.writeText(txt); }
+  catch(e){ const ta=document.createElement('textarea'); ta.value=txt; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); }
+  flash(k,`${txt?txt.split('\n').length:0} linha(s) copiada(s) no layout da planilha.`);
+}));
+refreshFiles();
+</script>
+</body>
+</html>
