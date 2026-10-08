@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Conciliação de IRRF s/ salário — VERSÃO: 1.0.0 — finalizado em 08/10/2026 (nova ferramenta: razão da conta 2405 × guias DARF 0561 → linhas de copiar e colar conciliadas no formato da planilha manual: bloco verde por DARF, saldo inicial e provisões do 140/139 alocados por FIFO). Base oficial estável: alterar somente o que for solicitado. -->
+<!-- Conciliação de IRRF s/ salário — VERSÃO: 1.7.0 — finalizado em 08/10/2026 (1.0.0: razão da conta 2405 × guias DARF 0561 → linhas de copiar e colar no formato da planilha manual, bloco verde por DARF, FIFO. 1.1.0: um só campo de anexos com reconhecimento do tipo de arquivo; leitura do relatório de IRRF e da folha (eventos 304/306/308/311); conciliação por competência folha × razão × relatório × guia × Transferência de Saldo; rastreio por colaborador; guia DARF só entra com valor que coincide com relatório ou razão; folha ainda não lançada vira provisão fora do razão automaticamente). 1.1.1: leitura do Comprovante de Arrecadação da Receita (data de arrecadação, principal/multa/juros do 0561, agrupado por Número do Documento; guias com multa/juros ficam ignoradas). 1.2.0: copiar e colar sem cor (Data · Histórico · Valor) e só com blocos validados; guia sem a provisão da competência nos arquivos vai para "Não validado" com o motivo. 1.3.0: guia DARF deixa de ser usada; o recolhimento passa a ser o total do relatório de IRRF (data = vencimento) conciliado com a folha, e o razão é só conferência. 1.4.0: blocos separados por tipo de IRRF (salários normal, férias, rescisão, 13º); o retido sem provisão vira "PROVISÃO FUTURA (a provisionar)" e a provisão da folha ainda não retida fica em "Provisão em aberto". 1.5.0: pagamento unificado (uma linha DARF IRRF por relatório) com provisões separadas por tipo e FIFO entre competências; arquivo de saldo em aberto (.json) para continuar mês a mês depois da carga do ano. 1.6.0: conciliação do ano validada com relatórios, folhas e razão reais (Dez/2025–Set/2026): provisões do razão em FIFO contra o total do relatório (pagamento único), sobra = provisão futura; arquivo de saldo em aberto v2. 1.7.0: linha "SALDO EM ABERTO" no fim do copiar e colar (provisão já lançada e ainda não quitada); sem arquivo de saldo em aberto nem implantação no razão o bloco não é gerado (evita FIFO errado). Base oficial estável: alterar somente o que for solicitado. -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -114,9 +114,7 @@ code.k{ background:var(--surface-alt); border:1px solid var(--border); padding:1
 .tab.is-active{ background:var(--accent-soft); color:var(--accent-strong); border-color:var(--accent); }
 .tab .cnt{ font-family:var(--font-mono); font-size:11px; margin-left:6px; opacity:.8; }
 .panel[hidden]{ display:none; }
-table.copy tr.verde td:not(.out){ background:#92D050; color:#111; }
 table.copy td.neg{ color:var(--danger); }
-table.copy tr.verde td.neg{ color:#b00020; }
 table.copy tr.sepr td{ height:14px; padding:0; background:var(--surface); }
 table.copy td{ background:var(--surface); font-family:var(--font-mono); font-size:12.5px; }
 table.copy td.out{ background:var(--surface); color:var(--muted); font-family:var(--font-body); font-size:12px; border-left:2px solid var(--border); }
@@ -127,45 +125,32 @@ td input[type="text"]{ padding:5px 7px; font-size:12.5px; min-width:98px; font-f
 details{ margin-top:12px; font-size:12.5px; color:var(--muted); }
 details pre{ white-space:pre-wrap; background:var(--surface-alt); border:1px solid var(--border); padding:10px; border-radius:8px; max-height:220px; overflow:auto; font-family:var(--font-mono); font-size:11.5px; }
 .ver{ text-align:center; color:var(--muted); font-size:12px; margin-top:24px; }
-</style>
+</style>table.copy tr.saldo-linha td{ font-style:italic; border-top:2px solid var(--border); }
+
 </head>
 <body>
 <div class="app-shell">
   <header class="topbar"><div class="topbar-inner">
-    <div class="brand"><div class="brand-mark">IR</div><div><h1>Conciliação de IRRF s/ salário</h1><p>Centro Médico Cirúrgico de Catalão · conta 2405 · Razão × Guias DARF 0561 × Provisão</p></div></div>
+    <div class="brand"><div class="brand-mark">IR</div><div><h1>Conciliação de IRRF s/ salário</h1><p>Centro Médico Cirúrgico de Catalão · conta 2405 · Folha × Relatório de IRRF (razão como conferência)</p></div></div>
     <div class="steps-pills" id="pills">
-      <span class="step-pill is-active" data-p="1">1 · Razão</span><span class="step-pill" data-p="2">2 · Guias</span><span class="step-pill" data-p="3">3 · Resultado</span>
+      <span class="step-pill is-active" data-p="1">1 · Arquivos</span><span class="step-pill" data-p="2">2 · Resultado</span>
     </div>
   </div></header>
 
   <section class="step-card" id="s1">
-    <div class="step-head"><div class="step-num">1</div><div><h2>Razão da conta 2405</h2><p class="step-sub">Aceita o layout curto (Data movimento; Complemento; Valor débito; Valor crédito — com ou sem a coluna Valor) e o layout completo do Tasy (23 colunas, UTF-16). A codificação é detectada sozinha. Reconhece: Implantação de Saldo, Parcelamento, IRRF SALARIOS A RECOLHER (hist. 140), IRRF FERIAS (hist. 139) e Transferência de Saldo (pagamento).</p></div></div>
-    <div class="dropzone" id="dzRazao"><strong>Arraste o CSV/TXT do razão aqui</strong><span>ou clique para escolher o arquivo</span></div>
-    <input type="file" id="fRazao" accept=".csv,.txt" hidden>
-    <div id="razaoInfo"></div>
-  </section>
-
-  <section class="step-card" id="s2" data-locked="true">
-    <div class="step-head"><div class="step-num">2</div><div><h2>Guias DARF 0561 — opcional</h2><p class="step-sub">Com as guias, a data da linha "DARF IRRF" é a do pagamento real (o razão lança a "Transferência de Saldo" em outra data) e guias ainda não lançadas no razão também geram bloco. Sem guias, cada Transferência de Saldo do razão vira um bloco com a data do razão. Os campos podem ser corrigidos na tabela.</p></div></div>
-    <div class="dropzone" id="dzGuias"><strong>Arraste os PDFs dos DARF aqui</strong><span>vários arquivos de uma vez · ou clique para escolher · leitura aproximada: confira data e valor</span></div>
-    <input type="file" id="fGuias" accept=".pdf" multiple hidden>
-    <div class="actions-row"><button class="btn-secondary" id="btnAddGuia" type="button">+ Adicionar guia manualmente</button><span class="hint" id="guiasHint"></span></div>
-    <div id="guiasBox"></div>
-    <fieldset>
-      <legend>Provisões ainda não lançadas no razão (opcional)</legend>
-      <p class="hint" style="margin:0 0 4px">Ex.: IRRF da folha do mês corrente, ainda não contabilizada. Entram na fila apenas para guias com data posterior à da provisão. Tipo 140 = eventos 304 + 308; tipo 139 = evento 311.</p>
-      <div class="actions-row" style="margin-top:8px"><button class="btn-secondary" id="btnAddExtra" type="button">+ Adicionar provisão</button></div>
-      <div id="extrasBox"></div>
-    </fieldset>
+    <div class="step-head"><div class="step-num">1</div><div><h2>Arquivos do mês</h2><p class="step-sub">Anexe tudo de uma vez — o tipo de cada arquivo é reconhecido pelo conteúdo: <b>folha</b> (Relação de Cálculo) e <b>relatório de IRRF</b> (Imposto de Renda Colaboradores), que são a base da conciliação, e o <b>razão da conta 2405</b> (CSV/TXT do Tasy), usado só para conferir se a provisão lançada bate com a folha. Guias DARF não são usadas. <b>Primeira vez:</b> anexe os relatórios e as folhas do ano todo (a partir de dezembro do ano anterior), o razão do período e, se o razão não trouxer a implantação de saldo, o arquivo de saldo inicial (.json); o painel concilia mês a mês e permite baixar o <b>saldo em aberto</b>. <b>Nos meses seguintes:</b> anexe só a folha e o relatório do mês, mais o arquivo de saldo em aberto do mês anterior (.json) e o razão.</p></div></div>
+    <div class="dropzone" id="dzArq"><strong>Arraste os arquivos aqui</strong><span>folha e relatório de IRRF (.pdf) · razão (.csv/.txt) · saldo em aberto (.json) · ou clique para escolher</span></div>
+    <input type="file" id="fArq" accept=".csv,.txt,.pdf,.json" multiple hidden>
+    <div id="arqInfo"></div>
   </section>
 
   <section class="step-card" id="s4" data-locked="true">
-    <div class="step-head"><div class="step-num">3</div><div><h2>Resultado</h2><p class="step-sub" id="resSub">—</p></div></div>
+    <div class="step-head"><div class="step-num">2</div><div><h2>Resultado</h2><p class="step-sub" id="resSub">—</p></div></div>
     <div class="summary-grid" id="tiles"></div>
     <div class="tabs" id="tabs"></div>
     <div id="panels"></div>
   </section>
-  <div class="ver">Conciliação de IRRF s/ salário · v1.0.0 · Contabilidade Integrada</div>
+  <div class="ver">Conciliação de IRRF s/ salário · v1.7.0 · Contabilidade Integrada</div>
 </div>
 <div class="toast-host" id="toasts"></div>
 
@@ -358,27 +343,132 @@ function classify(l) {
 }
 function reclassify(lines) { lines.forEach(l => { l.cat = classify(l); }); return lines; }
 
-/* ---------- guias DARF (texto extraído do PDF) — leitura aproximada, sempre conferir ---------- */
+/* ---------- leitura dos PDFs (texto já extraído pelo pdf.js) ---------- */
+const MONEYRE = '(\\d{1,3}(?:\\.\\d{3})*,\\d{2})';
+function tipoArquivoTexto(txt) {
+  if (/Imposto de Renda Colaboradores/i.test(txt) && /Total IR Retido|Valores Para Recolhimento/i.test(txt)) return 'relatorio';
+  if (/Rela[cç][aã]o de C[aá]lculo/i.test(txt) && /Colaborador:/i.test(txt)) return 'folha';
+  if (/FGTS Digital|Guia de Recolhimento do FGTS|Total da Guia/i.test(txt)) return 'fgts';
+  return 'darf';
+}
+function periodoComp(txt) {
+  const m = /Per[ií]odo(?: Pagto)?\s*(?:=>)?\s*:?\s*(?:De:)?\s*(\d{2})\/(\d{2})\/(\d{4})\s+a\s+(\d{2}\/\d{2}\/\d{4})/i.exec(txt);
+  return m ? { comp: m[2] + '/' + m[3], de: parseDate(m[1] + '/' + m[2] + '/' + m[3]), ate: parseDate(m[4]) } : null;
+}
+/* relatório "Imposto de Renda Colaboradores" (FPRE001.IRF) */
+function parseRelatorioIrrf(txt, nome) {
+  const t = txt.replace(/ /g, ' ');
+  const r = { nome, comp: '', venc: null, total: null, regs: [], porOrigem: {}, soma: 0, avisos: [] };
+  const per = periodoComp(t); if (per) r.comp = per.comp; else r.avisos.push('Período do relatório não encontrado.');
+  let m = /Valores Para Recolhimento em:\s*(\d{2}\/\d{2}\/\d{4})/i.exec(t); if (m) r.venc = parseDate(m[1]);
+  m = new RegExp('Total IR Retido:\\s*' + MONEYRE, 'i').exec(t); if (m) r.total = parseNum(m[1]);
+  const M = MONEYRE;
+  const re = new RegExp('(?:^|\\s)(\\d{4})\\s+(\\d{2}\\/\\d{2}\\/\\d{4})\\s+(\\d{2})\\s+([NFD])\\s+(\\d{2})\\s+' + M + '\\s+' + M + '\\s+' + M + '\\s+' + M + '\\s+[NS]\\s+\\d{2}\\/\\d{2}\\/\\d{4}\\s+(.+?)\\s*$');
+  let cod = '', nm = '';
+  t.split(/\r?\n/).forEach(ln => {
+    const mm = re.exec(ln); if (!mm) return;
+    const pre = ln.slice(0, mm.index).trim();
+    const pm = /^\d\s+(\d{3,6})\s+(.+)$/.exec(pre);
+    if (pm) { cod = pm[1]; nm = pm[2].trim(); }
+    const tp = mm[4], or = tp === 'D' ? '13' : mm[5];
+    const reg = { cod, nome: nm, receita: mm[1], dataPag: parseDate(mm[2]), tp, or, base: parseNum(mm[6]), valor: parseNum(mm[7]), desc: mm[10] };
+    r.regs.push(reg);
+    r.porOrigem[or] = r2((r.porOrigem[or] || 0) + reg.valor);
+    r.soma = r2(r.soma + reg.valor);
+  });
+  if (!r.regs.length) r.avisos.push('Nenhum registro de IRRF reconhecido no relatório.');
+  if (r.total != null && Math.abs(r.total - r.soma) > 0.005) r.avisos.push('Soma dos registros (' + fmtBR(r.soma) + ') difere do "Total IR Retido" (' + fmtBR(r.total) + ') — confira.');
+  if (r.regs.some(g => g.receita !== '0561')) r.avisos.push('Há registros com receita diferente de 0561.');
+  return r;
+}
+/* folha "Relação de Cálculo" (FPRF002.OPE): eventos 304 / 306 / 308 / 311 por colaborador */
+function parseFolha(txt, nome) {
+  const t = txt.replace(/ /g, ' ');
+  const f = { nome, comp: '', colab: new Map(), tot: {}, soma: { 304: 0, 306: 0, 308: 0, 311: 0 }, tipos: [], avisos: [] };
+  const per = periodoComp(t); if (per) f.comp = per.comp; else f.avisos.push('Período da folha não encontrado.');
+  const EV = ['304', '306', '308', '311'];
+  let cur = null, inTot = false;
+  const reDet = /(?:^|\s)(304|306|308|311)\s+0\d\s+(.*)$/;
+  const reRes = new RegExp('(?:^|\\s)(304|306|308|311)\\s+([A-Za-zÀ-ÿ][^\\d]*(?:\\d{2}[oº°]\\s*Sal[aá]rio)?[^\\d]*?)\\s+' + MONEYRE + '\\b');
+  t.split(/\r?\n/).forEach(ln => {
+    let m = /Tipo:\s*(.+?)\s*$/.exec(ln); if (m && /Per[ií]odo:/.test(ln)) { const tp = m[1]; if (!f.tipos.includes(tp)) f.tipos.push(tp); }
+    m = /Colaborador:\s*\d+\s*-\s*(\d+)\s*-\s*(.+?)\s+Admiss/.exec(ln);
+    if (m) { inTot = false; cur = f.colab.get(m[1]); if (!cur) { cur = { cod: m[1], nome: m[2].trim(), e304: 0, e306: 0, e308: 0, e311: 0 }; f.colab.set(m[1], cur); } return; }
+    if (/C\.Custo:\s*Total da Empresa/i.test(ln)) { inTot = true; cur = null; return; }
+    if (/^\s*C\.Custo:/i.test(ln)) { inTot = false; cur = null; return; }
+    if (inTot) {
+      m = reRes.exec(ln);
+      if (m && !(m[1] in f.tot)) f.tot[m[1]] = parseNum(m[3]);
+      return;
+    }
+    if (!cur) return;
+    m = reDet.exec(ln);
+    if (m) { const vals = m[2].match(new RegExp(MONEYRE, 'g')); if (vals) cur['e' + m[1]] = r2(cur['e' + m[1]] + parseNum(vals[vals.length - 1])); }
+  });
+  f.colab.forEach(c => EV.forEach(e => { f.soma[e] = r2(f.soma[e] + c['e' + e]); }));
+  if (!f.colab.size) f.avisos.push('Nenhum colaborador reconhecido na folha.');
+  EV.forEach(e => { if (e in f.tot && Math.abs(f.tot[e] - f.soma[e]) > 0.005) f.avisos.push('Evento ' + e + ': soma por colaborador (' + fmtBR(f.soma[e]) + ') difere do "Total da Empresa" (' + fmtBR(f.tot[e]) + ') — confira.'); });
+  if (f.tipos.some(x => !/C[aá]lculo Mensal/i.test(x))) f.avisos.push('Há tipos de cálculo além do Mensal (' + f.tipos.join(', ') + ').');
+  return f;
+}
+/* guias DARF: "Comprovante de Arrecadação" da Receita (um documento pode ter várias páginas) — só os documentos com o código 0561 */
 function parseDarfText(txt, nome) {
   const t = txt.replace(/ /g, ' ');
-  const MONEY = /\d{1,3}(?:\.\d{3})*,\d{2}/g;
   const pages = t.split(/\n\s*\n/).filter(p => p.trim());
-  const out = [];
+  const MONEY = new RegExp(MONEYRE, 'g');
+  const docs = new Map(), out = [];
+  const val = x => (x == null || x === '-' ? 0 : parseNum(x));
   pages.forEach((pg, pi) => {
     const lines = pg.split(/\r?\n/);
-    const idx = lines.findIndex(l => /(^|\D)0561(\D|$)/.test(l));
-    if (idx < 0) return;
-    const g = { nome: nome + (pages.length > 1 ? ' (pág. ' + (pi + 1) + ')' : ''), id: '', paga: null, total: 0, avisos: [], raw: pg };
-    let m = /(?:Data (?:de )?(?:Pagamento|Arrecada[cç][aã]o)|Pago em|Arrecadado em)[^\d]{0,40}(\d{2}\/\d{2}\/\d{4})/i.exec(pg);
-    if (m) g.paga = parseDate(m[1]); else g.avisos.push('Data do pagamento não encontrada — preencha manualmente.');
-    m = /\b(\d{2}\.\d{3}\.\d{5}\.\d\b|\d{17,}\b)/.exec(pg); if (m) g.id = m[1];
-    let vals = (lines[idx].match(MONEY) || []);
-    if (!vals.length && lines[idx + 1]) vals = (lines[idx + 1].match(MONEY) || []);
-    if (vals.length) { g.total = parseNum(vals[vals.length - 1]); g.avisos.push('Valor lido na linha do código 0561 (último valor da linha) — confira se é o total do 0561.'); }
-    else g.avisos.push('Valor do código 0561 não encontrado — preencha manualmente.');
+    const mh = /Per[ií]odo Apura[cç][aã]o[^\n]*\n\s*(\d{2}\/\d{2}\/\d{4})\s+(\d{2}\/\d{2}\/\d{4})\s+(\d{12,})/i.exec(pg);
+    if (mh) {
+      const id = mh[3];
+      let d = docs.get(id);
+      if (!d) { d = { id, apuracao: parseDate(mh[1]), venc: parseDate(mh[2]), paga: null, p: 0, m: 0, j: 0, tot: 0, n561: 0, paginas: [] }; docs.set(id, d); }
+      const ma = /Data de Arrecada[cç][aã]o[^\n]*\n[^\n]*?(\d{2}\/\d{2}\/\d{4})\s*$/im.exec(pg);
+      if (ma && d.paga == null) d.paga = parseDate(ma[1]);
+      d.paginas.push(pg);
+      lines.forEach(ln => {
+        if (!/^\s*0561\s/.test(ln)) return;
+        const tk = ln.trim().split(/\s+/), q = tk.slice(-4);
+        if (q.length < 4 || !q.every(x => x === '-' || /^\d{1,3}(?:\.\d{3})*,\d{2}$/.test(x))) return;
+        d.p = r2(d.p + val(q[0])); d.m = r2(d.m + val(q[1])); d.j = r2(d.j + val(q[2])); d.tot = r2(d.tot + val(q[3])); d.n561++;
+      });
+      return;
+    }
+    /* página fora do padrão do comprovante: leitura aproximada */
+    const idx = lines.findIndex(l => /(^|\D)0561(\D|$)/.test(l)); if (idx < 0) return;
+    const cand = []; (pg.match(MONEY) || []).forEach(v => { const n = parseNum(v); if (!cand.includes(n)) cand.push(n); });
+    const datas = []; (pg.match(/\d{2}\/\d{2}\/\d{4}/g) || []).forEach(x => { if (!datas.includes(x)) datas.push(x); });
+    const g = { nome: nome + ' (pág. ' + (pi + 1) + ')', id: '', paga: null, total: 0, cand, datas, avisosBase: [], nota: '', raw: pg, auto: true, manual: false, ignorar: false, comEncargos: false, regular: false };
+    const m = /(?:Data (?:de |do )?(?:Pagamento|Arrecada[cç][aã]o|Opera[cç][aã]o|D[eé]bito)|Pago em|Pagamento em|Debitado em|Efetivad[oa] em)\D{0,40}(\d{2}\/\d{2}\/\d{4})/i.exec(pg);
+    if (m) g.paga = parseDate(m[1]); else g.avisosBase.push('Data do pagamento não encontrada' + (datas.length ? ' (datas na página: ' + datas.join(', ') + ')' : '') + ' — preencha manualmente.');
+    const vals = lines[idx].match(MONEY) || [];
+    g.totalLinha = vals.length ? parseNum(vals[vals.length - 1]) : 0;
+    out.push(g);
+  });
+  docs.forEach(d => {
+    if (!d.n561) return;
+    const enc = r2(d.m + d.j);
+    const g = { nome: nome + ' · doc ' + d.id.slice(-8), id: d.id, paga: d.paga, comp: d.apuracao != null ? compOf(d.apuracao) : '', apuracao: d.apuracao, venc: d.venc, total: d.p, principal: d.p, multa: d.m, juros: d.j,
+      cand: [d.p].concat(enc > 0.004 ? [d.tot] : []), datas: [], avisosBase: [], nota: '', raw: d.paginas.join('\n\n'), auto: true, manual: false, ignorar: false, comEncargos: enc > 0.004, regular: enc <= 0.004, totalLinha: d.p };
+    if (d.paga == null) g.avisosBase.push('Data de arrecadação não encontrada — preencha manualmente.');
+    if (g.comEncargos) g.avisosBase.push('0561 com multa ' + fmtBR(d.m) + ' e juros ' + fmtBR(d.j) + ' (principal ' + fmtBR(d.p) + ').');
     out.push(g);
   });
   return out;
+}
+/* decide quais guias entram: valor que coincide com o total de um relatório de IRRF ou com uma Transferência de Saldo do razão; ou guia regular (sem multa/juros) */
+function applyAnchors(guias, anchors) {
+  guias.forEach(g => {
+    if (!g.auto || g.manual) return;
+    g.ignorar = false; g.nota = '';
+    const hit = g.cand.find(v => anchors.some(a => Math.abs(a.valor - v) < 0.005));
+    if (hit != null) { g.total = hit; g.nota = 'Valor confere com ' + anchors.find(a => Math.abs(a.valor - hit) < 0.005).rotulo + '.'; return; }
+    if (g.regular) { g.total = g.principal; g.nota = 'Guia 0561 regular (sem multa nem juros)' + (g.comp ? ' do período de apuração ' + g.comp : '') + '; nenhum relatório/razão carregado tem o mesmo valor.'; return; }
+    if (g.principal == null && !anchors.length) { g.total = g.totalLinha; g.nota = g.totalLinha ? 'Valor lido na linha do código 0561 (último valor da linha) — confira.' : 'Valor do 0561 não encontrado — preencha manualmente.'; return; }
+    g.ignorar = true; g.total = g.principal != null ? g.principal : g.totalLinha;
+  });
 }
 
 /* ---------- conciliação ---------- */
@@ -389,10 +479,208 @@ function labelIni(sIni, parc) {
   return 'Saldo inicial IRRF s/ salário (parcelamento ' + tp + ')';
 }
 
+function folhaPorComp(folhas) {
+  const m = new Map();
+  (folhas || []).forEach(f => {
+    if (!f.comp) return;
+    const v = m.get(f.comp) || { e304: 0, e306: 0, e308: 0, e311: 0, v140: 0, v139: 0, nomes: [] };
+    ['304', '306', '308', '311'].forEach(e => { v['e' + e] = r2(v['e' + e] + (f.soma[e] || 0)); });
+    v.v140 = r2(v.e304 + v.e308); v.v139 = v.e311; v.nomes.push(f.nome);
+    m.set(f.comp, v);
+  });
+  return m;
+}
+function relPorComp(rels) {
+  const m = new Map();
+  (rels || []).forEach(r => {
+    if (!r.comp) return;
+    const v = m.get(r.comp) || { porOrigem: {}, total: 0, venc: null, nomes: [], totalDeclarado: 0 };
+    Object.keys(r.porOrigem).forEach(k => { v.porOrigem[k] = r2((v.porOrigem[k] || 0) + r.porOrigem[k]); });
+    v.total = r2(v.total + r.soma); v.totalDeclarado = r2(v.totalDeclarado + (r.total != null ? r.total : r.soma));
+    if (r.venc != null && (v.venc == null || r.venc > v.venc)) v.venc = r.venc;
+    v.nomes.push(r.nome); m.set(r.comp, v);
+  });
+  return m;
+}
+/* conciliação por competência: folha × razão × relatório × guia 0561 × Transferência de Saldo */
+function montaConc(lines, folhaMes, rels, G, pagLines, avisos) {
+  const relMes = relPorComp(rels);
+  const prov = new Map();
+  lines.forEach(l => {
+    if (l.cat !== 'IRRF SALÁRIOS (140)' && l.cat !== 'IRRF FÉRIAS (139)') return;
+    const k = compOf(l.data), v = prov.get(k) || { r140: 0, r139: 0 };
+    if (l.cat === 'IRRF FÉRIAS (139)') v.r139 = r2(v.r139 + l.cred); else v.r140 = r2(v.r140 + l.cred);
+    prov.set(k, v);
+  });
+  const comps = new Set([...folhaMes.keys(), ...relMes.keys(), ...prov.keys()]);
+  const key = c => +c.slice(3) * 100 + +c.slice(0, 2);
+  const usedG = new Set(), usedP = new Set();
+  const rows = [...comps].sort((a, b) => key(a) - key(b)).map(comp => {
+    const f = folhaMes.get(comp) || null, r = relMes.get(comp) || null, p = prov.get(comp) || null;
+    const row = { comp, temFolha: !!f, temRel: !!r, temProv: !!p,
+      f140: f ? f.v140 : null, f139: f ? f.v139 : null, f306: f ? f.e306 : null,
+      r140: p ? p.r140 : null, r139: p ? p.r139 : null, prov: p ? r2(p.r140 + p.r139) : null,
+      difFolha: null, org: r ? r.porOrigem : null, relTotal: r ? r.total : null, venc: r ? r.venc : null,
+      guia: null, guiaData: null, guiaNome: '', difRelGuia: null, transf: null, transfData: null, difGuiaTransf: null, provMenosRel: null, dif139: null, notas: [] };
+    if (f && p) row.difFolha = r2(f.v140 + f.v139 - row.prov);
+    if (r) {
+      row.dif139 = p ? r2(p.r139 - (r.porOrigem['07'] || 0)) : null;
+      const gi = G.findIndex((g, i) => !usedG.has(i) && Math.abs(g.total - r.total) < 0.005);
+      let gj = gi;
+      if (gj < 0) gj = G.findIndex((g, i) => !usedG.has(i) && g.comp === comp);
+      if (gj >= 0) { usedG.add(gj); const g = G[gj]; row.guia = r2(g.total); row.guiaData = g.paga; row.guiaNome = g.id || g.nome; row.difRelGuia = r2(r.total - g.total); if (Math.abs(row.difRelGuia) >= 0.005) row.notas.push('DIFERENÇA relatório × guia ' + fmtBR(row.difRelGuia)); }
+      const alvo = row.guia != null ? row.guia : r.total;
+      const pi = pagLines.findIndex((l, i) => !usedP.has(i) && Math.abs(l.deb - alvo) < 0.005);
+      if (pi >= 0) { usedP.add(pi); row.transf = r2(pagLines[pi].deb); row.transfData = pagLines[pi].data; if (row.guia != null) row.difGuiaTransf = r2(row.guia - row.transf); }
+      if (p) row.provMenosRel = r2(row.prov - alvo); else if (f) row.provMenosRel = r2(f.v140 + f.v139 - alvo);
+    }
+    /* situação */
+    const n = row.notas;
+    if (f && p) n.push(Math.abs(row.difFolha) < 0.005 ? 'Folha = razão' : 'DIFERENÇA folha × razão ' + fmtBR(row.difFolha));
+    else if (f && !p) n.push(lines.length ? 'Folha ainda não lançada no razão' : 'Sem razão');
+    else if (!f && p) n.push('Sem folha carregada');
+    if (r) {
+      if (row.guia != null) n.push(row.transf != null ? 'Relatório = guia = Transferência de Saldo (' + fmtDate(row.transfData) + ')' : 'Relatório = guia; sem Transferência de Saldo no razão');
+      else n.push(row.transf != null ? 'Relatório = Transferência de Saldo (' + fmtDate(row.transfData) + '); guia não carregada' : 'A RECOLHER ' + (r.venc != null ? 'em ' + fmtDate(r.venc) : '') + ' – sem guia nem Transferência de Saldo');
+      if (row.provMenosRel != null) n.push(Math.abs(row.provMenosRel) < 0.005 ? 'Provisão = recolhimento' : 'Provisão − recolhimento ' + fmtBR(row.provMenosRel) + ' (timing por colaborador: ver Rastreio)');
+    }
+    const ruim = n.some(x => /^DIFEREN/.test(x));
+    row.situ = (ruim ? 'REVISAR – ' : (r && row.guia != null && row.transf != null && row.provMenosRel != null && Math.abs(row.provMenosRel) < 0.005 && f && p && Math.abs(row.difFolha) < 0.005 ? 'OK – ' : '')) + n.join('; ');
+    row.stCurto = ruim ? 'REVISAR' : (r && row.guia == null && row.transf == null ? 'A RECOLHER' : (row.provMenosRel != null && Math.abs(row.provMenosRel) >= 0.005 ? 'CONFERE – timing da provisão' : (r || (f && p) ? 'OK' : 'PARCIAL – falta arquivo')));
+    return row;
+  });
+  const sobra = G.filter((g, i) => !usedG.has(i));
+  if (sobra.length && rels.length) avisos.push('Guia(s) sem relatório de mesmo valor: ' + sobra.map(g => fmtBR(g.total)).join('; ') + ' (relatório da competência não carregado ou valor diferente).');
+  return rows;
+}
+/* rastreio por colaborador: folha (304/306/308/311) × relatório de IRRF (por origem) */
+function montaRastreio(folhas, rels) {
+  const comps = new Set([...(folhas || []).map(f => f.comp), ...(rels || []).map(r => r.comp)].filter(Boolean));
+  const key = c => +c.slice(3) * 100 + +c.slice(0, 2);
+  return [...comps].sort((a, b) => key(a) - key(b)).map(comp => {
+    const fs = (folhas || []).filter(f => f.comp === comp), rs = (rels || []).filter(r => r.comp === comp);
+    const m = new Map();
+    const get = (cod, nome) => { let x = m.get(cod); if (!x) { x = { cod, nome, f304: 0, f306: 0, f308: 0, f311: 0, r01: 0, r05: 0, r07: 0, r08: 0, r13: 0, rx: 0 }; m.set(cod, x); } if (!x.nome && nome) x.nome = nome; return x; };
+    fs.forEach(f => f.colab.forEach(c => { const x = get(c.cod, c.nome); x.f304 = r2(x.f304 + c.e304); x.f306 = r2(x.f306 + c.e306); x.f308 = r2(x.f308 + c.e308); x.f311 = r2(x.f311 + c.e311); }));
+    rs.forEach(r => r.regs.forEach(g => { const x = get(g.cod, g.nome); const k = { '01': 'r01', '05': 'r05', '07': 'r07', '08': 'r08', '13': 'r13' }[g.or] || 'rx'; x[k] = r2(x[k] + g.valor); }));
+    const rows = [...m.values()].map(x => {
+      x.folha = r2(x.f304 + x.f308 + x.f311); x.rel = r2(x.r01 + x.r05 + x.r07 + x.r08 + x.r13 + x.rx);
+      x.dif = r2(x.folha - x.rel);
+      x.difNormal = r2(x.f304 - (x.r01 + x.r08)); x.difFerias = r2((x.f308 + x.f311) - (x.r05 + x.r07));
+      const dn = Math.abs(x.difNormal) > 0.005, df = Math.abs(x.difFerias) > 0.005;
+      if (!dn && !df && Math.abs(x.f306 - x.r13) < 0.005) { x.st = 'OK'; x.motivo = ''; }
+      else if (x.folha > 0.004 && x.rel < 0.005 && !x.f306) { x.st = 'SÓ NA FOLHA'; x.motivo = 'Há IRRF na folha e nada no relatório do período (retenção em outra data de pagamento?).'; }
+      else if (x.rel > 0.004 && x.folha < 0.005 && !x.r13) { x.st = 'SÓ NO RELATÓRIO'; x.motivo = x.r08 > 0.004 ? 'Rescisão (origem 08) retida no período sem IRRF no cálculo mensal da folha.' : 'Há retenção no relatório e nada na folha do período (ex.: férias provisionadas em outro mês).'; }
+      else { x.st = 'DIFERENÇA'; x.motivo = (dn && df ? 'Normal/rescisão (304 × 01+08) e férias (308+311 × 05+07)' : dn ? 'Normal/rescisão: folha 304 × relatório 01+08' : df ? 'Férias: folha 308+311 × relatório 05+07 (data de pagamento)' : '13º: folha 306 × relatório D') + '.'; }
+      return x;
+    }).sort((a, b) => (a.st === 'OK') - (b.st === 'OK') || +a.cod - +b.cod);
+    const tot = { f304: 0, f306: 0, f308: 0, f311: 0, folha: 0, r01: 0, r05: 0, r07: 0, r08: 0, r13: 0, rx: 0, rel: 0, dif: 0 };
+    rows.forEach(x => Object.keys(tot).forEach(k => { tot[k] = r2(tot[k] + x[k]); }));
+    return { comp, temFolha: fs.length > 0, temRel: rs.length > 0, rows, tot };
+  });
+}
+
+
+/* ---------- recolhimento por tipo de IRRF (base: relatório + folha; razão só valida) ---------- */
+const TIPOS_IRRF = [
+  { k: 'N', orig: ['01'], dl: 'SALÁRIOS (normal – origem 01)', pl: 'IRRF SALARIOS A RECOLHER', nome: 'Salários (normal)' },
+  { k: 'F', orig: ['05', '07'], dl: 'FÉRIAS (origem 05/07)', pl: 'IRRF FERIAS', nome: 'Férias' },
+  { k: 'R', orig: ['08'], dl: 'RESCISÃO (origem 08)', pl: 'IRRF RESCISAO', nome: 'Rescisão', semProv: true },
+  { k: 'T', orig: ['13'], dl: '13º SALÁRIO', pl: 'IRRF 13o SALARIO A RECOLHER', nome: '13º salário' },
+  { k: 'O', orig: null, dl: 'OUTRAS ORIGENS', pl: 'IRRF OUTRAS ORIGENS', nome: 'Outras origens', semProv: true }
+];
+function blocosPorTipo(lines, folhas, rels, estado) {
+  const folhaMes = folhaPorComp(folhas), relMes = relPorComp(rels);
+  const copiar = [], pendentes = [], resumo = [], regularizar = [], pulados = [];
+  const sep = () => { if (copiar.length) copiar.push({ tipo: 'sep' }); };
+  const temRazao = lines.length > 0;
+  const ate = estado && estado.ate ? estado.ate : null;
+  const jaSemeados = new Set(estado && estado.comps ? estado.comps : []);
+  const razComp = (cat, comp) => r2(lines.filter(l => l.cat === cat && compOf(l.data) === comp).reduce((a, l) => a + l.cred, 0));
+  const pags = lines.filter(l => l.cat === 'PAGAMENTO').map(l => ({ l, used: false }));
+  /* filas de provisão por tipo: saldo em aberto herdado + folha (ou, sem folha, o razão) de cada competência */
+  const fila = { N: [], F: [], T: [] };
+  if (estado && estado.abertos) estado.abertos.forEach(x => { if (fila[x.k] && x.valor > 0.004) fila[x.k].push({ k: x.k, comp: x.comp, data: x.data, valor: x.valor, rest: x.valor, semRazao: !!x.semRazao, herdado: true }); });
+  const compsSemente = new Set([...folhaMes.keys(), ...lines.filter(l => l.cat === 'IRRF SALÁRIOS (140)' || l.cat === 'IRRF FÉRIAS (139)').map(l => compOf(l.data))]);
+  const semeadas = new Set([...jaSemeados]);
+  [...compsSemente].sort((a, b) => compKey(a) - compKey(b)).forEach(comp => {
+    if (jaSemeados.has(comp) || (ate && compKey(comp) <= compKey(ate))) return;
+    const dt = monthRange(comp)[1], f = folhaMes.get(comp);
+    const r140 = razComp('IRRF SALÁRIOS (140)', comp), r139 = razComp('IRRF FÉRIAS (139)', comp);
+    const semRazao = temRazao && r140 + r139 < 0.005;
+    const val = f ? { N: f.e304, F: r2(f.e308 + f.e311), T: f.e306 } : { N: r140, F: r139, T: 0 };
+    ['N', 'F', 'T'].forEach(k => { if (val[k] > 0.004) fila[k].push({ k, comp, data: dt, valor: val[k], rest: val[k], semRazao: !!(f && semRazao), fonteRazao: !f }); });
+    semeadas.add(comp);
+  });
+  const ordenaFila = () => Object.keys(fila).forEach(k => fila[k].sort((a, b) => compKey(a.comp) - compKey(b.comp) || a.data - b.data));
+  ordenaFila();
+  let ultima = ate;
+  [...relMes.keys()].sort((a, b) => compKey(a) - compKey(b)).forEach(comp => {
+    const v = relMes.get(comp), f = folhaMes.get(comp);
+    if (ate && compKey(comp) <= compKey(ate)) { pulados.push(comp); return; }
+    const motivos = [];
+    const temFonte = f || fila.N.concat(fila.F, fila.T).some(it => it.comp === comp) || compsSemente.has(comp);
+    if (!temFonte) motivos.push('Nenhuma provisão de ' + comp + ' nos arquivos: anexe a Folha_' + comp.replace('/', '.') + '.PDF (ou o razão da conta 2405 com a provisão de ' + comp + ').');
+    else if (f) {
+      const r140 = razComp('IRRF SALÁRIOS (140)', comp), r139 = razComp('IRRF FÉRIAS (139)', comp);
+      if ((r140 > 0.004 || r139 > 0.004) && (Math.abs(f.v140 - r140) > 0.005 || Math.abs(f.v139 - r139) > 0.005)) motivos.push('Folha × razão não batem em ' + comp + ': folha 304+308 ' + fmtBR(f.v140) + ' / 311 ' + fmtBR(f.v139) + ' × razão 140 ' + fmtBR(r140) + ' / 139 ' + fmtBR(r139) + '. Resolva a diferença antes de copiar.');
+    }
+    if (motivos.length) { pendentes.push({ data: v.venc, valor: v.total, ref: 'Relatório ' + comp, status: 'NÃO VALIDADO', motivos }); return; }
+    const pg = pags.find(p => !p.used && Math.abs(p.l.deb - v.total) < 0.005);
+    if (pg) pg.used = true;
+    const data = pg ? pg.l.data : v.venc;
+    const known = new Set(['01', '05', '07', '08', '13']);
+    const outras = r2(Object.keys(v.porOrigem).filter(k => !known.has(k)).reduce((a, k) => a + v.porOrigem[k], 0));
+    sep();
+    /* pagamento sempre unificado: uma linha só, o total do relatório */
+    copiar.push({ tipo: 'verde', data, hist: 'DARF IRRF', valor: v.total, status: pg ? 'PAGO (Transferência de Saldo no razão)' : 'A RECOLHER', ref: 'Relatório ' + comp });
+    TIPOS_IRRF.forEach(T => {
+      const amt = T.k === 'O' ? outras : r2(T.orig.reduce((a, o) => a + (v.porOrigem[o] || 0), 0));
+      const provMes = f ? (T.k === 'N' ? f.e304 : T.k === 'F' ? r2(f.e308 + f.e311) : T.k === 'T' ? f.e306 : 0) : fila[T.k] ? fila[T.k].filter(it => it.comp === comp).reduce((a, it) => a + it.valor, 0) : 0;
+      resumo.push({ comp, tipo: T.nome, k: T.k, prov: provMes, rel: amt, dif: r2(provMes - amt) });
+      if (amt <= 0.004) return;
+      let rest = amt;
+      (fila[T.k] || []).forEach(it => {
+        if (rest <= 0.004 || it.rest <= 0.004 || compKey(it.comp) > compKey(comp) + 1) return;
+        const t = r2(Math.min(rest, it.rest)); it.rest = r2(it.rest - t); rest = r2(rest - t);
+        copiar.push({ tipo: 'verde', data: it.data, hist: T.pl + (Math.abs(t - it.valor) > 0.004 ? ' (parcial)' : '') + (it.semRazao ? ' (folha ' + it.comp + ', ainda não lançada no razão)' : ''), valor: -t, status: it.semRazao ? 'PROVISÃO FORA DO RAZÃO' : (it.herdado ? 'SALDO DE COMPETÊNCIA ANTERIOR' : ''), ref: it.comp });
+      });
+      if (rest > 0.004) {
+        copiar.push({ tipo: 'verde', data, hist: 'PROVISÃO FUTURA – IRRF ' + T.dl.split(' (')[0] + ' (retido no relatório, a provisionar)', valor: -rest, status: 'REVISAR', ref: 'Relatório ' + comp });
+        regularizar.push({ comp, tipo: T.nome, valor: rest });
+      }
+    });
+    ultima = !ultima || compKey(comp) > compKey(ultima) ? comp : ultima;
+  });
+  const futuras = [];
+  Object.keys(fila).forEach(k => fila[k].forEach(it => { if (it.rest > 0.004) futuras.push({ comp: it.comp, data: it.data, k, tipo: TIPOS_IRRF.find(t => t.k === k).nome, valor: it.rest, original: it.valor, semRazao: it.semRazao, fonteRazao: it.fonteRazao }); }));
+  futuras.sort((a, b) => compKey(a.comp) - compKey(b.comp) || a.k.localeCompare(b.k));
+  [...folhaMes.keys()].forEach(comp => { if (relMes.has(comp)) return; const f = folhaMes.get(comp); [['N', f.e304], ['F', r2(f.e308 + f.e311)], ['T', f.e306]].forEach(([k, v]) => { if (v > 0.004) resumo.push({ comp, tipo: TIPOS_IRRF.find(t => t.k === k).nome, k, prov: v, rel: 0, dif: v }); }); });
+  resumo.sort((a, b) => compKey(a.comp) - compKey(b.comp) || TIPOS_IRRF.findIndex(t => t.k === a.k) - TIPOS_IRRF.findIndex(t => t.k === b.k));
+  const estadoFinal = { versao: 1, tipo: 'IRRF_saldo_aberto', ate: ultima, comps: [...semeadas].sort((a, b) => compKey(a) - compKey(b)), abertos: futuras.map(x => ({ k: x.k, comp: x.comp, data: x.data, valor: x.valor, semRazao: !!x.semRazao })) };
+  return { copiar, pendentes, resumo, futuras, regularizar, pulados, estadoFinal };
+}
+
 function conciliarIRRF(lines, guias, opts) {
   opts = opts || {};
   const semGuia = opts.semGuia !== false;
-  const extras = (opts.extras || []).filter(e => e && e.valor > 0 && e.data != null);
+  const folhas = opts.folhas || [], rels = opts.relatorios || [];
+  lines = lines || [];
+  const linesAll = lines, est = opts.estado || null, ateEst = est && est.ate ? est.ate : null, compsEst = new Set(est && est.comps ? est.comps : []);
+  const jaEst = comp => !!est && (compsEst.has(comp) || (!!ateEst && compKey(comp) <= compKey(ateEst)));
+  if (est) lines = lines.filter(l => !(['IRRF SALÁRIOS (140)', 'IRRF FÉRIAS (139)', 'OUTRO CRÉDITO', 'SALDO INICIAL', 'PARCELAMENTO'].includes(l.cat) && (jaEst(compOf(l.data)) || (est.dataCorte != null && l.data <= est.dataCorte))));
+  const folhaMes = folhaPorComp(folhas);
+  const provMes = new Set(lines.filter(l => l.cat === 'IRRF SALÁRIOS (140)' || l.cat === 'IRRF FÉRIAS (139)').map(l => compOf(l.data)));
+  const autoExtras = [];
+  let iniRaz = lines.length ? compKey(compOf(Math.min(...lines.map(l => l.data)))) : 0;
+  const sIni0 = lines.filter(l => l.cat === 'SALDO INICIAL'); if (sIni0.length) iniRaz = Math.max(iniRaz, compKey(compOf(Math.max(...sIni0.map(l => l.data)))) + 1);
+  folhaMes.forEach((v, comp) => {
+    if (provMes.has(comp) || jaEst(comp) || (lines.length && compKey(comp) < iniRaz)) return;
+    const fim = monthRange(comp)[1], desc = 'folha ' + comp + ', ainda não lançada';
+    if (v.v140 > 0.004) autoExtras.push({ data: fim, tipo: '140', valor: v.v140, desc, auto: true });
+    if (v.v139 > 0.004) autoExtras.push({ data: fim, tipo: '139', valor: v.v139, desc, auto: true });
+  });
+  const extras = (opts.extras || []).concat(autoExtras).filter(e => e && e.valor > 0 && e.data != null);
   const avisos = [];
   const sIni = lines.filter(l => l.cat === 'SALDO INICIAL'), parc = lines.filter(l => l.cat === 'PARCELAMENTO');
   const iniVal = r2(sIni.reduce((a, l) => a + l.cred - l.deb, 0) - parc.reduce((a, l) => a + l.deb, 0));
@@ -414,23 +702,27 @@ function conciliarIRRF(lines, guias, opts) {
     const lab = e.tipo === '139' ? 'IRRF FERIAS' : 'IRRF SALARIOS A RECOLHER (' + (e.desc || ('folha ' + compOf(e.data) + ', ainda não lançada')) + ')';
     (e.tipo === '139' ? q139 : q140).push(mk('x' + (e.tipo === '139' ? '139' : '140'), e.data, e.valor, lab, compOf(e.data), true));
   });
+  if (est && est.abertos) est.abertos.forEach(x => { const q = (x.kind === '139' || x.kind === 'x139') ? q139 : q140; q.push({ kind: x.kind, data: x.data, valor: r2(x.valor), rest: r2(x.valor), label: x.label, comp: x.comp, extra: !!x.extra, herdado: true }); });
   const rank = { ini: 0, '140': 1, out: 2, x140: 3, '139': 1, x139: 3 };
+  const rk = k => rank[k] == null ? 1 : rank[k];
   [q140, q139].forEach(q => q.forEach((it, i) => { it._o = i; }));
-  q140.sort((a, b) => a.data - b.data || rank[a.kind] - rank[b.kind] || a._o - b._o);
-  q139.sort((a, b) => a.data - b.data || rank[a.kind] - rank[b.kind] || a._o - b._o);
+  q140.sort((a, b) => a.data - b.data || rk(a.kind) - rk(b.kind) || a._o - b._o);
+  q139.sort((a, b) => a.data - b.data || rk(a.kind) - rk(b.kind) || a._o - b._o);
 
   /* DARFs */
   const pags = lines.filter(l => l.cat === 'PAGAMENTO').map(l => ({ l, used: false }));
   const darfs = [];
-  const G = (guias || []).filter(g => g && g.total > 0);
+  const gl = (guias || []).slice(), pulados = [];
+  if (opts.fromRel) relPorComp(rels).forEach((v, comp) => { if (est && ateEst && compKey(comp) <= compKey(ateEst)) { pulados.push(comp); return; } if (v.total > 0.004) gl.push({ nome: 'Relatório de IRRF ' + comp, id: 'Relatório ' + comp, total: v.total, paga: v.venc, comp, rel: true }); });
+  const G = gl.filter(g => g && g.total > 0 && !g.ignorar);
   G.forEach((g, gi) => {
     let best = null;
     pags.forEach(p => { if (p.used || Math.abs(p.l.deb - g.total) > 0.005) return; const dd = g.paga != null ? Math.abs(p.l.data - g.paga) : 0; if (!best || dd < best.dd) best = { p, dd }; });
     if (best) {
       best.p.used = true;
-      darfs.push({ data: g.paga != null ? g.paga : best.p.l.data, valor: r2(g.total), guia: g, pag: best.p.l, status: g.paga != null ? 'CONCILIADO' : 'CONCILIADO – sem data na guia (usada a do razão)', ref: g.id || g.nome, nota: 'Lançado no razão em ' + fmtDate(best.p.l.data) + '.' , ord: gi });
+      darfs.push({ data: g.paga != null ? g.paga : best.p.l.data, valor: r2(g.total), guia: g, pag: best.p.l, status: g.rel ? 'PAGO (Transferência de Saldo no razão)' : (g.paga != null ? 'CONCILIADO' : 'CONCILIADO – sem data na guia (usada a do razão)'), ref: g.id || g.nome, nota: 'Lançado no razão em ' + fmtDate(best.p.l.data) + '.' , ord: gi });
     } else {
-      darfs.push({ data: g.paga, valor: r2(g.total), guia: g, pag: null, status: g.paga != null ? 'GUIA SEM LANÇAMENTO NO RAZÃO' : 'GUIA SEM DATA E SEM LANÇAMENTO NO RAZÃO', ref: g.id || g.nome, nota: 'Nenhum débito de mesmo valor no razão.', ord: gi });
+      darfs.push({ data: g.paga, valor: r2(g.total), guia: g, pag: null, status: g.rel ? 'A RECOLHER – sem pagamento no razão' : (g.paga != null ? 'GUIA SEM LANÇAMENTO NO RAZÃO' : 'GUIA SEM DATA E SEM LANÇAMENTO NO RAZÃO'), ref: g.id || g.nome, nota: g.rel ? 'Total do relatório de IRRF; data = vencimento.' : 'Nenhum débito de mesmo valor no razão.', ord: gi });
     }
   });
   const pagsFora = [];
@@ -441,10 +733,11 @@ function conciliarIRRF(lines, guias, opts) {
   });
   darfs.sort((a, b) => (a.data == null ? Infinity : a.data) - (b.data == null ? Infinity : b.data) || a.ord - b.ord);
 
-  /* alocação FIFO */
-  const copiar = [];
+  /* alocação FIFO — um bloco só entra no "copiar" se estiver validado pelos arquivos anexados */
+  const copiar = [], pendentes = [];
   const sep = () => { if (copiar.length) copiar.push({ tipo: 'sep' }); };
-  let Ar_nd = 0, Ax_rd = 0, Sp_rd = 0, Sp_total = 0;
+  const razIni = lines.length ? Math.min(...lines.map(l => l.data)) : null;
+  let Ar_nd = 0, Ax_rd = 0, Sp_rd = 0, Sp_total = 0, Ep = 0;
   darfs.forEach(d => {
     d.aloc = []; let rest = d.valor;
     const ref = d.data;
@@ -455,20 +748,46 @@ function conciliarIRRF(lines, guias, opts) {
       const t = r2(Math.min(rest, it.rest));
       d.aloc.push({ it, valor: t, parcial: Math.abs(t - it.valor) > 0.004 });
       it.rest = r2(it.rest - t); rest = r2(rest - t);
-      if (it.extra) { if (d.pag) Ax_rd += t; } else if (!d.pag) Ar_nd += t;
     };
     const ms = ref != null ? monthStart(ref) : -Infinity;
     q139.forEach(it => take(it, x => x.data < ms));
     q140.forEach(it => take(it));
     d.sem = r2(rest);
+    /* validação do bloco */
+    const motivos = [];
+    const comp = d.guia && d.guia.comp;
+    if (d.data == null) motivos.push('Guia sem data de pagamento — informe a data na tabela de guias.');
+    if (!d.aloc.length) motivos.push('Nenhuma provisão (razão ou folha) disponível para quitar este DARF' + (comp ? ' (competência ' + comp + ')' : '') + '.');
+    else if (comp && !d.aloc.some(a => compOf(a.it.data) === comp)) {
+      motivos.push('Nenhuma provisão da competência ' + comp + ' nos arquivos anexados' + (razIni != null && !lines.some(l => compOf(l.data) === comp) ? ' (o razão anexado não tem lançamentos de ' + comp + ' e começa em ' + fmtDate(razIni) + ')' : '') + '. Anexe a Folha de ' + comp.replace('/', '.') + ' (e o relatório IRRF_' + comp.replace('/', '.') + ') ou o razão da conta 2405 do período completo.');
+    }
+    if (d.guia && d.guia.rel) {
+      const comp2 = d.guia.comp, f2 = folhaMes.get(comp2);
+      if (!est && !sIni.length) motivos.push('Sem saldo anterior: anexe o arquivo de saldo em aberto do mês anterior (.json) ou um razão que traga a implantação de saldo — sem isso o FIFO não enxerga as provisões antigas e o bloco sairia errado.');
+      if (!f2) motivos.push('Falta a folha de ' + comp2 + ' (Folha_' + comp2.replace('/', '.') + '.PDF) para validar o relatório.');
+      else {
+        const r140 = r2(lines.filter(l => l.cat === 'IRRF SALÁRIOS (140)' && compOf(l.data) === comp2).reduce((a, l) => a + l.cred, 0));
+        const r139 = r2(lines.filter(l => l.cat === 'IRRF FÉRIAS (139)' && compOf(l.data) === comp2).reduce((a, l) => a + l.cred, 0));
+        if ((r140 > 0.004 || r139 > 0.004) && (Math.abs(f2.v140 - r140) > 0.005 || Math.abs(f2.v139 - r139) > 0.005)) motivos.push('Folha × razão não batem em ' + comp2 + ': folha 304+308 ' + fmtBR(f2.v140) + ' / 311 ' + fmtBR(f2.v139) + ' × razão 140 ' + fmtBR(r140) + ' / 139 ' + fmtBR(r139) + '. Resolva a diferença antes de copiar.');
+      }
+    }
+    d.valida = !motivos.length; d.motivos = motivos;
+    if (!d.valida) {
+      d.aloc.forEach(a => { a.it.rest = r2(a.it.rest + a.valor); });
+      d.aloc = []; d.sem = d.valor;
+      if (d.pag) Ep = r2(Ep + d.valor);
+      pendentes.push({ data: d.data, valor: d.valor, ref: d.ref, status: d.status, motivos, nota: d.nota });
+      return;
+    }
+    d.aloc.forEach(a => { if (a.it.extra) { if (d.pag) Ax_rd += a.valor; } else if (!d.pag) Ar_nd += a.valor; });
     if (d.sem > 0.004) { Sp_total += d.sem; if (d.pag) Sp_rd += d.sem; }
     sep();
-    copiar.push({ tipo: 'verde', data: d.data, hist: 'DARF IRRF', valor: d.valor, status: d.status, ref: d.ref, aviso: d.data == null ? 'Informe a data da guia' : '' });
+    copiar.push({ tipo: 'verde', data: d.data, hist: 'DARF IRRF', valor: d.valor, status: d.status, ref: d.ref, aviso: '' });
     d.aloc.forEach(a => {
       const it = a.it;
       copiar.push({ tipo: 'verde', data: it.data, hist: it.label + (a.parcial ? ' (parcial)' : ''), valor: -a.valor, status: it.extra ? 'PROVISÃO FORA DO RAZÃO' : (it.kind === 'out' ? 'REVISAR – crédito não classificado' : ''), ref: it.comp !== 'Saldo inicial' ? it.comp : '' });
     });
-    if (d.sem > 0.004) copiar.push({ tipo: 'verde', data: d.data, hist: 'SEM PROVISÃO NO RAZÃO – diferença a regularizar', valor: -d.sem, status: 'REVISAR', ref: '', aviso: 'Pagamento maior que as provisões disponíveis' });
+    if (d.sem > 0.004) copiar.push({ tipo: 'verde', data: d.data, hist: opts.fromRel ? 'PROVISÃO FUTURA – diferença retida acima do provisionado (a provisionar)' : 'SEM PROVISÃO NO RAZÃO – diferença a regularizar', valor: -d.sem, status: 'REVISAR', ref: '', aviso: 'Pagamento maior que as provisões disponíveis' });
   });
 
   /* resumo por competência */
@@ -494,21 +813,43 @@ function conciliarIRRF(lines, guias, opts) {
   const outDeb = r2(lines.filter(l => l.cat === 'OUTRO DÉBITO').reduce((a, l) => a + l.deb, 0));
   const saldo = { ini: iniVal, prov, pag: pagTot, outDeb, final: r2(iniVal + prov - pagTot - outDeb) };
   const openR = r2(q140.concat(q139).filter(i => !i.extra).reduce((a, i) => a + i.rest, 0));
-  const E = r2(pagsFora.reduce((a, l) => a + l.deb, 0));
+  const E = r2(pagsFora.reduce((a, l) => a + l.deb, 0) + Ep);
   saldo.openR = openR; saldo.Ar_nd = r2(Ar_nd); saldo.Ax_rd = r2(Ax_rd); saldo.Sp_rd = r2(Sp_rd); saldo.E = E;
   saldo.prova = r2(saldo.final - (openR + Ar_nd - Ax_rd - Sp_rd - E - outDeb));
   lines.filter(l => l.cat === 'OUTRO DÉBITO').forEach(l => avisos.push('Débito não classificado em ' + fmtDate(l.data) + ' (' + fmtBR(l.deb) + ' — ' + l.compl + ') — fora dos blocos; REVISAR.'));
-  return { lines, darfs, copiar, resumo, saldo, avisos, semGuiaIgnorados: pagsFora, q140, q139, semProvisaoTotal: r2(Sp_total) };
+  const conc = montaConc(linesAll, folhaMes, rels, opts.fromRel ? [] : G, pags.map(p => p.l), avisos);
+  const rastreio = montaRastreio(folhas, rels);
+  const out = { lines: linesAll, darfs, copiar, resumo, saldo, avisos, pendentes, semGuiaIgnorados: pagsFora, q140, q139, semProvisaoTotal: r2(Sp_total), conc, rastreio, autoExtras, pulados };
+  if (opts.fromRel) {
+    const nomeK = k => k === '139' || k === 'x139' ? 'IRRF férias (139)' : k === 'ini' ? 'Saldo inicial' : k === 'out' ? 'Outro crédito' : 'IRRF salários (140)';
+    const abertos = q140.concat(q139).filter(i => i.rest > 0.004).sort((a, b) => a.data - b.data);
+    out.futuras = abertos.map(i => ({ comp: i.comp, data: i.data, tipo: nomeK(i.kind), valor: i.rest, original: i.valor, kind: i.kind, label: i.label, extra: i.extra }));
+    out.resumoTipo = blocosPorTipo(lines, folhas, rels).resumo;
+    /* linhas de saldo em aberto (provisão já lançada e ainda não quitada) logo após o último DARF */
+    if (copiar.some(c => c.tipo !== 'sep') && abertos.length) {
+      const ultD = darfs.filter(d => d.valida).map(d => d.data).filter(x => x != null).sort((a, b) => b - a)[0];
+      copiar.push({ tipo: 'sep' });
+      abertos.forEach(i => {
+        const base = i.kind === '139' || i.kind === 'x139' ? 'IRRF FERIAS' : i.kind === 'ini' || i.kind === 'out' ? String(i.label).replace(/\s*\(parcial\)$/, '') : 'IRRF SALARIOS A RECOLHER';
+        copiar.push({ tipo: 'saldo', data: i.data, hist: base + ' – SALDO EM ABERTO' + (ultD != null ? ' (após DARF ' + fmtDate(ultD) + ')' : ''), valor: i.rest, status: 'SALDO EM ABERTO', ref: i.comp });
+      });
+    }
+    const compsFinal = new Set([...compsEst, ...linesAll.filter(l => ['IRRF SALÁRIOS (140)', 'IRRF FÉRIAS (139)', 'OUTRO CRÉDITO'].includes(l.cat)).map(l => compOf(l.data)), ...folhaMes.keys()]);
+    const valid = darfs.filter(d => d.valida && d.guia && d.guia.rel).map(d => d.guia.comp);
+    const ult = valid.concat(ateEst ? [ateEst] : []).sort((a, b) => compKey(b) - compKey(a))[0] || null;
+    out.estadoFinal = { versao: 2, tipo: 'IRRF_saldo_aberto', ate: ult, dataCorte: est && est.dataCorte != null ? est.dataCorte : null, comps: [...compsFinal].filter(c => /^\d{2}\/\d{4}$/.test(c)).sort((a, b) => compKey(a) - compKey(b)), abertos: abertos.map(i => ({ kind: i.kind, comp: i.comp, data: i.data, valor: i.rest, label: i.label, extra: !!i.extra })) };
+  }
+  return out;
 }
 
-if (typeof module !== 'undefined') module.exports = { conciliarIRRF, parseDarfText, parseRazao, reclassify, decodeBuffer, parseNum, parseDate, fmtDate, fmtBR, fmtPlain, classify, r2, compOf, norm };
+if (typeof module !== 'undefined') module.exports = { conciliarIRRF, blocosPorTipo, parseDarfText, parseRelatorioIrrf, parseFolha, tipoArquivoTexto, applyAnchors, parseRazao, reclassify, decodeBuffer, parseNum, parseDate, fmtDate, fmtBR, fmtPlain, classify, r2, compOf, norm };
 
 </script>
 <script>
 (function(){
   const $ = id => document.getElementById(id);
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  const S = { dirty: false, timer: null, razao: null, nomeRazao: '', guias: [], extras: [], res: null, tab: 'copiar', semGuia: true };
+  const S = { dirty: false, timer: null, razao: null, nomeRazao: '', rels: [], folhas: [], estado: null, arqs: [], fid: 0, res: null, tab: 'copiar', tabSet: false, semGuia: false, soDiv: true, busca: '', rastComp: '' };
 
   function toast(msg, kind){ const t = document.createElement('div'); t.className = 'toast' + (kind ? ' toast-' + kind : ''); t.textContent = msg; $('toasts').appendChild(t); setTimeout(() => t.remove(), 4200); }
   /* edições nos campos adiam o recálculo: evita perder o clique em "Copiar" quando o campo perde o foco e a tela é redesenhada */
@@ -523,136 +864,152 @@ if (typeof module !== 'undefined') module.exports = { conciliarIRRF, parseDarfTe
     input.addEventListener('change', () => { handler(input.files); input.value = ''; });
   }
   const tile = (n, l, cls) => '<div class="summary-tile ' + (cls || '') + '"><div class="n">' + n + '</div><div class="l">' + l + '</div></div>';
-  const stCls = s => /^(OK|CONCILIADO)/.test(s) ? 'st-ok' : /SEM GUIA|PARCIAL|EM ABERTO|FORA DO RAZ|REVISAR|DIFEREN|sem data|conferir/i.test(s) ? 'st-warn' : 'st-err';
+  const stCls = s => /^(OK|CONCILIADO)/.test(s) ? 'st-ok' : /SEM GUIA|PARCIAL|EM ABERTO|FORA DO RAZ|REVISAR|DIFEREN|sem data|conferir|A RECOLHER|timing|SÓ NA|SÓ NO/i.test(s) ? 'st-warn' : 'st-err';
   const stag = s => '<span class="tag ' + stCls(s) + '">' + esc(s) + '</span>';
 
-  /* ---- 1: razão ---- */
-  async function loadRazao(files){
-    files = Array.from(files); const f = files[0]; if (!f) return;
-    try{
-      const buf = await f.arrayBuffer();
-      const p = parseRazao(decodeBuffer(buf));
-      if (!p.lines.length) throw new Error('Nenhum lançamento com data válida foi encontrado.');
-      S.razao = p; S.nomeRazao = f.name; S.res = null;
-      const L = p.lines, ds = L.map(l => l.data);
-      const cred = L.reduce((a, l) => a + l.cred, 0), deb = L.reduce((a, l) => a + l.deb, 0);
-      const cats = {}; L.forEach(l => cats[l.cat] = (cats[l.cat] || 0) + 1);
-      const nc = (cats['OUTRO DÉBITO'] || 0) + (cats['OUTRO CRÉDITO'] || 0) + (cats['OUTRO'] || 0);
-      $('razaoInfo').innerHTML = '<span class="file-chip">' + esc(f.name) + '</span><span class="file-chip">layout ' + esc(p.layout) + '</span>' +
-        '<div class="summary-grid">' + tile(L.length, 'lançamentos') + tile(fmtDate(Math.min(...ds)) + ' – ' + fmtDate(Math.max(...ds)), 'período') + tile(fmtBR(r2(cred - deb)), 'saldo credor (créd. − déb.)', 'accent') + tile(cats['PAGAMENTO'] || 0, 'pagamentos (Transferência de Saldo)') + tile(nc, 'não classificados', nc ? 'warn' : '') + '</div>';
-      unlock('s2'); pills(2); run();
-      toast('Razão lido: ' + L.length + ' lançamentos.', 'ok');
-    }catch(e){ toast('Razão: ' + (e.message || e), 'err'); }
+  /* ---- 1: arquivos (razão, relatório de IRRF, folha, DARF) ---- */
+  function chips(){
+    const lab = { razao: 'Razão 2405', relatorio: 'Relatório de IRRF', folha: 'Folha', darf: 'DARF (não usada)', estado: 'Saldo em aberto', fgts: 'Guia de FGTS (ignorada)' };
+    $('arqInfo').innerHTML = S.arqs.map(a => '<span class="file-chip" title="' + esc(a.nome) + '"><b>' + lab[a.tipo] + '</b> · ' + esc(a.nome) + (a.info ? ' · ' + esc(a.info) : '') + ' <button class="btn-icon" data-rm="' + a.id + '" title="Remover" style="width:22px;height:22px">×</button></span>').join('') + (S.busy ? '<span class="file-chip">' + esc(S.busy) + '</span>' : '');
+    const avs = [].concat(S.rels.map(r => r.avisos.map(x => r.nome + ': ' + x)), S.folhas.map(f => f.avisos.map(x => f.nome + ': ' + x))).reduce((x, y) => x.concat(y), []);
+    $('arqInfo').innerHTML += (avs.length ? '<p class="hint warn" style="margin-top:12px">' + avs.map(esc).join('<br>') + '</p>' : '');
   }
-  setupDrop($('dzRazao'), $('fRazao'), loadRazao);
-
-  /* ---- 2: guias ---- */
-  async function loadGuias(files){
-    files = Array.from(files);
-    if (!window.pdfTexto){ toast('Leitor de PDF indisponível (sem acesso ao CDN). Use "Adicionar guia manualmente".', 'err'); return; }
-    let n = 0, sem = [];
+  $('arqInfo').addEventListener('click', e => {
+    const b = e.target.closest('[data-rm]'); if (!b) return; const id = +b.dataset.rm;
+    const a = S.arqs.find(x => x.id === id); if (!a) return;
+    S.arqs = S.arqs.filter(x => x.id !== id);
+    if (a.tipo === 'razao'){ S.razao = null; S.nomeRazao = ''; }
+    if (a.tipo === 'estado') S.estado = null;
+    S.rels = S.rels.filter(x => x.fid !== id); S.folhas = S.folhas.filter(x => x.fid !== id); 
+    chips(); S.res = null; if (S.arqs.some(x => x.tipo !== 'darf' && x.tipo !== 'fgts' && x.tipo !== 'estado')) run(); else { $('s4').setAttribute('data-locked', 'true'); pills(1); }
+  });
+  async function loadArquivos(files){
+    files = Array.from(files); if (!files.length) return;
     for (const f of files){
+      const id = ++S.fid, ext = (f.name.split('.').pop() || '').toLowerCase();
       try{
-        const txt = await window.pdfTexto(await f.arrayBuffer());
-        const gs = parseDarfText(txt, f.name);
-        if (!gs.length) sem.push(f.name);
-        gs.forEach(g => { S.guias.push(g); n++; });
+        S.busy = 'lendo ' + f.name + '…'; chips();
+        const buf = await f.arrayBuffer();
+        if (ext === 'json'){
+          const j = JSON.parse(new TextDecoder().decode(buf));
+          if (!j || j.tipo !== 'IRRF_saldo_aberto' || !Array.isArray(j.abertos)) throw new Error('Não é um arquivo de saldo em aberto do painel de IRRF.');
+          if ((j.versao || 1) < 2) throw new Error('Arquivo de saldo em aberto de versão antiga — gere novamente.');
+          S.arqs = S.arqs.filter(a => a.tipo !== 'estado'); S.estado = j;
+          S.arqs.push({ id, tipo: 'estado', nome: f.name, info: 'até ' + (j.ate || '?') + ' · ' + j.abertos.length + ' provisão(ões) em aberto · ' + fmtBR(r2(j.abertos.reduce((a, x) => a + x.valor, 0))) });
+        } else if (ext === 'pdf'){
+          if (!window.pdfTexto){ toast('Leitor de PDF indisponível (sem acesso ao CDN). Anexe o razão em CSV ou adicione guias manualmente.', 'err'); continue; }
+          const txt = await window.pdfTexto(buf), tp = tipoArquivoTexto(txt);
+          if (tp === 'relatorio'){
+            const r = parseRelatorioIrrf(txt, f.name); r.fid = id; S.rels.push(r);
+            S.arqs.push({ id, tipo: 'relatorio', nome: f.name, info: (r.comp || '?') + ' · ' + r.regs.length + ' registros · ' + fmtBR(r.soma) });
+          } else if (tp === 'folha'){
+            const fo = parseFolha(txt, f.name); fo.fid = id; S.folhas.push(fo);
+            S.arqs.push({ id, tipo: 'folha', nome: f.name, info: (fo.comp || '?') + ' · ' + fo.colab.size + ' colaboradores · 304+308 ' + fmtBR(fo.soma['304'] + fo.soma['308']) });
+          } else if (tp === 'fgts'){
+            S.arqs.push({ id, tipo: 'fgts', nome: f.name, info: 'use o painel de FGTS' });
+          } else {
+            S.arqs.push({ id, tipo: 'darf', nome: f.name, info: 'não usada — a conciliação é feita pela folha e pelo relatório de IRRF' });
+          }
+        } else {
+          const p = parseRazao(decodeBuffer(buf));
+          if (!p.lines.length) throw new Error('Nenhum lançamento com data válida foi encontrado.');
+          S.arqs = S.arqs.filter(a => { if (a.tipo === 'razao'){ return false; } return true; });
+          S.razao = p; S.nomeRazao = f.name;
+          const L = p.lines, ds = L.map(l => l.data);
+          S.arqs.unshift({ id, tipo: 'razao', nome: f.name, info: L.length + ' lançamentos · ' + fmtDate(Math.min(...ds)) + ' a ' + fmtDate(Math.max(...ds)) });
+        }
       }catch(e){ toast(f.name + ': ' + (e.message || e), 'err'); }
     }
-    renderGuias();
-    toast(n + ' guia(s) com código 0561 lida(s). Confira data e valor.' + (sem.length ? ' Sem 0561: ' + sem.join(', ') : ''), n ? 'ok' : 'err');
-    if (S.res) run();
+    S.busy = ''; chips();
+    if (S.arqs.length){ S.res = null; run(); toast('Arquivos lidos e conciliados.', 'ok'); }
   }
-  setupDrop($('dzGuias'), $('fGuias'), loadGuias);
-  $('btnAddGuia').addEventListener('click', () => { S.guias.push({ nome: 'manual', id: '', paga: null, total: 0, avisos: [], raw: '' }); renderGuias(); });
-  function renderGuias(){
-    const G = S.guias; $('guiasHint').textContent = G.length ? G.length + ' guia(s)' : '';
-    if (!G.length){ $('guiasBox').innerHTML = ''; return; }
-    let h = '<div class="table-wrap"><table><thead><tr><th>Arquivo</th><th>Identificador</th><th>Pago em</th><th class="num">Valor do 0561</th><th></th></tr></thead><tbody>';
-    G.forEach((g, i) => {
-      h += '<tr data-i="' + i + '"><td>' + esc(g.nome) + (g.avisos && g.avisos.length ? '<br><span class="hint warn">' + esc(g.avisos.join(' ')) + '</span>' : '') + '</td>' +
-        '<td><input type="text" data-f="id" value="' + esc(g.id) + '"></td>' +
-        '<td><input type="text" data-f="paga" placeholder="dd/mm/aaaa" value="' + esc(fmtDate(g.paga)) + '"></td>' +
-        '<td><input type="text" data-f="total" value="' + (g.total ? fmtPlain(g.total) : '') + '"></td>' +
-        '<td><button class="btn-icon" data-del="' + i + '" title="Remover">×</button></td></tr>';
-    });
-    h += '</tbody></table></div>';
-    const raws = G.filter(g => g.raw).map(g => '<details><summary>Texto lido de ' + esc(g.nome) + '</summary><pre>' + esc(g.raw) + '</pre></details>').join('');
-    $('guiasBox').innerHTML = h + raws;
-  }
-  $('guiasBox').addEventListener('change', e => {
-    const inp = e.target.closest('input[data-f]'); if (!inp) return;
-    const i = +inp.closest('tr').dataset.i, f = inp.dataset.f, g = S.guias[i];
-    if (f === 'paga') g.paga = parseDate(inp.value); else if (f === 'id') g.id = inp.value.trim(); else g[f] = parseNum(inp.value);
-    if (S.res) agenda();
-  });
-  $('guiasBox').addEventListener('click', e => { const b = e.target.closest('[data-del]'); if (!b) return; S.guias.splice(+b.dataset.del, 1); renderGuias(); if (S.res) run(); });
+  setupDrop($('dzArq'), $('fArq'), loadArquivos);
 
-  /* provisões fora do razão */
-  $('btnAddExtra').addEventListener('click', () => { S.extras.push({ data: null, tipo: '140', valor: 0, desc: '' }); renderExtras(); });
-  function renderExtras(){
-    const X = S.extras;
-    if (!X.length){ $('extrasBox').innerHTML = ''; return; }
-    let h = '<div class="table-wrap"><table><thead><tr><th>Data da provisão</th><th>Tipo</th><th class="num">Valor</th><th>Descrição (opcional)</th><th></th></tr></thead><tbody>';
-    X.forEach((x, i) => {
-      h += '<tr data-i="' + i + '"><td><input type="text" data-f="data" placeholder="dd/mm/aaaa" value="' + esc(fmtDate(x.data)) + '"></td>' +
-        '<td><select data-f="tipo"><option value="140"' + (x.tipo === '140' ? ' selected' : '') + '>140 — eventos 304 + 308</option><option value="139"' + (x.tipo === '139' ? ' selected' : '') + '>139 — evento 311</option></select></td>' +
-        '<td><input type="text" data-f="valor" value="' + (x.valor ? fmtPlain(x.valor) : '') + '"></td>' +
-        '<td><input type="text" data-f="desc" style="min-width:260px" placeholder="folha MM/AAAA, ainda não lançada" value="' + esc(x.desc) + '"></td>' +
-        '<td><button class="btn-icon" data-delx="' + i + '" title="Remover">×</button></td></tr>';
-    });
-    $('extrasBox').innerHTML = h + '</tbody></table></div>';
-  }
-  $('extrasBox').addEventListener('change', e => {
-    const inp = e.target.closest('[data-f]'); if (!inp) return;
-    const i = +inp.closest('tr').dataset.i, f = inp.dataset.f, x = S.extras[i];
-    if (f === 'data') x.data = parseDate(inp.value); else if (f === 'valor') x.valor = parseNum(inp.value); else x[f] = inp.value.trim();
-    if (S.res) agenda();
-  });
-  $('extrasBox').addEventListener('click', e => { const b = e.target.closest('[data-delx]'); if (!b) return; S.extras.splice(+b.dataset.delx, 1); renderExtras(); if (S.res) run(); });
-
-  /* ---- 3: conciliar ---- */
+  /* ---- 2: conciliar ---- */
   function run(){
-    if (!S.razao) return;
+    if (!S.razao && !S.rels.length && !S.folhas.length) return;
     S.dirty = false; clearTimeout(S.timer);
     try{
-      S.res = conciliarIRRF(S.razao.lines, S.guias, { semGuia: S.semGuia, extras: S.extras });
-      unlock('s4'); pills(3); render();
+      const lines = S.razao ? S.razao.lines : [];
+      S.res = conciliarIRRF(lines, [], { semGuia: S.semGuia, extras: [], folhas: S.folhas, relatorios: S.rels, fromRel: true, estado: S.estado });
+      if (!S.tabSet){ S.tab = (S.rels.length || S.folhas.length) ? 'conc' : 'copiar'; S.tabSet = true; }
+      unlock('s4'); pills(2); render();
     }catch(e){ toast('Erro na conciliação: ' + (e.message || e), 'err'); console.error(e); }
   }
 
-  const TABS = [['copiar', 'Copiar e colar'], ['resumo', 'Resumo por competência'], ['guias', 'Guia × Razão'], ['saldo', 'Saldo']];
+  const TABS = [['conc', 'Conciliação por competência'], ['copiar', 'Copiar e colar'], ['rast', 'Rastreio por colaborador'], ['resumo', 'Por tipo de IRRF'], ['guias', 'Relatório × Razão'], ['saldo', 'Saldo']];
   function render(){
     const R = S.res;
     const nl = R.copiar.filter(c => c.tipo !== 'sep').length;
     const okG = R.darfs.filter(d => /^CONCILIADO/.test(d.status)).length;
-    const pend = R.resumo.filter(r => !/^OK/.test(r.situ)).length;
-    $('resSub').textContent = 'Razão: ' + S.nomeRazao + ' · ' + R.darfs.length + ' DARF(s) · ' + R.resumo.length + ' linha(s) de competência.';
-    $('tiles').innerHTML = tile(nl, 'linhas para copiar', 'accent') + tile(R.darfs.length, 'blocos (DARF)') + tile(S.guias.length ? okG + '/' + R.darfs.length : '—', 'DARF conciliados com guia') + tile(fmtBR(R.semProvisaoTotal), 'sem provisão no razão', R.semProvisaoTotal > 0.004 ? 'warn' : '') + tile(pend, 'competências em aberto', pend ? 'warn' : '') + tile(fmtBR(R.saldo.final), 'saldo credor final');
-    const cnt = { copiar: nl, resumo: R.resumo.length, guias: R.darfs.length, saldo: '' };
+    const dFolha = R.conc.filter(c => c.difFolha != null && Math.abs(c.difFolha) > 0.005).length;
+    const rastDiv = R.rastreio.reduce((a, r) => a + r.rows.filter(x => x.st !== 'OK').length, 0);
+    $('resSub').textContent = (S.razao ? 'Razão: ' + S.nomeRazao + ' · ' : 'Sem razão · ') + S.rels.length + ' relatório(s) de IRRF · ' + S.folhas.length + ' folha(s) · ' + R.conc.length + ' competência(s).';
+    $('tiles').innerHTML = tile(R.conc.length, 'competências analisadas', 'accent') + tile(dFolha, 'dif. folha × razão', dFolha ? 'warn' : '') + tile(rastDiv, 'colaboradores com diferença', rastDiv ? 'warn' : '') + tile(nl, 'linhas para copiar') + tile(fmtBR(R.semProvisaoTotal), 'provisão futura a lançar', R.semProvisaoTotal > 0.004 ? 'warn' : '') + tile(S.razao && !S.estado ? fmtBR(R.saldo.final) : '—', 'saldo credor final');
+    const cnt = { conc: R.conc.length, copiar: nl, rast: rastDiv, resumo: (R.resumoTipo || []).filter(x => x.prov || x.rel).length, guias: R.darfs.length, saldo: '' };
     $('tabs').innerHTML = TABS.map(t => '<button type="button" class="tab' + (S.tab === t[0] ? ' is-active' : '') + '" data-t="' + t[0] + '">' + t[1] + (cnt[t[0]] !== '' ? '<span class="cnt">' + cnt[t[0]] + '</span>' : '') + '</button>').join('');
     $('panels').innerHTML = TABS.map(t => '<div class="panel" id="pn_' + t[0] + '"' + (S.tab === t[0] ? '' : ' hidden') + '></div>').join('');
-    pCopiar(); pResumo(); pGuias(); pSaldo();
+    pConc(); pCopiar(); pRast(); pResumo(); pGuias(); pSaldo();
   }
   $('tabs').addEventListener('click', e => { const b = e.target.closest('[data-t]'); if (!b) return; S.tab = b.dataset.t; render(); });
 
   function tbl(head, rows, cls){ return '<div class="table-wrap"><table class="' + (cls || '') + '"><thead><tr>' + head.map(h => '<th' + (h[1] ? ' class="num"' : '') + '>' + esc(h[0]) + '</th>').join('') + '</tr></thead><tbody>' + rows + '</tbody></table></div>'; }
 
+  const dash = v => v == null ? '—' : fmtBR(v);
+  function pConc(){
+    const R = S.res, P = $('pn_conc');
+    if (!R.conc.length){ P.innerHTML = '<div class="empty-state neutral"><div class="big">∅</div>Anexe o relatório de IRRF e/ou a folha (e o razão) para conciliar por competência.</div>'; return; }
+    let rows = '';
+    R.conc.forEach(c => {
+      const o = c.org || {}, out = c.org ? r2(Object.keys(o).filter(k => !['01', '13', '05', '07', '08'].includes(k)).reduce((a, k) => a + o[k], 0)) : null;
+      rows += '<tr><td>' + esc(c.comp) + '</td><td class="num">' + dash(c.f140) + '</td><td class="num">' + dash(c.f139) + '</td><td class="num">' + dash(c.r140) + '</td><td class="num">' + dash(c.r139) + '</td><td class="num">' + (c.difFolha != null ? fmtBR(c.difFolha) : 'n/d') + '</td>' +
+        '<td class="num">' + (c.org ? fmtBR(o['01'] || 0) : '—') + '</td><td class="num">' + (c.org ? fmtBR(o['13'] || 0) : '—') + '</td><td class="num">' + (c.org ? fmtBR(o['05'] || 0) : '—') + '</td><td class="num">' + (c.org ? fmtBR(o['07'] || 0) : '—') + '</td><td class="num">' + (c.org ? fmtBR(o['08'] || 0) : '—') + '</td><td class="num">' + (out ? fmtBR(out) : (c.org ? fmtBR(0) : '—')) + '</td>' +
+        '<td class="num"><b>' + dash(c.relTotal) + '</b></td><td>' + fmtDate(c.venc) + '</td><td class="num">' + dash(c.transf) + '</td><td>' + fmtDate(c.transfData) + '</td><td class="num">' + dash(c.provMenosRel) + '</td><td class="num">' + dash(c.dif139) + '</td><td class="wrap">' + stag(c.stCurto) + '<br><span class="hint">' + esc(c.situ) + '</span></td></tr>';
+    });
+    const nf = R.autoExtras.length ? '<p class="hint" style="margin-top:12px">Folha sem provisão no razão (entra nas linhas de copiar como "provisão fora do razão"): ' + R.autoExtras.map(e => compOf(e.data) + ' · ' + e.tipo + ' · ' + fmtBR(e.valor)).join('; ') + '.</p>' : '';
+    P.innerHTML = '<p class="hint" style="margin-top:12px">Para cada competência: <b>Folha</b> (eventos 304 + 308 = hist. 140; 311 = hist. 139) × <b>Relatório de IRRF</b> por origem (01 normal, 13º, 05 férias, 07 dif. férias, 08 rescisão) = o que será recolhido (competência M, vencimento em M+1). O <b>razão</b> é auxiliar: serve só para conferir se a provisão lançada bate com a folha. "Provisão − recolhimento" diferente de zero é timing (principalmente férias e rescisões por data de pagamento): o detalhe por colaborador está no Rastreio.</p>' + nf +
+      tbl([['Comp.'], ['Folha 304+308', 1], ['Folha 311', 1], ['Razão 140', 1], ['Razão 139', 1], ['Dif. folha × razão', 1], ['Rel. 01 normal', 1], ['Rel. 13º', 1], ['Rel. 05 férias', 1], ['Rel. 07 dif. férias', 1], ['Rel. 08 rescisão', 1], ['Rel. outras', 1], ['Total relatório', 1], ['A recolher em'], ['Pago no razão (Transf. saldo)', 1], ['Data'], ['Provisão − recolh.', 1], ['Dif. 139 × 07', 1], ['Situação']], rows);
+  }
+  function pRast(){
+    const R = S.res, P = $('pn_rast');
+    if (!R.rastreio.length){ P.innerHTML = '<div class="empty-state neutral"><div class="big">∅</div>Anexe a folha e o relatório de IRRF da mesma competência para rastrear por colaborador.</div>'; return; }
+    if (!S.rastComp || !R.rastreio.some(r => r.comp === S.rastComp)) S.rastComp = (R.rastreio.filter(r => r.temFolha && r.temRel).pop() || R.rastreio[R.rastreio.length - 1]).comp;
+    const X = R.rastreio.find(r => r.comp === S.rastComp);
+    const q = S.busca.trim().toUpperCase();
+    const vis = X.rows.filter(x => (!S.soDiv || x.st !== 'OK') && (!q || x.cod.includes(q) || (x.nome || '').toUpperCase().includes(q)));
+    let h = '<div class="field-row"><div class="field" style="max-width:220px"><label>Competência</label><select id="rsComp">' + R.rastreio.map(r => '<option value="' + r.comp + '"' + (r.comp === X.comp ? ' selected' : '') + '>' + r.comp + (r.temFolha && r.temRel ? '' : r.temFolha ? ' (só folha)' : ' (só relatório)') + '</option>').join('') + '</select></div><div class="field"><label>Buscar colaborador ou código</label><input type="text" id="rsBusca" value="' + esc(S.busca) + '" placeholder="nome ou código"></div></div>';
+    h += '<label class="chk"><input type="checkbox" id="rsDiv"' + (S.soDiv ? ' checked' : '') + '><span>Mostrar só colaboradores com diferença (' + X.rows.filter(x => x.st !== 'OK').length + ' de ' + X.rows.length + ')</span></label>';
+    if (!(X.temFolha && X.temRel)) h += '<p class="hint warn">Esta competência tem só ' + (X.temFolha ? 'a folha' : 'o relatório de IRRF') + ': a comparação por colaborador precisa dos dois.</p>';
+    const t = X.tot;
+    let rows = vis.map(x => '<tr><td class="mono">' + esc(x.cod) + '</td><td>' + esc(x.nome) + '</td><td class="num">' + fmtBR(x.f304) + '</td><td class="num">' + fmtBR(x.f308) + '</td><td class="num">' + fmtBR(x.f311) + '</td><td class="num">' + fmtBR(x.r01) + '</td><td class="num">' + fmtBR(x.r05) + '</td><td class="num">' + fmtBR(x.r07) + '</td><td class="num">' + fmtBR(x.r08) + '</td><td class="num">' + fmtBR(x.r13) + '</td><td class="num">' + fmtBR(x.folha) + '</td><td class="num">' + fmtBR(x.rel) + '</td><td class="num">' + fmtBR(x.dif) + '</td><td>' + stag(x.st) + '</td><td class="wrap">' + esc(x.motivo) + '</td></tr>').join('');
+    rows += '<tr class="total"><td></td><td>TOTAL (todos os colaboradores)</td>' + ['f304', 'f308', 'f311', 'r01', 'r05', 'r07', 'r08', 'r13', 'folha', 'rel', 'dif'].map(k => '<td class="num">' + fmtBR(t[k]) + '</td>').join('') + '<td></td><td></td></tr>';
+    h += tbl([['Cód.'], ['Colaborador'], ['Folha 304', 1], ['Folha 308', 1], ['Folha 311', 1], ['Rel. 01', 1], ['Rel. 05', 1], ['Rel. 07', 1], ['Rel. 08', 1], ['Rel. 13º', 1], ['Folha total', 1], ['Relatório total', 1], ['Diferença', 1], ['Situação'], ['Indício']], rows);
+    h += '<p class="hint">Diferença = folha (304 + 308 + 311) − relatório (todas as origens). O "indício" só aponta onde a diferença está (cálculo normal, férias ou 13º); a causa precisa ser confirmada na folha. Nada é ajustado automaticamente.</p>';
+    P.innerHTML = h;
+    $('rsComp').addEventListener('change', e => { S.rastComp = e.target.value; pRast(); });
+    $('rsDiv').addEventListener('change', e => { S.soDiv = e.target.checked; pRast(); });
+    const b = $('rsBusca'); b.addEventListener('input', () => { S.busca = b.value; const pos = b.selectionStart; pRast(); const nb = $('rsBusca'); nb.focus(); nb.setSelectionRange(pos, pos); });
+  }
   const fmtCell = v => fmtBR(v);
   function pCopiar(){
     const R = S.res, P = $('pn_copiar');
-    let h = '<p class="hint" style="margin-top:12px">Formato da planilha de conciliação: <b>Data · Histórico · Valor</b>, sem título, um bloco <b>verde</b> por DARF. A linha "DARF IRRF" é positiva; as provisões que ela quita são negativas, alocadas em ordem cronológica (FIFO): primeiro o IRRF férias (139) de competências anteriores ao mês do pagamento, depois o saldo inicial e o IRRF salários (140) por mês. Cada bloco soma zero. A coluna "Status" fica fora da área a copiar.</p>';
-    h += '<label class="chk"><input type="checkbox" id="ckSG"' + (S.semGuia ? ' checked' : '') + '><span>Gerar bloco também para <b>pagamentos do razão sem guia</b> (a data da linha DARF é a do lançamento no razão)</span></label>';
+    let h = '<p class="hint" style="margin-top:12px">Linhas no padrão da planilha: <b>Data · Histórico · Valor</b>. O pagamento é <b>único</b>: a linha "DARF IRRF" é o total do <b>relatório de IRRF</b> (data = vencimento). Abaixo dela, as provisões do razão que o quitam, da mais antiga para a mais nova (FIFO): primeiro o IRRF férias (139) de competências anteriores ao mês, depois o saldo inicial e o IRRF s/ salário (140) por mês — por isso o salário de uma competência costuma ser quitado meses depois, e férias/rescisão na própria competência. Cada bloco soma zero. O que sobra de provisão já lançada e ainda não quitada vira a linha "SALDO EM ABERTO" no fim (cole depois do último DARF); no mês seguinte ela é a primeira a ser quitada. Só sai o bloco em que a folha bate com o razão; o resto fica em "Não validado".</p>';
+    if (R.pulados && R.pulados.length) h += '<p class="hint">Competências já conciliadas no arquivo de saldo em aberto (não repetidas): ' + R.pulados.map(esc).join(', ') + '.</p>';
     if (R.avisos.length) h += '<p class="hint warn">' + R.avisos.map(esc).join('<br>') + '</p>';
     const n = R.copiar.filter(c => c.tipo !== 'sep').length;
-    if (!n){ P.innerHTML = h + '<div class="empty-state neutral"><div class="big">∅</div>Nenhuma linha gerada. O razão não tem Transferência de Saldo e nenhuma guia foi carregada.</div>'; bindCopiar(); return; }
-    h += '<div class="actions-row"><button class="btn-primary" id="btnCopy" type="button">Copiar ' + n + ' linhas (com cor e formato)</button><button class="btn-secondary" id="btnCopyTxt" type="button">Copiar só o texto</button><button class="btn-secondary" id="btnXlsx" type="button">Baixar Excel (.xlsx)</button></div>';
-    let rows = '';
-    R.copiar.forEach(c => {
-      if (c.tipo === 'sep'){ rows += '<tr class="sepr"><td colspan="3"></td><td class="out"></td></tr>'; return; }
-      rows += '<tr class="verde' + (c.aviso ? ' div' : '') + '"><td>' + fmtDate(c.data) + '</td><td>' + esc(c.hist) + '</td><td class="num' + (c.valor < 0 ? ' neg' : '') + '">' + fmtCell(c.valor) + '</td><td class="out">' + (c.status ? stag(c.status) : '') + (c.ref ? ' <span class="mono">' + esc(c.ref) + '</span>' : '') + (c.aviso ? ' <span class="hint err">' + esc(c.aviso) + '</span>' : '') + '</td></tr>';
-    });
-    h += tbl([['Data'], ['Histórico'], ['Valor', 1], ['Status (não copiar)']], rows, 'copy');
+    if (n){
+      h += '<div class="actions-row"><button class="btn-primary" id="btnCopy" type="button">Copiar ' + n + ' linhas</button><button class="btn-secondary" id="btnXlsx" type="button">Baixar Excel (.xlsx)</button><button class="btn-secondary" id="btnEstado" type="button">Baixar saldo em aberto (para o próximo mês)</button></div>';
+      let rows = '';
+      R.copiar.forEach(c => {
+        if (c.tipo === 'sep'){ rows += '<tr class="sepr"><td colspan="3"></td></tr>'; return; }
+        rows += '<tr' + (c.tipo === 'saldo' ? ' class="saldo-linha"' : '') + '><td>' + fmtDate(c.data) + '</td><td>' + esc(c.hist) + '</td><td class="num' + (c.valor < 0 ? ' neg' : '') + '">' + fmtCell(c.valor) + '</td></tr>';
+      });
+      h += tbl([['Data'], ['Histórico'], ['Valor', 1]], rows, 'copy');
+    } else h += '<div class="empty-state neutral"><div class="big">∅</div>Nenhuma linha validada para copiar.' + (R.pendentes.length ? ' Veja abaixo o que falta.' : ' Anexe o relatório de IRRF, a folha e o razão da conta 2405.') + '</div>';
+    if (R.pendentes.length){
+      h += '<h3 style="margin-top:22px;font-size:16px">Não validado (não copiar)</h3>';
+      R.pendentes.forEach(x => { h += '<div class="hint warn" style="margin:8px 0"><b>DARF ' + fmtDate(x.data) + ' · ' + fmtBR(x.valor) + '</b>' + (x.ref ? ' <span class="mono">' + esc(x.ref) + '</span>' : '') + '<br>' + x.motivos.map(esc).join('<br>') + '</div>'; });
+    }
     P.innerHTML = h; bindCopiar();
   }
   function copiaTexto(){ return S.res.copiar.map(c => c.tipo === 'sep' ? '' : [fmtDate(c.data), c.hist, fmtPlain(c.valor)].join('\t')).join('\n'); }
@@ -661,8 +1018,7 @@ if (typeof module !== 'undefined') module.exports = { conciliarIRRF, parseDarfTe
     let h = '<table>';
     S.res.copiar.forEach(c => {
       if (c.tipo === 'sep'){ h += '<tr><td></td><td></td><td></td></tr>'; return; }
-      const bg = 'background:#92D050;';
-      h += '<tr><td style="' + bg + 'mso-number-format:\'dd\\/mm\\/yyyy\'">' + fmtDate(c.data) + '</td><td style="' + bg + '">' + esc(c.hist) + '</td><td style=\'' + bg + 'mso-number-format:' + NF + '\'>' + fmtPlain(c.valor) + '</td></tr>';
+      h += '<tr><td style="mso-number-format:\'dd\\/mm\\/yyyy\'">' + fmtDate(c.data) + '</td><td>' + esc(c.hist) + '</td><td style=\'mso-number-format:' + NF + '\'>' + fmtPlain(c.valor) + '</td></tr>';
     });
     return h + '</table>';
   }
@@ -681,43 +1037,52 @@ if (typeof module !== 'undefined') module.exports = { conciliarIRRF, parseDarfTe
     }
   }
   function bindCopiar(){
-    const sg = $('ckSG'); if (sg) sg.addEventListener('change', () => { S.semGuia = sg.checked; run(); });
     const c = $('btnCopy'); if (c) c.addEventListener('click', () => copiar(true));
-    const ct = $('btnCopyTxt'); if (ct) ct.addEventListener('click', () => copiar(false));
-    const x = $('btnXlsx'); if (x) x.addEventListener('click', exportXlsx);
+        const x = $('btnXlsx'); if (x) x.addEventListener('click', exportXlsx);
+    const es = $('btnEstado'); if (es) es.addEventListener('click', baixarEstado);
   }
 
   function pResumo(){
-    const R = S.res; let rows = '', t = { ini: 0, p140: 0, p139: 0, extra: 0, total: 0, pago: 0, aberto: 0 };
-    R.resumo.forEach(r => {
-      Object.keys(t).forEach(k => { t[k] += r[k]; });
-      rows += '<tr><td>' + esc(r.comp) + '</td><td class="num">' + fmtBR(r.ini) + '</td><td class="num">' + fmtBR(r.p140) + '</td><td class="num">' + fmtBR(r.p139) + '</td><td class="num">' + fmtBR(r.extra) + '</td><td class="num">' + fmtBR(r.total) + '</td><td class="num">' + fmtBR(r.pago) + '</td><td class="num">' + fmtBR(r.aberto) + '</td><td>' + stag(r.situ) + '</td></tr>';
+    const R = S.res; let rows = '';
+    const tot = { prov: 0, rel: 0, dif: 0 };
+    (R.resumoTipo || []).filter(x => x.prov || x.rel).forEach(x => {
+      tot.prov += x.prov; tot.rel += x.rel; tot.dif += x.dif;
+      rows += '<tr><td>' + esc(x.comp) + '</td><td>' + esc(x.tipo) + '</td><td class="num">' + fmtBR(x.prov) + '</td><td class="num">' + fmtBR(x.rel) + '</td><td class="num">' + fmtBR(x.dif) + '</td><td>' + stag(Math.abs(x.dif) < 0.005 ? 'OK' : (x.dif > 0 ? 'PROVISÃO EM ABERTO' : 'PROVISÃO FUTURA – a provisionar')) + '</td></tr>';
     });
-    rows += '<tr class="total"><td>TOTAL</td>' + ['ini', 'p140', 'p139', 'extra', 'total', 'pago', 'aberto'].map(k => '<td class="num">' + fmtBR(r2(t[k])) + '</td>').join('') + '<td></td></tr>';
-    $('pn_resumo').innerHTML = '<p class="hint" style="margin-top:12px">Provisão do razão por competência (hist. 140 = eventos 304 + 308; hist. 139 = evento 311), quanto dela foi quitado pelos DARF na alocação FIFO e quanto segue em aberto. "Provisão fora do razão" vem do passo 2.</p>' +
-      tbl([['Competência'], ['Saldo inicial', 1], ['IRRF sal. (140)', 1], ['IRRF férias (139)', 1], ['Fora do razão', 1], ['Provisão total', 1], ['Pago (DARF)', 1], ['Em aberto', 1], ['Situação']], rows);
+    rows += '<tr class="total"><td colspan="2">TOTAL</td><td class="num">' + fmtBR(r2(tot.prov)) + '</td><td class="num">' + fmtBR(r2(tot.rel)) + '</td><td class="num">' + fmtBR(r2(tot.dif)) + '</td><td></td></tr>';
+    $('pn_resumo').innerHTML = '<p class="hint" style="margin-top:12px">Por competência e tipo de IRRF: provisão da <b>folha</b> (salários normal = 304; férias = 308 + 311; 13º = 306; rescisão não tem provisão na folha) × total do <b>relatório</b> (origem 01; 05 + 07; 13; 08). Positivo = provisionado e ainda não retido (fica em aberto para as próximas competências); negativo = retido no relatório sem provisão (a provisionar).</p>' +
+      tbl([['Competência'], ['Tipo'], ['Provisão (folha)', 1], ['Relatório de IRRF', 1], ['Provisão − relatório', 1], ['Situação']], rows);
   }
 
   function pGuias(){
     const R = S.res; let rows = '';
-    R.darfs.forEach(d => {
-      const comp = d.aloc.map(a => (a.it.comp === 'Saldo inicial' ? 'saldo inicial' : a.it.comp + (a.it.kind === '139' || a.it.kind === 'x139' ? ' (139)' : ''))).join(', ');
-      rows += '<tr><td>' + fmtDate(d.data) + '</td><td class="num">' + fmtBR(d.valor) + '</td><td>' + (d.pag ? fmtDate(d.pag.data) : '—') + '</td><td class="num">' + (d.pag ? fmtBR(d.pag.deb) : '—') + '</td><td>' + stag(d.status) + '</td><td class="wrap">' + esc(comp + (d.sem > 0.004 ? (comp ? ' + ' : '') + 'sem provisão ' + fmtBR(d.sem) : '')) + '</td><td class="wrap">' + esc((d.ref ? d.ref + ' · ' : '') + d.nota) + '</td></tr>';
+    R.conc.filter(c => c.relTotal != null).forEach(c => {
+      rows += '<tr><td>' + esc(c.comp) + '</td><td class="num">' + fmtBR(c.relTotal) + '</td><td>' + fmtDate(c.venc) + '</td><td class="num">' + dash(c.transf) + '</td><td>' + fmtDate(c.transfData) + '</td><td>' + stag(c.transf != null ? 'OK – pago no razão' : 'A RECOLHER') + '</td></tr>';
     });
-    const ign = R.semGuiaIgnorados.length ? '<p class="hint warn">Pagamentos do razão sem guia fora dos blocos (opção desmarcada): ' + R.semGuiaIgnorados.map(l => fmtDate(l.data) + ' ' + fmtBR(l.deb)).join('; ') + '.</p>' : '';
-    $('pn_guias').innerHTML = '<p class="hint" style="margin-top:12px">Regra: a guia é pareada ao débito do razão de mesmo valor (data do razão ≠ data do pagamento é normal: a Transferência de Saldo costuma ser lançada no fim do mês). Nada é pareado por valor aproximado.</p>' + ign +
-      tbl([['Data DARF'], ['Valor DARF', 1], ['Razão – data'], ['Razão – valor', 1], ['Situação'], ['Provisões quitadas'], ['Referência / observação']], rows || '<tr><td colspan="7">—</td></tr>');
+    $('pn_guias').innerHTML = '<p class="hint" style="margin-top:12px">Cada total de relatório de IRRF é pareado ao débito (Transferência de Saldo) do razão de mesmo valor; sem débito igual, fica "A recolher". Nada é pareado por valor aproximado.</p>' +
+      tbl([['Competência'], ['Total do relatório', 1], ['A recolher em'], ['Razão – valor', 1], ['Razão – data'], ['Situação']], rows || '<tr><td colspan="6">—</td></tr>');
   }
 
   function pSaldo(){
+    if (!S.razao){ $('pn_saldo').innerHTML = '<div class="empty-state neutral"><div class="big">∅</div>Anexe o razão da conta 2405 para ver o saldo.</div>'; return; }
+    if (S.estado){ $('pn_saldo').innerHTML = '<div class="empty-state neutral"><div class="big">∅</div>O saldo do razão não é calculado quando se usa o arquivo de saldo em aberto (o razão anexado não traz o histórico inteiro).</div>'; return; }
     const s = S.res.saldo;
     const row = (a, v, b) => '<tr' + (b ? ' class="total"' : '') + '><td>' + a + '</td><td class="num">' + fmtBR(v) + '</td></tr>';
     let h = row('Saldo inicial (implantação − parcelamento)', s.ini) + row('(+) Provisões (hist. 140 e 139)', s.prov) + row('(−) Pagamentos (Transferência de Saldo)', s.pag) + (s.outDeb ? row('(−) Outros débitos', s.outDeb) : '') + row('Saldo credor final do razão', s.final, 1);
     let p = row('Provisões em aberto no razão (fila)', s.openR) + (s.Ar_nd ? row('(+) Quitado por guias ainda não lançadas no razão', s.Ar_nd) : '') + (s.Ax_rd ? row('(−) Provisão fora do razão quitada por pagamento do razão', -s.Ax_rd) : '') + row('(−) Pagamentos sem provisão ("SEM PROVISÃO NO RAZÃO")', -s.Sp_rd) + (s.E ? row('(−) Pagamentos do razão fora dos blocos', -s.E) : '') + (s.outDeb ? row('(−) Outros débitos', -s.outDeb) : '') + row('Diferença para o saldo do razão (deve ser 0,00)', s.prova, 1);
-    $('pn_saldo').innerHTML = '<p class="hint" style="margin-top:12px">Saldo credor = créditos − débitos. Negativo = pagamentos acima das provisões lançadas; a diferença aparece como "SEM PROVISÃO NO RAZÃO" no bloco do DARF e precisa de lançamento de regularização (decisão do contador).</p>' +
+    $('pn_saldo').innerHTML = '<p class="hint" style="margin-top:12px">Saldo credor = créditos − débitos. Negativo = pagamentos acima das provisões lançadas; a diferença precisa de lançamento de regularização (decisão do contador).</p>' +
       tbl([['Item'], ['Valor', 1]], h) + '<h3 style="margin-top:22px;font-size:16px">Prova do saldo pela conciliação</h3>' + tbl([['Item'], ['Valor', 1]], p);
   }
 
+  async function baixarEstado(){
+    if (S.dirty) run();
+    try{
+      const E = S.res.estadoFinal; if (!E || !E.ate) throw new Error('Nenhuma competência conciliada para salvar.');
+      const nome = 'IRRF_saldo_aberto_' + E.ate.slice(3) + '-' + E.ate.slice(0, 2) + '.json';
+      await salvarArquivo(nome, new Blob([JSON.stringify(Object.assign({ gerado: new Date().toISOString() }, E), null, 1)], { type: 'application/json' }));
+      toast('Saldo em aberto salvo. No próximo mês, anexe este arquivo junto com a folha e o relatório do mês.', 'ok');
+    }catch(e){ toast('Erro ao salvar: ' + (e.message || e), 'err'); }
+  }
   async function exportXlsx(){
     if (S.dirty) run();
     try{
@@ -728,8 +1093,12 @@ if (typeof module !== 'undefined') module.exports = { conciliarIRRF, parseDarfTe
       cp.forEach((r, i) => { const a = XLSX.utils.encode_cell({ r: i, c: 0 }); if (ws1[a] && ws1[a].t === 'n') ws1[a].z = 'dd/mm/yyyy'; const v = ws1[XLSX.utils.encode_cell({ r: i, c: 2 })]; if (v && v.t === 'n') v.z = '#,##0.00;[Red]-#,##0.00;-'; });
       ws1['!cols'] = [{ wch: 13 }, { wch: 62 }, { wch: 16 }];
       XLSX.utils.book_append_sheet(wb, ws1, 'Copiar_Conciliado');
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([['Competência', 'Saldo inicial', 'IRRF salários (140)', 'IRRF férias (139)', 'Fora do razão', 'Provisão total', 'Pago (DARF)', 'Em aberto', 'Situação']].concat(R.resumo.map(r => [r.comp, r.ini, r.p140, r.p139, r.extra, r.total, r.pago, r.aberto, r.situ]))), 'Resumo_Competencia');
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([['Data DARF', 'Valor DARF', 'Razão – data', 'Razão – valor', 'Situação', 'Sem provisão', 'Referência']].concat(R.darfs.map(d => [fmtDate(d.data), d.valor, d.pag ? fmtDate(d.pag.data) : '', d.pag ? d.pag.deb : '', d.status, d.sem, d.ref]))), 'Guia_x_Razao');
+      if ((R.futuras || []).length) XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([['Data', 'Tipo', 'Competência', 'Valor em aberto', 'Provisão original']].concat(R.futuras.map(x => [fmtDate(x.data), x.tipo, x.comp, x.valor, x.original]))), 'Provisao_em_aberto');
+      if (R.pendentes.length) XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([['Data DARF', 'Valor', 'Referência', 'Motivo']].concat(R.pendentes.map(x => [fmtDate(x.data), x.valor, x.ref, x.motivos.join(' ')]))), 'Nao_validados');
+      if (R.conc.length) XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([['Competência', 'Folha 304+308', 'Folha 311', 'Razão 140', 'Razão 139', 'Dif. folha × razão', 'Rel. 01', 'Rel. 13º', 'Rel. 05', 'Rel. 07', 'Rel. 08', 'Total relatório', 'A recolher em', 'Guia 0561', 'Pago em', 'Dif. rel. × guia', 'Transf. saldo razão', 'Data transf.', 'Dif. guia × razão', 'Provisão − recolhimento', 'Dif. 139 × 07', 'Situação']].concat(R.conc.map(c => { const o = c.org || {}; return [c.comp, c.f140, c.f139, c.r140, c.r139, c.difFolha, c.org ? (o['01'] || 0) : '', c.org ? (o['13'] || 0) : '', c.org ? (o['05'] || 0) : '', c.org ? (o['07'] || 0) : '', c.org ? (o['08'] || 0) : '', c.relTotal, fmtDate(c.venc), c.guia, fmtDate(c.guiaData), c.difRelGuia, c.transf, fmtDate(c.transfData), c.difGuiaTransf, c.provMenosRel, c.dif139, c.situ].map(v => v == null ? '' : v); }))), 'Conciliacao_Competencia');
+      R.rastreio.filter(x => x.temFolha && x.temRel).forEach(x => XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([['Cód.', 'Colaborador', 'Folha 304', 'Folha 308', 'Folha 311', 'Rel. 01', 'Rel. 05', 'Rel. 07', 'Rel. 08', 'Rel. 13º', 'Folha total', 'Relatório total', 'Diferença', 'Situação', 'Indício']].concat(x.rows.map(r => [r.cod, r.nome, r.f304, r.f308, r.f311, r.r01, r.r05, r.r07, r.r08, r.r13, r.folha, r.rel, r.dif, r.st, r.motivo]))), 'Rastreio_' + x.comp.replace('/', '-')));
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([['Competência', 'Tipo de IRRF', 'Provisão (folha)', 'Relatório', 'Provisão − relatório']].concat((R.resumoTipo || []).map(r => [r.comp, r.tipo, r.prov, r.rel, r.dif]))), 'Por_Tipo');
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([['Competência', 'Total do relatório', 'A recolher em', 'Razão – valor', 'Razão – data']].concat(R.conc.filter(c => c.relTotal != null).map(c => [c.comp, c.relTotal, fmtDate(c.venc), c.transf == null ? '' : c.transf, fmtDate(c.transfData)]))), 'Relatorio_x_Razao');
       XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([['Data', 'Complemento', 'Categoria', 'Competência', 'Débito', 'Crédito']].concat(R.lines.map(l => [fmtDate(l.data), l.compl, l.cat, l.comp, l.deb, l.cred]))), 'Razao_Classificado');
       const out = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
       await salvarArquivo('Conciliacao_IRRF_conciliado.xlsx', new Blob([out], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }));
