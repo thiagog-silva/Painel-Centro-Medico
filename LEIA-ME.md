@@ -1,6 +1,6 @@
 # Hospital São Nicolau — Painel de Automação
 
-**Versão 1.0.0** (build 2026-10-01). Pasta independente: funciona sem o Claude e sem depender de nenhum outro painel.
+**Versão 1.1.0** (build 2026-10-08). Pasta independente: funciona sem o Claude e sem depender de nenhum outro painel.
 Só a fonte IBM Plex vem do Google Fonts; sem internet o painel usa a fonte padrão do sistema e funciona normalmente.
 
 ## Como abrir
@@ -23,10 +23,12 @@ Ferramentas já instaladas:
 
 - **Extrair Dados da Folha** (`tools/extrair-dados-folha.html`, categoria *Folha de Pagamento*) — lê o PDF da Relação de Cálculo, cruza férias e rescisões com os CSVs do banco e gera o layout para colar na planilha. Usa pdf.js via internet (cdnjs), então precisa de conexão na primeira abertura.
 - **Faturamento Mensal Tasy** (`tools/faturamento-mensal-tasy.html`, categoria *Faturamento*) — gera os lançamentos de faturamento bruto (particular, convênio e SUS) e o TXT de importação do Tasy a partir da Relação de Serviços e Deduções Federais. Usa ExcelJS via internet (cdnjs).
-- **Extratos Bancários Tasy** (`tools/extratos-bancarios-tasy.html`, categoria *Conciliação*) — transforma os extratos do mês (CSV/XLSX) em lançamentos TXT para importar no Tasy, validando débito = crédito, contas e CR. Não depende de internet (biblioteca embutida) e guarda neste navegador o plano de contas, as regras e os bancos que você atualizar.
+- **Extratos Bancários Tasy** (`tools/extratos-bancarios-tasy.html`, categoria *Conciliação*) — transforma os extratos do mês (CSV/XLSX) em lançamentos TXT para importar no Tasy, validando débito = crédito, contas e CR. Não depende de internet (biblioteca embutida) e guarda neste navegador o plano de contas, as regras e os bancos que você atualizar. Versão 1.1.1: regras, bancos e histórico (47) padrão alinhados ao TXT de agosto/2026, com novas regras de setembro/2026.
 - **Resumo de Estoque** (`tools/resumo-estoque-balancete.html`, categoria *Conciliação*) — lê o PDF do relatório Saldo de Estoque do Tasy e monta o resumo e os lançamentos de estoque conferidos com o Balancete. Não depende de internet (bibliotecas embutidas) e guarda neste navegador as contas dos movimentos.
 - **Zerar CR** (`tools/zerar-cr.html`, categoria *Folha de Pagamento*) — corrige o TXT de lançamentos do Tasy: zera o CR de lançamentos sem contrapartida em Ativo/Passivo, ajusta débito = crédito, remove duplicatas e aplica o fato contábil. Não depende de internet.
 - **Balancete de Verificação** (`tools/balancete-verificacao.html`, categoria *Relatórios Contábeis*) — converte o CSV do balancete do sistema em relatório formatado no padrão do Balancete CM, com conferências automáticas, impressão em PDF e exportação para Excel.
+- **Conciliação de FGTS** (`tools/conciliacao-fgts.html`, categoria *Folha de Pagamento*) — lê as guias do FGTS (GFD) e monta a conciliação nos blocos GUIA FGTS, PROVISAO FGTS RESCISORIO e PAGTO, no formato da planilha manual, com exportação para Excel. Usa SheetJS e pdf.js via internet (cdnjs).
+- **Conciliação de IRRF s/ salário** (`tools/conciliacao-irrf.html`, categoria *Folha de Pagamento*) — concilia o razão da conta 2405 com as guias DARF 0561 e as provisões, gerando as linhas para copiar e colar no formato da planilha manual. Usa SheetJS e pdf.js via internet (cdnjs).
 
 As próximas serão adicionadas depois, como descrito abaixo.
 

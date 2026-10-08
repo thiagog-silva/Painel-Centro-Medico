@@ -1,0 +1,920 @@
+<!doctype html>
+<!-- Conciliação de FGTS — VERSÃO: 2.1.0 — finalizado em 08/10/2026 (copiar e colar no formato da planilha manual: blocos GUIA FGTS / PROVISAO FGTS RESCISORIO / PAGTO; leitura das guias GFD reais: Total da Guia com dois-pontos, colunas com Quantidade, consignado, vencimento em linha separada; débitos hist. 112 abatem o consignado). Base oficial estável: alterar somente o que for solicitado. -->
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Conciliação de FGTS</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Sans+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  --bg:#f7f7fb; --surface:#ffffff; --surface-alt:#eef1f8; --ink:#17254d; --muted:#5f6f8f; --border:#dbe2ee;
+  --accent:#28509c; --accent-strong:#1c3a7a; --accent-ink:#f5f8ff; --accent-soft:#e3ebfa;
+  --danger:#b3261e; --danger-soft:#fbe9e6; --warning:#8a5a00; --warning-soft:#fff1d9; --success:#1e7d4a; --success-soft:#e5f4ea;
+  --tag-debito-bg:#fff1d9; --tag-debito-ink:#8a5a00; --tag-credito-bg:#dff1fa; --tag-credito-ink:#17608f;
+  --brand-cyan:#2da6de; --brand-mid:#2b76b9; --brand-navy:#2a4291;
+  --shadow: 0 1px 2px rgba(20,40,100,.06), 0 8px 24px -12px rgba(20,40,100,.22);
+  --radius:14px;
+  --font-display:'IBM Plex Sans Condensed','IBM Plex Sans',sans-serif;
+  --font-body:'IBM Plex Sans',system-ui,sans-serif;
+  --font-mono:'IBM Plex Mono',ui-monospace,SFMono-Regular,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0d1426; --surface:#141d36; --surface-alt:#1a2542; --ink:#e6ecfa; --muted:#93a3c7; --border:#27345a; --accent:#63a9ee; --accent-strong:#a4cdfa;
+    --accent-ink:#06142e; --accent-soft:#172a50; --danger:#ff9d93; --danger-soft:#3a201d; --warning:#ffcf70; --warning-soft:#3a2c12; --success:#8fe3ac; --success-soft:#173425;
+    --tag-debito-bg:#3a2c12; --tag-debito-ink:#ffcf70; --tag-credito-bg:#12304a; --tag-credito-ink:#7fd0f5;
+    --brand-cyan:#38b4ea; --brand-mid:#3b8bd0; --brand-navy:#4a65c4;
+    --shadow: 0 1px 2px rgba(0,0,0,.35), 0 12px 28px -14px rgba(0,0,0,.65);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0d1426; --surface:#141d36; --surface-alt:#1a2542; --ink:#e6ecfa; --muted:#93a3c7; --border:#27345a; --accent:#63a9ee; --accent-strong:#a4cdfa;
+  --accent-ink:#06142e; --accent-soft:#172a50; --danger:#ff9d93; --danger-soft:#3a201d; --warning:#ffcf70; --warning-soft:#3a2c12; --success:#8fe3ac; --success-soft:#173425;
+  --tag-debito-bg:#3a2c12; --tag-debito-ink:#ffcf70; --tag-credito-bg:#12304a; --tag-credito-ink:#7fd0f5;
+  --brand-cyan:#38b4ea; --brand-mid:#3b8bd0; --brand-navy:#4a65c4;
+  --shadow: 0 1px 2px rgba(0,0,0,.35), 0 12px 28px -14px rgba(0,0,0,.65);
+}
+*{ box-sizing:border-box; }
+body{ background:var(--bg); color:var(--ink); font-family:var(--font-body); margin:0; padding-inline:16px; padding-block:20px 60px; }
+h1,h2,h3{ font-family:var(--font-display); font-weight:700; text-wrap:balance; margin:0; }
+.mono{ font-family:var(--font-mono); font-variant-numeric:tabular-nums; }
+.app-shell{ max-width:1180px; margin:0 auto; }
+.topbar{ position:sticky; top:env(safe-area-inset-top,0px); z-index:30; background:color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); border-bottom:1px solid var(--border); margin:-20px -16px 28px; padding:16px; border-top:6px solid; border-image:linear-gradient(90deg,var(--brand-cyan),var(--brand-navy)) 1 0 0 0; }
+.topbar-inner{ max-width:1180px; margin:0 auto; display:flex; flex-wrap:wrap; align-items:center; gap:14px 24px; justify-content:space-between; }
+.brand{ display:flex; align-items:center; gap:12px; }
+.brand-mark{ width:38px; height:38px; border-radius:10px; background:var(--accent); color:var(--accent-ink); display:flex; align-items:center; justify-content:center; font-family:var(--font-mono); font-weight:700; font-size:15px; box-shadow:var(--shadow); flex:none; }
+.brand h1{ font-size:19px; letter-spacing:.2px; }
+.brand p{ margin:2px 0 0; font-size:12.5px; color:var(--muted); }
+.steps-pills{ display:flex; gap:8px; flex-wrap:wrap; }
+.step-pill{ font-family:var(--font-mono); font-size:11.5px; letter-spacing:.03em; padding:6px 11px; border-radius:999px; border:1px solid var(--border); color:var(--muted); background:var(--surface); white-space:nowrap; }
+.step-pill.is-active{ border-color:var(--accent); color:var(--accent-strong); background:var(--accent-soft); font-weight:600; }
+.step-pill.is-done{ color:var(--success); border-color:var(--success); }
+.step-card{ background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:26px; margin-bottom:22px; box-shadow:var(--shadow); }
+.step-card[data-locked="true"]{ opacity:.45; pointer-events:none; }
+.step-head{ display:flex; align-items:flex-start; gap:14px; margin-bottom:18px; }
+.step-num{ width:32px; height:32px; border-radius:9px; background:var(--surface-alt); color:var(--ink); font-family:var(--font-mono); font-weight:600; font-size:14px; display:flex; align-items:center; justify-content:center; flex:none; border:1px solid var(--border); }
+.step-head h2{ font-size:20px; }
+.step-head .step-sub{ margin:3px 0 0; color:var(--muted); font-size:13.5px; max-width:70ch; }
+.dropzone{ border:1.5px dashed var(--border); border-radius:12px; padding:26px 20px; text-align:center; background:var(--surface-alt); cursor:pointer; transition:border-color .15s, background .15s; }
+.dropzone:hover, .dropzone.is-dragover{ border-color:var(--accent); background:var(--accent-soft); }
+.dropzone strong{ display:block; font-size:15px; margin-bottom:4px; }
+.dropzone span{ font-size:12.5px; color:var(--muted); }
+.file-chip{ display:inline-flex; align-items:center; gap:8px; margin:14px 8px 0 0; padding:7px 12px; border-radius:9px; background:var(--accent-soft); color:var(--accent-strong); font-size:13px; font-family:var(--font-mono); }
+.field-row{ display:flex; flex-wrap:wrap; gap:16px; margin-top:16px; }
+.field{ display:flex; flex-direction:column; gap:5px; min-width:190px; flex:1; }
+.field label{ font-size:12px; color:var(--muted); font-weight:600; letter-spacing:.02em; text-transform:uppercase; }
+select, input[type="text"], input[type="number"]{ font-family:var(--font-body); font-size:13.5px; padding:9px 10px; border-radius:8px; border:1px solid var(--border); background:var(--surface); color:var(--ink); width:100%; }
+select:focus, input:focus, button:focus-visible{ outline:2px solid var(--accent); outline-offset:1px; }
+.table-wrap{ overflow-x:auto; border:1px solid var(--border); border-radius:10px; margin-top:14px; max-height:520px; overflow-y:auto; }
+table{ border-collapse:collapse; width:100%; font-size:13px; }
+thead th{ position:sticky; top:0; background:var(--surface-alt); text-align:left; padding:9px 10px; font-size:11.5px; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); border-bottom:1px solid var(--border); white-space:nowrap; z-index:1; }
+tbody td{ padding:8px 10px; border-bottom:1px solid var(--border); white-space:nowrap; }
+tbody tr:last-child td{ border-bottom:none; }
+td.num, th.num{ text-align:right; font-family:var(--font-mono); font-variant-numeric:tabular-nums; }
+td.wrap{ white-space:normal; min-width:220px; }
+tr.total td{ font-weight:700; background:var(--surface-alt); }
+button{ font-family:var(--font-body); cursor:pointer; border:none; border-radius:9px; font-weight:600; font-size:13.5px; }
+.btn-primary{ background:var(--accent); color:var(--accent-ink); padding:11px 20px; box-shadow:var(--shadow); }
+.btn-primary:disabled{ opacity:.45; cursor:not-allowed; box-shadow:none; }
+.btn-secondary{ background:var(--surface-alt); color:var(--ink); border:1px solid var(--border); padding:10px 16px; }
+.btn-ghost{ background:transparent; color:var(--muted); border:1px solid var(--border); padding:7px 10px; font-size:12px; }
+.btn-icon{ background:var(--surface-alt); border:1px solid var(--border); color:var(--ink); width:28px; height:28px; border-radius:7px; display:inline-flex; align-items:center; justify-content:center; padding:0; }
+.actions-row{ display:flex; flex-wrap:wrap; gap:12px; margin-top:18px; align-items:center; }
+.hint{ font-size:12.5px; color:var(--muted); }
+.hint.warn{ color:var(--warning); }
+.hint.err{ color:var(--danger); }
+.summary-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; margin:16px 0 4px; }
+.summary-tile{ background:var(--surface-alt); border:1px solid var(--border); border-radius:10px; padding:14px 16px; }
+.summary-tile .n{ font-family:var(--font-mono); font-size:20px; font-weight:600; }
+.summary-tile .l{ font-size:11.5px; color:var(--muted); text-transform:uppercase; letter-spacing:.03em; margin-top:2px; }
+.summary-tile.accent{ background:var(--accent-soft); }
+.summary-tile.accent .n{ color:var(--accent-strong); }
+.summary-tile.warn .n{ color:var(--warning); }
+.tag{ display:inline-flex; align-items:center; gap:5px; font-family:var(--font-mono); font-size:11.5px; font-weight:600; padding:4px 9px; border-radius:999px; white-space:nowrap; }
+.tag-debito{ background:var(--tag-debito-bg); color:var(--tag-debito-ink); }
+.tag-credito{ background:var(--tag-credito-bg); color:var(--tag-credito-ink); }
+.st-ok{ background:var(--success-soft); color:var(--success); }
+.st-warn{ background:var(--warning-soft); color:var(--warning); }
+.st-err{ background:var(--danger-soft); color:var(--danger); }
+.empty-state{ text-align:center; padding:34px 16px; color:var(--success); }
+.empty-state .big{ font-size:28px; }
+.empty-state.neutral{ color:var(--muted); }
+fieldset{ border:1px solid var(--border); border-radius:10px; padding:16px; margin:16px 0 0; }
+legend{ padding:0 6px; font-size:12.5px; font-weight:700; color:var(--accent-strong); text-transform:uppercase; letter-spacing:.03em; }
+.toast-host{ position:fixed; right:16px; bottom:calc(16px + env(safe-area-inset-bottom,0px)); z-index:60; display:flex; flex-direction:column; gap:8px; max-width:min(360px, calc(100vw - 32px)); }
+.toast{ background:var(--ink); color:var(--bg); padding:11px 14px; border-radius:9px; font-size:13px; box-shadow:var(--shadow); animation:toast-in .18s ease-out; }
+.toast.toast-err{ background:var(--danger); color:var(--accent-ink); }
+.toast.toast-ok{ background:var(--success); color:var(--accent-ink); }
+@keyframes toast-in{ from{ transform:translateY(6px); opacity:0; } to{ transform:none; opacity:1; } }
+code.k{ background:var(--surface-alt); border:1px solid var(--border); padding:1px 5px; border-radius:5px; font-family:var(--font-mono); font-size:12px; }
+/* específicos */
+.tabs{ display:flex; flex-wrap:wrap; gap:8px; margin:6px 0 4px; }
+.tab{ background:var(--surface); color:var(--muted); border:1px solid var(--border); padding:9px 14px; border-radius:9px; }
+.tab.is-active{ background:var(--accent-soft); color:var(--accent-strong); border-color:var(--accent); }
+.tab .cnt{ font-family:var(--font-mono); font-size:11px; margin-left:6px; opacity:.8; }
+.panel[hidden]{ display:none; }
+table.copy tr.verde td:not(.out){ background:#92D050; color:#111; }
+table.copy td.neg{ color:var(--danger); }
+table.copy tr.verde td.neg{ color:#b00020; }
+table.copy tr.sepr td{ height:14px; padding:0; background:var(--surface); }
+table.copy td{ background:var(--surface); font-family:var(--font-mono); font-size:12.5px; }
+table.copy td.out{ background:var(--surface); color:var(--muted); font-family:var(--font-body); font-size:12px; border-left:2px solid var(--border); }
+table.copy tr.div td:not(.out){ outline:1px solid var(--warning); }
+.chk{ display:flex; gap:8px; align-items:flex-start; font-size:13px; margin-top:10px; }
+.chk input{ margin-top:3px; }
+td input[type="text"]{ padding:5px 7px; font-size:12.5px; min-width:98px; font-family:var(--font-mono); }
+details{ margin-top:12px; font-size:12.5px; color:var(--muted); }
+details pre{ white-space:pre-wrap; background:var(--surface-alt); border:1px solid var(--border); padding:10px; border-radius:8px; max-height:220px; overflow:auto; font-family:var(--font-mono); font-size:11.5px; }
+.ver{ text-align:center; color:var(--muted); font-size:12px; margin-top:24px; }
+</style>
+</head>
+<body>
+<div class="app-shell">
+  <header class="topbar"><div class="topbar-inner">
+    <div class="brand"><div class="brand-mark">FG</div><div><h1>Conciliação de FGTS</h1><p>Centro Médico Cirúrgico de Catalão · conta 2751 · Razão × Guias × Provisão</p></div></div>
+    <div class="steps-pills" id="pills">
+      <span class="step-pill is-active" data-p="1">1 · Razão</span><span class="step-pill" data-p="2">2 · Guias</span><span class="step-pill" data-p="3">3 · Parâmetros</span><span class="step-pill" data-p="4">4 · Resultado</span>
+    </div>
+  </div></header>
+
+  <section class="step-card" id="s1">
+    <div class="step-head"><div class="step-num">1</div><div><h2>Razão da conta 2751</h2><p class="step-sub">Aceita o layout curto (Data movimento; Complemento; Valor débito; Valor crédito — com ou sem a coluna Valor) e o layout completo do Tasy (23 colunas, UTF-16). A codificação é detectada sozinha.</p></div></div>
+    <div class="dropzone" id="dzRazao"><strong>Arraste o CSV/TXT do razão aqui</strong><span>ou clique para escolher o arquivo</span></div>
+    <input type="file" id="fRazao" accept=".csv,.txt" hidden>
+    <div id="razaoInfo"></div>
+  </section>
+
+  <section class="step-card" id="s2" data-locked="true">
+    <div class="step-head"><div class="step-num">2</div><div><h2>Guias do FGTS Digital (GFD) — opcional</h2><p class="step-sub">PDFs das guias pagas. Com elas, cada lançamento do razão é conferido por valor e data e a coluna "Data banco" das linhas de copiar e colar vem do campo "Guia paga em". Os campos extraídos podem ser corrigidos na tabela.</p></div></div>
+    <div class="dropzone" id="dzGuias"><strong>Arraste os PDFs das guias aqui</strong><span>vários arquivos de uma vez · ou clique para escolher</span></div>
+    <input type="file" id="fGuias" accept=".pdf" multiple hidden>
+    <div class="actions-row"><button class="btn-secondary" id="btnAddGuia" type="button">+ Adicionar guia manualmente</button><span class="hint" id="guiasHint"></span></div>
+    <div id="guiasBox"></div>
+  </section>
+
+  <section class="step-card" id="s3" data-locked="true">
+    <div class="step-head"><div class="step-num">3</div><div><h2>Parâmetros</h2><p class="step-sub">Os valores de rescisórios por competência podem ser ajustados no resultado (aba Resumo).</p></div></div>
+    <fieldset><legend>Conciliação</legend>
+      <div class="field-row">
+        <div class="field"><label for="pTol">Tolerância de data (dias)</label><input type="number" id="pTol" value="3" min="0" max="30"></div>
+        <div class="field"><label for="pDe">Competência inicial (MM/AAAA)</label><input type="text" id="pDe" placeholder="ex.: 01/2026"></div>
+        <div class="field"><label for="pAte">Competência final (MM/AAAA)</label><input type="text" id="pAte" placeholder="ex.: 07/2026"></div>
+        <div class="field"><label for="pLim">Pagamento ≥ R$ é guia mensal</label><input type="number" id="pLim" value="50000" min="0" step="1000"></div>
+      </div>
+    </fieldset>
+    <div class="actions-row"><button class="btn-primary" id="btnRun" type="button">Conciliar</button><span class="hint">Pode rodar sem guias: o resumo por competência e os rescisórios usam só o razão.</span></div>
+  </section>
+
+  <section class="step-card" id="s4" data-locked="true">
+    <div class="step-head"><div class="step-num">4</div><div><h2>Resultado</h2><p class="step-sub" id="resSub">—</p></div></div>
+    <div class="summary-grid" id="tiles"></div>
+    <div class="tabs" id="tabs"></div>
+    <div id="panels"></div>
+  </section>
+  <div class="ver">Conciliação de FGTS · v2.1.0 · Contabilidade Integrada</div>
+</div>
+<div class="toast-host" id="toasts"></div>
+
+<script>
+/* ponte de capacidades do hub (download) */
+(function(){
+  if (window.top === window.self) return;
+  if (window.claude && window.claude.use) return;
+  let proximoId = 1;
+  const pendentes = {};
+  window.addEventListener('message', (ev) => {
+    const msg = ev.data;
+    if (!msg || msg.__ponteClaude !== true || msg.tipo !== 'resposta') return;
+    const p = pendentes[msg.id];
+    if (!p) return;
+    delete pendentes[msg.id];
+    if (msg.erro) p.reject(msg.erro); else p.resolve(msg.resultado);
+  });
+  function chamarHub(acao, payload){
+    return new Promise((resolve, reject) => {
+      const id = proximoId++;
+      pendentes[id] = { resolve, reject };
+      window.parent.postMessage({ __ponteClaude: true, tipo: 'chamada', id, acao, payload }, '*');
+    });
+  }
+  window.claude = {
+    use: async (nome) => {
+      if (nome !== 'downloads') return null;
+      return { save: (req) => chamarHub('downloads.save', req) };
+    }
+  };
+})();
+async function salvarArquivo(filename, blob){
+  if (typeof window.claude !== 'undefined' && typeof window.claude.use === 'function'){
+    try{
+      const downloads = await window.claude.use('downloads');
+      if (downloads){ await downloads.save({ filename, data: blob }); return true; }
+    }catch(err){
+      alert('Não foi possível salvar o arquivo (' + (err && (err.code || err.message) || 'erro') + ').');
+      return false;
+    }
+  }
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+  return true;
+}
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script type="module">
+try{
+  const pdfjsLib = await import('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/6.1.200/pdf.mjs');
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/6.1.200/pdf.worker.mjs';
+  window.pdfTexto = async function(buf){
+    const doc = await pdfjsLib.getDocument({ data: buf }).promise;
+    let out = '';
+    for (let p = 1; p <= doc.numPages; p++){
+      const pg = await doc.getPage(p);
+      const tc = await pg.getTextContent();
+      const it = tc.items.filter(x => x.str && x.str.trim()).map(x => ({ s: x.str, x: x.transform[4], y: x.transform[5] }));
+      it.sort((a, b) => b.y - a.y || a.x - b.x);
+      let line = [], ly = null;
+      const flush = () => { if (line.length){ line.sort((a, b) => a.x - b.x); out += line.map(z => z.s).join(' ') + '\n'; } line = []; };
+      for (const z of it){ if (ly === null || Math.abs(z.y - ly) > 3){ flush(); ly = z.y; } line.push(z); }
+      flush(); out += '\n';
+    }
+    return out;
+  };
+}catch(e){ window.pdfErro = e; }
+</script>
+<script>
+/* ===== CORE: motor de conciliação FGTS (sem DOM) ===== */
+const norm = s => (s == null ? '' : String(s)).normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase().replace(/\s+/g, ' ').trim();
+const r2 = x => Math.round((x + Number.EPSILON) * 100) / 100;
+const DAY = 86400000;
+
+function parseNum(s) {
+  if (s == null) return 0;
+  s = String(s).trim().replace(/"/g, '');
+  if (!s) return 0;
+  let neg = false;
+  if (/^\(.*\)$/.test(s)) { neg = true; s = s.slice(1, -1); }
+  s = s.replace(/R\$|\s/g, '');
+  if (s.includes(',')) s = s.replace(/\./g, '').replace(',', '.');
+  const v = parseFloat(s);
+  return isNaN(v) ? 0 : (neg ? -v : v);
+}
+function parseDate(s) {
+  if (s == null) return null;
+  let m = /(\d{2})\/(\d{2})\/(\d{4})/.exec(String(s));
+  if (m) return Date.UTC(+m[3], +m[2] - 1, +m[1]);
+  m = /(\d{4})-(\d{2})-(\d{2})/.exec(String(s));
+  if (m) return Date.UTC(+m[1], +m[2] - 1, +m[3]);
+  return null;
+}
+const p2 = n => String(n).padStart(2, '0');
+function fmtDate(ms) { if (ms == null) return ''; const d = new Date(ms); return p2(d.getUTCDate()) + '/' + p2(d.getUTCMonth() + 1) + '/' + d.getUTCFullYear(); }
+function compOf(ms) { const d = new Date(ms); return p2(d.getUTCMonth() + 1) + '/' + d.getUTCFullYear(); }
+function compKey(c) { const m = /^(\d{2})\/(\d{4})$/.exec(c); return m ? +m[2] * 100 + +m[1] : 0; }
+function nextComp(c) { const m = /^(\d{2})\/(\d{4})$/.exec(c); let mo = +m[1] + 1, y = +m[2]; if (mo > 12) { mo = 1; y++; } return p2(mo) + '/' + y; }
+function monthRange(c) { const m = /^(\d{2})\/(\d{4})$/.exec(c); return [Date.UTC(+m[2], +m[1] - 1, 1), Date.UTC(+m[2], +m[1], 0)]; }
+function fmtBR(v) { return (v < 0 ? '-' : '') + Math.abs(v).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+function fmtPlain(v) { return (Math.round(v * 100) / 100).toFixed(2).replace('.', ','); }
+
+/* ---------- decodificação e CSV ---------- */
+function decodeBuffer(buf) {
+  const u = new Uint8Array(buf);
+  if (u[0] === 0xFF && u[1] === 0xFE) return new TextDecoder('utf-16le').decode(u.subarray(2));
+  if (u[0] === 0xFE && u[1] === 0xFF) return new TextDecoder('utf-16be').decode(u.subarray(2));
+  let zeros = 0; const n = Math.min(u.length, 400);
+  for (let i = 1; i < n; i += 2) if (u[i] === 0) zeros++;
+  if (n > 20 && zeros > n / 2 * 0.6) return new TextDecoder('utf-16le').decode(u);
+  try { return new TextDecoder('utf-8', { fatal: true }).decode(u); }
+  catch (e) { return new TextDecoder('windows-1252').decode(u); }
+}
+function parseCSV(text, sep) {
+  const rows = []; let row = [], cur = '', q = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (q) {
+      if (c === '"') { if (text[i + 1] === '"') { cur += '"'; i++; } else q = false; }
+      else cur += c;
+    } else if (c === '"') q = true;
+    else if (c === sep) { row.push(cur); cur = ''; }
+    else if (c === '\n' || c === '\r') {
+      if (c === '\r' && text[i + 1] === '\n') i++;
+      row.push(cur); cur = ''; rows.push(row); row = [];
+    } else cur += c;
+  }
+  if (cur !== '' || row.length) { row.push(cur); rows.push(row); }
+  return rows;
+}
+
+/* ---------- razão ---------- */
+function parseRazao(text) {
+  text = text.replace(/^﻿/, '');
+  const first = text.split(/\r?\n/, 1)[0] || '';
+  const sep = (first.split(';').length >= first.split('\t').length && first.split(';').length >= first.split(',').length) ? ';' : (first.split('\t').length > first.split(',').length ? '\t' : ',');
+  const rows = parseCSV(text, sep);
+  let hi = -1, ix = {};
+  for (let i = 0; i < Math.min(rows.length, 15); i++) {
+    const h = rows[i].map(norm);
+    if (h.some(x => x === 'DATA MOVIMENTO' || x === 'DATA') && h.some(x => x === 'COMPLEMENTO')) {
+      hi = i;
+      const f = n => h.indexOf(n);
+      ix = { data: h.indexOf('DATA MOVIMENTO') >= 0 ? f('DATA MOVIMENTO') : f('DATA'), compl: f('COMPLEMENTO'), deb: f('VALOR DEBITO'), cred: f('VALOR CREDITO'), cod: f('CODIGO HISTORICO'), lote: f('LOTE'), lanc: f('LANCAMENTO') };
+      break;
+    }
+  }
+  if (hi < 0) throw new Error('Cabeçalho do razão não reconhecido (esperado: Data movimento, Complemento, Valor débito, Valor crédito).');
+  if (ix.deb < 0 || ix.cred < 0) throw new Error('Colunas "Valor débito" e "Valor crédito" não encontradas no razão.');
+  const layout = rows[hi].length >= 15 ? 'completo (' + rows[hi].length + ' colunas)' : 'curto (' + rows[hi].length + ' colunas)';
+  const lines = [];
+  for (let i = hi + 1; i < rows.length; i++) {
+    const r = rows[i];
+    const d = parseDate(r[ix.data]);
+    if (d == null) continue;
+    const deb = Math.abs(parseNum(r[ix.deb])), cred = Math.abs(parseNum(r[ix.cred]));
+    if (!deb && !cred) continue;
+    const l = { i: lines.length, row: i + 1, data: d, compl: (r[ix.compl] || '').replace(/\s+/g, ' ').trim(), deb: r2(deb), cred: r2(cred), cod: ix.cod >= 0 ? String(r[ix.cod] || '').trim() : '', lote: ix.lote >= 0 ? String(r[ix.lote] || '').trim() : '' };
+    l.cat = classify(l);
+    l.comp = compOf(l.data);
+    lines.push(l);
+  }
+  return { lines, layout, sep };
+}
+function classify(l) {
+  const n = norm(l.compl), cod = l.cod;
+  const par = l.deb > 0 && l.cred > 0 && Math.abs(l.deb - l.cred) < 0.005;
+  if (/SD ANTERIOR|AJUSTE DE SALDO/.test(n)) return 'SALDO INICIAL';
+  if (par) return /RESCIS/.test(n) ? 'RESCISÓRIO (par D=C)' : 'PAR D=C';
+  if (/JUROS/.test(n)) return 'JUROS';
+  if (l.deb > 0 && !l.cred) {
+    if (cod === '112') return 'CONSIGNADO';
+    if (cod === '47' || /PAGAMENTO DE IMPOSTOS|BAIXA DE TITULOS|MINISTERIO DO TRABALHO|\bMTE\b/.test(n)) return 'PAGAMENTO';
+    return 'OUTRO DÉBITO';
+  }
+  if (l.cred > 0 && !l.deb) {
+    if (cod === '145' || /FGTS 13/.test(n)) return 'FGTS 13º';
+    if (cod === '156' || /FGTS A RECOLHER/.test(n)) return 'FGTS MENSAL';
+    if (cod === '112' || /CONSIGNADO/.test(n)) return 'CONSIGNADO';
+    if (/ARREDOND/.test(n)) return 'ARREDONDAMENTO';
+    return 'OUTRO CRÉDITO';
+  }
+  return 'OUTRO';
+}
+
+/* ---------- guias GFD (texto extraído do PDF) ---------- */
+function parseGuiaText(txt, nome) {
+  const t = txt.replace(/\u00a0/g, ' ');
+  const MONEY = '(\\d{1,3}(?:\\.\\d{3})*,\\d{2})';
+  const g = { nome: nome || '', id: '', tag: '', venc: null, paga: null, total: 0, valorRecolher: 0, encargos: 0, resc: 0, consig: 0, comps: [], avisos: [] };
+  let m = /\b(\d{16}-\d{1,2})\b/.exec(t) || /\b(\d{16})\b/.exec(t); if (m) g.id = m[1];
+  m = /Pagar este documento at[eé][\s\S]{0,250}?(\d{2}\/\d{2}\/\d{4})/i.exec(t); if (m) g.venc = parseDate(m[1]);
+  m = /Guia paga em\s*:?\s*(\d{2}\/\d{2}\/\d{4})/i.exec(t); if (m) g.paga = parseDate(m[1]);
+  m = new RegExp('Total da Guia\\s*:?\\s*(?:R\\$)?\\s*' + MONEY, 'i').exec(t); if (m) g.total = parseNum(m[1]);
+  m = new RegExp('Valor a recolher[\\s\\S]{0,120}?' + MONEY, 'i').exec(t); if (m) g.valorRecolher = parseNum(m[1]);
+  if (!g.total && g.valorRecolher) g.total = g.valorRecolher;
+  const lines = t.split(/\r?\n/);
+  if (g.id) { const li = lines.find(l => l.includes(g.id)); if (li) g.tag = li.slice(li.indexOf(g.id) + g.id.length).replace(new RegExp(MONEY + '\\s*$'), '').trim(); }
+  let sec = '';
+  const reComp = /^\s*((?:13[º°o]?\s*\/\s*\d{4})|(?:\d{2}\/\d{4}))\s+(.*)$/i;
+  for (const ln of lines) {
+    if (/recolhimentos do FGTS/i.test(ln)) { sec = 'fgts'; continue; }
+    if (/recolhimentos do Consignado/i.test(ln)) { sec = 'consig'; continue; }
+    const mm = reComp.exec(ln); if (!mm) continue;
+    const vals = (mm[2].match(/\d{1,3}(?:\.\d{3})*,\d{2}/g) || []).map(parseNum);
+    const comp = mm[1].replace(/\s+/g, '');
+    if (sec === 'consig' || (sec !== 'fgts' && vals.length === 3)) {
+      if (vals.length >= 3) g.comps.push({ comp, tipo: 'consig', consig: vals[0], enc: vals[1], total: vals[2], vals });
+      else g.avisos.push('Linha de consignado ' + comp + ' com ' + vals.length + ' valores — confira.');
+    } else if (vals.length === 5) {
+      g.comps.push({ comp, tipo: 'fgts', mensal: vals[0], resc: vals[1], indeniz: vals[2], enc: vals[3], total: vals[4], vals });
+    } else g.avisos.push('Linha de FGTS ' + comp + ' com ' + vals.length + ' valores — colunas não mapeadas, confira.');
+  }
+  const fg = g.comps.filter(c => c.tipo === 'fgts'), cs = g.comps.filter(c => c.tipo === 'consig');
+  g.resc = r2(fg.reduce((a, c) => a + (c.resc || 0) + (c.indeniz || 0), 0));
+  g.consig = r2(cs.reduce((a, c) => a + (c.consig || 0), 0));
+  g.encargos = r2(g.comps.reduce((a, c) => a + (c.enc || 0), 0));
+  if (!g.total) g.avisos.push('Total da guia não encontrado — preencha manualmente.');
+  else if (g.comps.length) { const soma = r2(g.comps.reduce((a, c) => a + (c.total || 0), 0)); if (Math.abs(soma - g.total) > 0.01) g.avisos.push('Soma das competências (' + fmtBR(soma) + ') difere do total da guia — confira.'); }
+  if (!g.paga) g.avisos.push('Data "Guia paga em" não encontrada — preencha manualmente (guia ainda não paga?).');
+  return g;
+}
+
+/* ---------- conciliação ---------- */
+function subsets(items, maxK, target, tol) {
+  const out = [];
+  const n = items.length;
+  function rec(start, k, sum, pick) {
+    if (k > 0 && Math.abs(sum - target) <= tol) out.push(pick.slice());
+    if (k === maxK) return;
+    for (let i = start; i < n; i++) { pick.push(i); rec(i + 1, k + 1, sum + items[i].v, pick); pick.pop(); }
+  }
+  rec(0, 0, 0, []);
+  return out.sort((a, b) => a.length - b.length);
+}
+
+function subsetsFast(items, maxK, target, tolCents) {
+  const T = Math.round(target * 100), v = items.map(x => Math.round(x.v * 100)), n = v.length, out = [];
+  const map = new Map();
+  v.forEach((c, i) => { if (!map.has(c)) map.set(c, []); map.get(c).push(i); });
+  for (let i = 0; i < n; i++) { if (Math.abs(v[i] - T) <= tolCents) out.push([i]); }
+  if (maxK >= 2) for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) {
+    const s2 = v[i] + v[j];
+    if (Math.abs(s2 - T) <= tolCents) out.push([i, j]);
+    if (maxK >= 3) { const need = T - s2; for (let d = -tolCents; d <= tolCents; d++) { const ks = map.get(need + d); if (ks) for (const k of ks) if (k > j) out.push([i, j, k]); } }
+  }
+  return out.sort((a, b) => a.length - b.length);
+}
+
+function conciliar(lines, guias, opts) {
+  opts = Object.assign({ tolDias: 3, resc: {}, de: '', ate: '', incluirAbertos: true }, opts || {});
+  const pagos = lines.filter(l => l.cat === 'PAGAMENTO');
+  const used = new Set();   // índices de pagamentos já consumidos
+  const res = {};
+
+  /* 1) resumo por competência */
+  const prov = {};
+  for (const l of lines) {
+    if (['FGTS MENSAL', 'FGTS 13º', 'ARREDONDAMENTO', 'CONSIGNADO'].includes(l.cat)) {
+      const c = prov[l.comp] = prov[l.comp] || { comp: l.comp, mensal: 0, d13: 0, arred: 0, consig: 0, rescRazao: 0, consigBaixa: 0 };
+      const net = l.cred - l.deb;
+      if (l.cat === 'FGTS MENSAL') c.mensal += net; else if (l.cat === 'FGTS 13º') c.d13 += net; else if (l.cat === 'ARREDONDAMENTO') c.arred += net; else { c.consig += net; c.consigBaixa += l.deb; }
+    }
+  }
+  for (const l of lines) if (l.cat === 'RESCISÓRIO (par D=C)') { const c = prov[l.comp] = prov[l.comp] || { comp: l.comp, mensal: 0, d13: 0, arred: 0, consig: 0, rescRazao: 0 }; c.rescRazao += l.cred; }
+  const guiaResc = {};
+  for (const g of guias || []) for (const c of g.comps || []) if (c.resc || c.indeniz) guiaResc[c.comp] = r2((guiaResc[c.comp] || 0) + (c.resc || 0) + (c.indeniz || 0));
+
+  let comps = Object.values(prov).filter(c => c.mensal + c.d13 + c.consig + c.arred > 0).sort((a, b) => compKey(a.comp) - compKey(b.comp));
+  if (opts.de) comps = comps.filter(c => compKey(c.comp) >= compKey(opts.de));
+  if (opts.ate) comps = comps.filter(c => compKey(c.comp) <= compKey(opts.ate));
+  const jurosLn = lines.filter(l => l.cat === 'JUROS');
+  res.resumo = comps.map(c => {
+    const r = Object.assign({}, c);
+    r.mensal = r2(c.mensal); r.d13 = r2(c.d13); r.arred = r2(c.arred); r.consig = r2(c.consig);
+    r.provTotal = r2(r.mensal + r.d13 + r.arred + r.consig);
+    r.rescRazao = r2(c.rescRazao); r.consigBaixa = r2(c.consigBaixa);
+    r.rescGuias = guiaResc[c.comp] != null ? guiaResc[c.comp] : null;
+    r.rescManual = opts.resc[c.comp] != null && opts.resc[c.comp] !== '' ? +opts.resc[c.comp] : null;
+    r.resc = r.rescManual != null ? r.rescManual : r.rescRazao;
+    r.esperada = r2(r.provTotal - r.resc);
+    const nx = nextComp(c.comp), [a, b] = monthRange(nx);
+    const win = pagos.filter(p => p.data >= a && p.data <= b && !used.has(p.i));
+    const jur = r2(jurosLn.filter(j => j.data >= a && j.data <= b).reduce((s, j) => s + j.cred, 0));
+    r.juros = jur;
+    let hit = win.find(p => Math.abs(p.deb - r.esperada) < 0.015) || win.find(p => jur && Math.abs(p.deb - r.esperada - jur) < 0.015);
+    let situ;
+    if (hit) { used.add(hit.i); situ = 'OK – fecha com a guia'; }
+    else {
+      const cand = win.filter(p => p.deb >= r.esperada * 0.3).sort((x, y) => Math.abs(x.deb - r.esperada) - Math.abs(y.deb - r.esperada))[0];
+      if (cand) { hit = cand; used.add(cand.i); situ = 'DIFERENÇA – investigar'; } else situ = 'SEM PAGAMENTO NO RAZÃO';
+    }
+    r.pagLinha = hit ? hit.i : null; r.pagData = hit ? hit.data : null; r.pagValor = hit ? hit.deb : null;
+    r.dif = hit ? r2(hit.deb - jur - r.esperada) : null;
+    r.situ = situ;
+    return r;
+  });
+
+  /* 2) guia × razão */
+  const gl = (guias || []).filter(g => g.total > 0).map((g, k) => Object.assign({ k }, g));
+  const tolMs = opts.tolDias * DAY;
+  const gDeb = new Set();   // débitos consumidos por guias
+  res.guias = [];
+  const done = new Set();
+  const out = (g, status, deb, nota) => res.guias.push({ g, status, deb: deb || [], nota: nota || '' });
+  // 2.1 mesmo valor e data dentro da tolerância
+  for (const g of gl) {
+    if (!g.paga) continue;
+    const cand = pagos.filter(p => !gDeb.has(p.i) && Math.abs(p.deb - g.total) < 0.005 && Math.abs(p.data - g.paga) <= tolMs);
+    if (cand.length === 1) { gDeb.add(cand[0].i); done.add(g.k); out(g, 'CONCILIADO', [cand[0]]); }
+    else if (cand.length > 1) {
+      cand.sort((x, y) => Math.abs(x.data - g.paga) - Math.abs(y.data - g.paga));
+      if (Math.abs(cand[0].data - g.paga) < Math.abs(cand[1].data - g.paga)) { gDeb.add(cand[0].i); done.add(g.k); out(g, 'CONCILIADO', [cand[0]]); }
+      else { done.add(g.k); out(g, 'REVISAR', cand, 'Vários lançamentos candidatos com mesmo valor e data.'); }
+    }
+  }
+  // 2.2 lote: um débito = soma de várias guias; ou uma guia = soma de vários débitos
+  const restG = () => gl.filter(g => !done.has(g.k) && g.paga);
+  for (const p of pagos.filter(p => !gDeb.has(p.i))) {
+    const cand = restG().filter(g => Math.abs(g.paga - p.data) <= tolMs).map(g => ({ g, v: g.total }));
+    if (cand.length < 2 || cand.length > 18) continue;
+    const sol = subsets(cand, 4, p.deb, 0.005).filter(s => s.length > 1);
+    if (sol.length === 1) {
+      gDeb.add(p.i);
+      for (const ii of sol[0]) { done.add(cand[ii].g.k); out(cand[ii].g, 'CONCILIADO (LOTE)', [p], 'Um lançamento no razão (' + fmtBR(p.deb) + ') paga ' + sol[0].length + ' guias.'); }
+    }
+  }
+  for (const g of restG()) {
+    const cand = pagos.filter(p => !gDeb.has(p.i) && Math.abs(p.data - g.paga) <= tolMs && p.deb < g.total).map(p => ({ p, v: p.deb }));
+    if (cand.length < 2 || cand.length > 18) continue;
+    const sol = subsets(cand, 4, g.total, 0.005).filter(s => s.length > 1);
+    if (sol.length === 1) { const ds = sol[0].map(ii => cand[ii].p); ds.forEach(p => gDeb.add(p.i)); done.add(g.k); out(g, 'CONCILIADO (LOTE)', ds, 'Guia dividida em ' + ds.length + ' lançamentos no razão.'); }
+  }
+  // 2.3 divergência de data / valor
+  for (const g of restG()) {
+    const sameVal = pagos.filter(p => !gDeb.has(p.i) && Math.abs(p.deb - g.total) < 0.005 && Math.abs(p.data - g.paga) <= 45 * DAY);
+    if (sameVal.length === 1) { gDeb.add(sameVal[0].i); done.add(g.k); out(g, 'DIVERGÊNCIA DE DATA', sameVal, 'Razão em ' + fmtDate(sameVal[0].data) + ' × guia paga em ' + fmtDate(g.paga) + '.'); continue; }
+    if (sameVal.length > 1) { done.add(g.k); out(g, 'REVISAR', sameVal, 'Mesmo valor em várias datas fora da tolerância.'); continue; }
+    const near = pagos.filter(p => !gDeb.has(p.i) && Math.abs(p.data - g.paga) <= tolMs && Math.abs(p.deb - g.total) <= Math.max(1, g.total * 0.005));
+    if (near.length === 1) { gDeb.add(near[0].i); done.add(g.k); out(g, 'DIVERGÊNCIA DE VALOR', near, 'Diferença de ' + fmtBR(near[0].deb - g.total) + ' (razão − guia).'); }
+  }
+  const ultimo = lines.length ? Math.max(...lines.map(l => l.data)) : 0;
+  for (const g of gl) if (!done.has(g.k)) { if (!g.paga) out(g, 'SEM DATA DE PAGAMENTO', [], 'Informe "Guia paga em" para conciliar.'); else if (g.paga > ultimo) out(g, 'PAGA APÓS O PERÍODO DO RAZÃO', [], 'Guia paga em ' + fmtDate(g.paga) + '; o razão termina em ' + fmtDate(ultimo) + '.'); else out(g, 'NÃO ENCONTRADA NO RAZÃO'); }
+  res.guias.sort((a, b) => (a.g.paga || 0) - (b.g.paga || 0) || a.g.k - b.g.k);
+  res.semGuia = pagos.filter(p => !gDeb.has(p.i));
+
+  /* 3) rescisórios: pagamentos fora do resumo mensal × provisões D=C (soma exata) */
+  const pares = lines.filter(l => l.cat === 'RESCISÓRIO (par D=C)' || (l.cat === 'SALDO INICIAL' && l.deb > 0 && l.cred > 0)).map(l => ({ l, v: l.cred }));
+  const usedPar = new Set();
+  res.resc = [];
+  const limResc = opts.limiteResc || 50000;
+  const rest = pagos.filter(p => !used.has(p.i) && p.deb < limResc).sort((a, b) => a.data - b.data);
+  res.grandesSemCompetencia = pagos.filter(p => !used.has(p.i) && p.deb >= limResc);
+  for (const p of rest) {
+    const cand = pares.filter(x => !usedPar.has(x.l.i) && Math.abs(x.l.data - p.data) <= 45 * DAY);
+    if (!cand.length) { res.resc.push({ p, sit: 'SEM PAR', prov: [], nota: '' }); continue; }
+    const sol = subsetsFast(cand, 3, p.deb, 0);
+    if (!sol.length) { res.resc.push({ p, sit: 'SEM PAR', prov: [], nota: '' }); continue; }
+    const k = sol[0].length, same = sol.filter(s => s.length === k);
+    same.sort((a, b) => a.reduce((s, i) => s + Math.abs(cand[i].l.data - p.data), 0) - b.reduce((s, i) => s + Math.abs(cand[i].l.data - p.data), 0));
+    const pick = same[0].map(i => cand[i]); pick.forEach(x => usedPar.add(x.l.i));
+    res.resc.push({ p, sit: same.length === 1 ? 'CONCILIADO' : 'REVISAR', prov: pick.map(x => x.l), nota: same.length > 1 ? same.length + ' combinações possíveis; escolhida a mais próxima.' : '' });
+  }
+
+  // roll-forward mensal: provisões rescisórias (pares D=C) × pagamentos de rescisório
+  const rm = {};
+  const mk = c => rm[c] = rm[c] || { mes: c, prov: 0, pag: 0 };
+  pares.forEach(x => { if (x.l.cat === 'RESCISÓRIO (par D=C)') mk(x.l.comp).prov += x.v; });
+  rest.forEach(p => { mk(p.comp).pag += p.deb; });
+  let ac = 0;
+  res.rescMes = Object.values(rm).sort((a, b) => compKey(a.mes) - compKey(b.mes)).map(m => { m.prov = r2(m.prov); m.pag = r2(m.pag); ac = r2(ac + m.prov - m.pag); m.acum = ac; return m; });
+
+  /* 4) juros: encargos das guias × créditos de JUROS no razão */
+  res.juros = [];
+  for (const g of gl) {
+    if (g.encargos > 0) {
+      const mesPaga = g.paga ? compOf(g.paga) : null;
+      const lancados = mesPaga ? jurosLn.filter(j => compOf(j.data) === mesPaga) : [];
+      res.juros.push({ g, encargos: g.encargos, lancado: r2(lancados.reduce((s, j) => s + j.cred, 0)), mes: mesPaga });
+    }
+  }
+  const agg = {};
+  res.juros.forEach(j => { const k = j.mes || '?'; agg[k] = agg[k] || { mes: k, encargos: 0, lancado: j.lancado }; agg[k].encargos = r2(agg[k].encargos + j.encargos); });
+  res.jurosMes = Object.values(agg).map(a => Object.assign(a, { falta: r2(a.encargos - a.lancado) }));
+
+  /* 5) saldo */
+  const s = { ini: 0, prov: 0, pag: 0, jur: 0, outros: 0 };
+  lines.forEach(l => {
+    const net = l.cred - l.deb;
+    if (l.cat === 'SALDO INICIAL') s.ini += net;
+    else if (['FGTS MENSAL', 'FGTS 13º', 'ARREDONDAMENTO', 'CONSIGNADO'].includes(l.cat)) s.prov += net;
+    else if (l.cat === 'PAGAMENTO') s.pag += net;
+    else if (l.cat === 'JUROS') s.jur += net;
+    else s.outros += net;
+  });
+  res.saldo = { ini: r2(s.ini), prov: r2(s.prov), pag: r2(s.pag), jur: r2(s.jur), outros: r2(s.outros), final: r2(s.ini + s.prov + s.pag + s.jur + s.outros) };
+
+  /* 6) linhas de copiar e colar */
+  res.lines = lines;
+  res.copiar = copiarLinhas(res, opts, lines);
+  return res;
+}
+
+/* ---------- linhas de copiar e colar (formato da planilha manual) ----------
+   Bloco VERDE (por competência M com guia mensal paga):
+     31/M  GUIA FGTS MM.AAAA               (guia mensal)      negativo
+     31/M  PROVISAO FGTS RESCISORIO        (soma dos rescisórios pagos dentro do mês M)  negativo
+     dd/M  PAGTO FGTS RESCISAO             um por pagamento   positivo
+     dd/M+1 PAGTO                          pagamento da guia mensal   positivo
+   Grupos BRANCOS (rescisório pago fora do mês da competência): provisões por competência (negativo) + PAGTO FGTS RESCISAO (positivo). */
+function lastDayOfComp(c) {
+  let m = /^(\d{2})\/(\d{4})$/.exec(c); if (m) return monthRange(c)[1];
+  m = /^13\D*\/(\d{4})$/.exec(c); if (m) return Date.UTC(+m[1], 11, 31);
+  return null;
+}
+function prevComp(c) { const m = /^(\d{2})\/(\d{4})$/.exec(c); let mo = +m[1] - 1, y = +m[2]; if (mo < 1) { mo = 12; y--; } return p2(mo) + '/' + y; }
+function copiarLinhas(res, opts, lines) {
+  const lim = opts.limiteResc || 50000;
+  const okSt = x => x.status === 'CONCILIADO' || x.status === 'CONCILIADO (LOTE)' || (opts.incluirDiverg && /^DIVERG/.test(x.status));
+  const matched = res.guias.filter(okSt);
+  const rows = [];
+  const R = (tipo, data, hist, valor, status, ref) => ({ tipo, data, hist, valor: r2(valor), status: status || '', ref: ref || '' });
+  const lab = c => c.replace('/', '.');
+  const mensais = matched.filter(x => x.g.total >= lim), resc = matched.filter(x => x.g.total < lim);
+  const compsDe = g => Array.from(new Set((g.comps || []).map(c => c.comp)));
+  const provPorComp = g => { const m = {}; (g.comps || []).forEach(c => { m[c.comp] = r2((m[c.comp] || 0) + (c.total || 0)); }); return m; };
+  const mesmoMes = x => { const cs = compsDe(x.g); return x.deb.length > 0 && cs.length === 1 && x.deb.every(d => compOf(d.data) === cs[0]); };
+
+  // rescisórios pagos dentro do próprio mês da competência, por competência
+  const mesmo = {};
+  resc.filter(mesmoMes).forEach(x => { const M = compsDe(x.g)[0]; (mesmo[M] = mesmo[M] || []).push(x); });
+  const consumido = new Set();
+  const blocosVerdes = [];
+
+  const blocoVerde = (M, guiaVal, juros, pagtos, status, ref) => {
+    const ld = lastDayOfComp(M), out = [];
+    out.push(R('verde', ld, 'GUIA FGTS ' + lab(M), -guiaVal, status, ref));
+    if (juros > 0) out.push(R('verde', lastDayOfComp(compOf(pagtos[0].data)), 'JUROS S/ PAGTO FGTS ' + lab(M), -juros, 'conferir juros', ref));
+    const rs = (mesmo[M] || []);
+    if (rs.length) {
+      consumido.add(M);
+      const pags = [];
+      rs.forEach(x => x.deb.forEach(d => pags.push({ d, x })));
+      pags.sort((a, b) => b.d.data - a.d.data || a.d.i - b.d.i);
+      const soma = r2(pags.reduce((s, p) => s + p.d.deb, 0));
+      out.push(R('verde', ld, 'PROVISAO FGTS RESCISORIO', -soma, 'soma dos rescisórios pagos em ' + M, ''));
+      pags.forEach(p => out.push(R('verde', p.d.data, 'PAGTO FGTS RESCISAO', p.d.deb, status, (p.x.g.id || '') + (p.x.g.tag ? ' · ' + p.x.g.tag : ''))));
+    }
+    pagtos.forEach(d => out.push(R('verde', d.data, 'PAGTO', d.deb, status, ref)));
+    const sum = r2(out.reduce((s, r) => s + r.valor, 0));
+    if (Math.abs(sum) > 0.005) out.forEach(r => { r.aviso = 'bloco não fecha em zero (' + fmtPlain(sum) + ')'; });
+    blocosVerdes.push({ M, rows: out, ord: ld });
+  };
+
+  // guias mensais conciliadas
+  mensais.forEach(x => {
+    const rowsC = (x.g.comps || []).filter(c => /^\d{2}\//.test(c.comp));
+    let M = null;
+    if (rowsC.length) { const t = {}; rowsC.forEach(c => { t[c.comp] = (t[c.comp] || 0) + (c.total || 0); }); M = Object.keys(t).sort((a, b) => t[b] - t[a])[0]; }
+    if (!M) M = prevComp(compOf(x.deb[0].data));
+    const pagtos = x.deb.slice().sort((a, b) => a.data - b.data);
+    blocoVerde(M, r2(x.g.total - (x.g.encargos || 0)), x.g.encargos || 0, pagtos, x.status, (x.g.id || x.g.nome) + (x.g.tag ? ' · ' + x.g.tag : ''));
+  });
+  // pagamentos mensais sem guia (competência = mês anterior ao pagamento, ou a do resumo)
+  if (opts.semGuia) {
+    res.semGuia.filter(p => p.deb >= lim).forEach(p => {
+      const hit = res.resumo.find(r => r.pagLinha === p.i);
+      const M = hit ? hit.comp : prevComp(compOf(p.data));
+      blocoVerde(M, p.deb, 0, [p], 'sem guia – competência ' + M + (hit ? ' (fecha com a provisão)' : ' assumida pelo mês anterior'), '');
+    });
+  }
+  blocosVerdes.sort((a, b) => a.ord - b.ord).forEach(b => { b.rows.forEach(r => rows.push(r)); rows.push(R('sep')); });
+
+  // grupos brancos: um por lançamento de pagamento do razão
+  const grupos = {}, provEmitida = new Set();
+  const addGrupo = (d, x, aberto) => { const k = d.i; (grupos[k] = grupos[k] || { d, xs: [], aberto }).xs.push(x); };
+  resc.forEach(x => {
+    if (mesmoMes(x) && opts.incluirAbertos === false) return;
+    if (mesmoMes(x) && consumido.has(compsDe(x.g)[0])) return;
+    x.deb.forEach(d => addGrupo(d, x, mesmoMes(x)));
+  });
+  const gl = Object.values(grupos).sort((a, b) => a.d.data - b.d.data || a.d.i - b.d.i);
+  // blocos abertos (rescisórios do mês sem guia mensal) viram uma provisão agregada + pagamentos
+  const abertosPorM = {};
+  gl.filter(g => g.aberto).forEach(g => { const M = compsDe(g.xs[0].g)[0]; (abertosPorM[M] = abertosPorM[M] || []).push(g); });
+  gl.filter(g => !g.aberto).forEach(g => {
+    const prov = {};
+    g.xs.forEach(x => { if (provEmitida.has(x.g.k)) return; provEmitida.add(x.g.k); const pc = provPorComp(x.g); Object.keys(pc).forEach(c => { prov[c] = r2((prov[c] || 0) + pc[c]); }); if (!x.g.comps || !x.g.comps.length) prov['?'] = r2(x.g.total); });
+    const out = [];
+    Object.keys(prov).sort((a, b) => compKey(a) - compKey(b)).forEach(c => out.push(R('branco', c === '?' ? lastDayOfComp(compOf(g.d.data)) : lastDayOfComp(c), 'PROVISAO FGTS RESCISORIO', -prov[c], c === '?' ? 'competência da guia não informada' : '', (g.xs[0].g.id || '') + (g.xs[0].g.tag ? ' · ' + g.xs[0].g.tag : ''))));
+    out.push(R('branco', g.d.data, 'PAGTO FGTS RESCISAO', g.d.deb, g.xs.map(x => x.status).filter((v, i, a) => a.indexOf(v) === i).join(' / '), g.xs.map(x => x.g.id || x.g.nome).join(' + ')));
+    const sum = r2(out.reduce((s, r) => s + r.valor, 0));
+    if (Math.abs(sum) > 0.005) out.forEach(r => { r.aviso = 'grupo não fecha em zero (' + fmtPlain(sum) + ')'; });
+    out.forEach(r => rows.push(r));
+  });
+  Object.keys(abertosPorM).sort((a, b) => compKey(a) - compKey(b)).forEach(M => {
+    const pags = abertosPorM[M].map(g => ({ d: g.d, x: g.xs[0] })).sort((a, b) => b.d.data - a.d.data || a.d.i - b.d.i);
+    const soma = r2(pags.reduce((s, p) => s + p.d.deb, 0));
+    const st = 'rescisórios pagos em ' + M + ' – aguarda a guia mensal ' + M;
+    rows.push(R('branco', lastDayOfComp(M), 'PROVISAO FGTS RESCISORIO', -soma, st, ''));
+    pags.forEach(p => rows.push(R('branco', p.d.data, 'PAGTO FGTS RESCISAO', p.d.deb, st, (p.x.g.id || '') + (p.x.g.tag ? ' · ' + p.x.g.tag : ''))));
+  });
+  while (rows.length && rows[rows.length - 1].tipo === 'sep') rows.pop();
+  return rows;
+}
+
+if (typeof module !== 'undefined') module.exports = { copiarLinhas, parseRazao, parseGuiaText, conciliar, decodeBuffer, parseNum, parseDate, fmtDate, fmtBR, fmtPlain, classify, parseCSV, r2, compOf, norm };
+/* ===== FIM CORE ===== */
+
+</script>
+<script>
+(function(){
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const S = { razao: null, nomeRazao: '', guias: [], res: null, tab: 'copiar', resc: {}, incluirDiverg: false, semGuia: false, abertos: true };
+
+  function toast(msg, kind){ const t = document.createElement('div'); t.className = 'toast' + (kind ? ' toast-' + kind : ''); t.textContent = msg; $('toasts').appendChild(t); setTimeout(() => t.remove(), 4200); }
+  function pills(n){ document.querySelectorAll('#pills .step-pill').forEach(p => { const k = +p.dataset.p; p.classList.toggle('is-active', k === n); p.classList.toggle('is-done', k < n); }); }
+  function unlock(id){ $(id).removeAttribute('data-locked'); }
+  function setupDrop(dz, input, handler){
+    dz.addEventListener('click', () => input.click());
+    dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('is-dragover'); });
+    dz.addEventListener('dragleave', () => dz.classList.remove('is-dragover'));
+    dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('is-dragover'); handler(e.dataTransfer.files); });
+    input.addEventListener('change', () => { handler(input.files); input.value = ''; });
+  }
+  const tile = (n, l, cls) => '<div class="summary-tile ' + (cls || '') + '"><div class="n">' + n + '</div><div class="l">' + l + '</div></div>';
+  const stCls = s => /^(OK|CONCILIADO)/.test(s) ? 'st-ok' : /DIVERG|DIFEREN|REVISAR|APÓS|sem guia|aguarda|soma dos|conferir/.test(s) ? 'st-warn' : 'st-err';
+  const stag = s => '<span class="tag ' + stCls(s) + '">' + esc(s) + '</span>';
+
+  /* ---- 1: razão ---- */
+  async function loadRazao(files){
+    files = Array.from(files); const f = files[0]; if (!f) return;
+    try{
+      const buf = await f.arrayBuffer();
+      const p = parseRazao(decodeBuffer(buf));
+      if (!p.lines.length) throw new Error('Nenhum lançamento com data válida foi encontrado.');
+      S.razao = p; S.nomeRazao = f.name; S.res = null;
+      const L = p.lines, ds = L.map(l => l.data);
+      const cred = L.reduce((a, l) => a + l.cred, 0), deb = L.reduce((a, l) => a + l.deb, 0);
+      const cats = {}; L.forEach(l => cats[l.cat] = (cats[l.cat] || 0) + 1);
+      $('razaoInfo').innerHTML = '<span class="file-chip">' + esc(f.name) + '</span><span class="file-chip">layout ' + esc(p.layout) + '</span>' +
+        '<div class="summary-grid">' + tile(L.length, 'lançamentos') + tile(fmtDate(Math.min(...ds)) + ' – ' + fmtDate(Math.max(...ds)), 'período') + tile(fmtBR(r2(cred - deb)), 'saldo credor (créd. − déb.)', 'accent') + tile(cats['PAGAMENTO'] || 0, 'pagamentos (débitos)') + tile((cats['OUTRO DÉBITO'] || 0) + (cats['OUTRO CRÉDITO'] || 0) + (cats['OUTRO'] || 0), 'não classificados', (cats['OUTRO DÉBITO'] || cats['OUTRO CRÉDITO'] || cats['OUTRO']) ? 'warn' : '') + '</div>';
+      unlock('s2'); unlock('s3'); pills(2);
+      toast('Razão lido: ' + L.length + ' lançamentos.', 'ok');
+    }catch(e){ toast('Razão: ' + (e.message || e), 'err'); }
+  }
+  setupDrop($('dzRazao'), $('fRazao'), loadRazao);
+
+  /* ---- 2: guias ---- */
+  async function loadGuias(files){
+    files = Array.from(files);
+    if (!window.pdfTexto){ toast('Leitor de PDF indisponível (sem acesso ao CDN). Use "Adicionar guia manualmente".', 'err'); return; }
+    for (const f of files){
+      try{
+        const txt = await window.pdfTexto(await f.arrayBuffer());
+        const g = parseGuiaText(txt, f.name); g.raw = txt; S.guias.push(g);
+      }catch(e){ toast(f.name + ': ' + (e.message || e), 'err'); }
+    }
+    renderGuias(); toast(files.length + ' PDF(s) lido(s). Confira os campos extraídos.', 'ok'); if (S.res) run();
+  }
+  setupDrop($('dzGuias'), $('fGuias'), loadGuias);
+  $('btnAddGuia').addEventListener('click', () => { S.guias.push({ nome: 'manual', id: '', venc: null, paga: null, total: 0, encargos: 0, resc: 0, comps: [], avisos: [], raw: '' }); renderGuias(); });
+  function renderGuias(){
+    const G = S.guias; $('guiasHint').textContent = G.length ? G.length + ' guia(s)' : '';
+    if (!G.length){ $('guiasBox').innerHTML = ''; return; }
+    let h = '<div class="table-wrap"><table><thead><tr><th>Arquivo</th><th>Identificador</th><th>Guia paga em</th><th class="num">Total da guia</th><th class="num">Encargos</th><th class="num">Rescisório</th><th>Competências</th><th></th></tr></thead><tbody>';
+    G.forEach((g, i) => {
+      h += '<tr data-i="' + i + '"><td>' + esc(g.nome) + (g.tag ? '<br><span class="hint">' + esc(g.tag) + '</span>' : '') + (g.avisos && g.avisos.length ? '<br><span class="hint warn">' + esc(g.avisos.join(' ')) + '</span>' : '') + '</td>' +
+        '<td><input type="text" data-f="id" value="' + esc(g.id) + '"></td>' +
+        '<td><input type="text" data-f="paga" placeholder="dd/mm/aaaa" value="' + esc(fmtDate(g.paga)) + '"></td>' +
+        '<td><input type="text" data-f="total" value="' + (g.total ? fmtPlain(g.total) : '') + '"></td>' +
+        '<td><input type="text" data-f="encargos" value="' + (g.encargos ? fmtPlain(g.encargos) : '') + '"></td>' +
+        '<td><input type="text" data-f="resc" value="' + (g.resc ? fmtPlain(g.resc) : '') + '"></td>' +
+        '<td class="wrap">' + esc((g.comps || []).map(c => c.comp + (c.tipo === 'consig' ? ' (consig.)' : '')).join(', ')) + '</td>' +
+        '<td><button class="btn-icon" data-del="' + i + '" title="Remover">×</button></td></tr>';
+    });
+    h += '</tbody></table></div>';
+    const raws = G.filter(g => g.raw).map(g => '<details><summary>Texto extraído de ' + esc(g.nome) + '</summary><pre>' + esc(g.raw) + '</pre></details>').join('');
+    $('guiasBox').innerHTML = h + raws;
+  }
+  $('guiasBox').addEventListener('change', e => {
+    const inp = e.target.closest('input[data-f]'); if (!inp) return;
+    const i = +inp.closest('tr').dataset.i, f = inp.dataset.f, g = S.guias[i];
+    if (f === 'paga') g.paga = parseDate(inp.value); else if (f === 'id') g.id = inp.value.trim(); else g[f] = parseNum(inp.value);
+    if (S.res) run();
+  });
+  $('guiasBox').addEventListener('click', e => { const b = e.target.closest('[data-del]'); if (!b) return; S.guias.splice(+b.dataset.del, 1); renderGuias(); if (S.res) run(); });
+
+  /* ---- 3/4: conciliar ---- */
+  function opts(){ return { tolDias: +$('pTol').value || 0, de: $('pDe').value.trim(), ate: $('pAte').value.trim(), limiteResc: +$('pLim').value || 50000, resc: S.resc, incluirDiverg: S.incluirDiverg, semGuia: S.semGuia, incluirAbertos: S.abertos }; }
+  function run(){
+    if (!S.razao) return;
+    try{
+      S.res = conciliar(S.razao.lines, S.guias, opts());
+      unlock('s4'); pills(4); render();
+    }catch(e){ toast('Erro na conciliação: ' + (e.message || e), 'err'); console.error(e); }
+  }
+  $('btnRun').addEventListener('click', () => { S.resc = {}; S.semGuia = !S.guias.length; run(); $('s4').scrollIntoView({ behavior: 'smooth' }); });
+
+  const TABS = [['copiar', 'Copiar e colar'], ['resumo', 'Resumo por competência'], ['guias', 'Guia × Razão'], ['resc', 'Rescisórios'], ['juros', 'Juros'], ['saldo', 'Saldo']];
+  function render(){
+    const R = S.res;
+    const okG = R.guias.filter(x => /^CONCILIADO/.test(x.status)).length;
+    $('resSub').textContent = 'Razão: ' + S.nomeRazao + ' · ' + R.guias.length + ' guia(s) · ' + R.resumo.length + ' competência(s).';
+    const difs = R.resumo.filter(r => !r.situ.startsWith('OK')).length;
+    $('tiles').innerHTML = tile(R.copiar.filter(c => c.tipo !== 'sep').length, 'linhas para copiar', 'accent') + tile(fmtBR(r2(R.copiar.filter(c => c.tipo !== 'sep' && c.valor > 0).reduce((a, c) => a + c.valor, 0))), 'pagamentos conciliados') + tile(R.guias.length ? okG + '/' + R.guias.length : '—', 'guias conciliadas') + tile(difs, 'competências com pendência', difs ? 'warn' : '') + tile(fmtBR(R.saldo.final), 'saldo credor final');
+    const cnt = { copiar: R.copiar.filter(c => c.tipo !== 'sep').length, resumo: R.resumo.length, guias: R.guias.length, resc: R.resc.length, juros: R.jurosMes.length, saldo: '' };
+    $('tabs').innerHTML = TABS.map(t => '<button type="button" class="tab' + (S.tab === t[0] ? ' is-active' : '') + '" data-t="' + t[0] + '">' + t[1] + (cnt[t[0]] !== '' ? '<span class="cnt">' + cnt[t[0]] + '</span>' : '') + '</button>').join('');
+    $('panels').innerHTML = TABS.map(t => '<div class="panel" id="pn_' + t[0] + '"' + (S.tab === t[0] ? '' : ' hidden') + '></div>').join('');
+    pCopiar(); pResumo(); pGuias(); pResc(); pJuros(); pSaldo();
+  }
+  $('tabs').addEventListener('click', e => { const b = e.target.closest('[data-t]'); if (!b) return; S.tab = b.dataset.t; render(); });
+
+  function tbl(head, rows, cls){ return '<div class="table-wrap"><table class="' + (cls || '') + '"><thead><tr>' + head.map(h => '<th' + (h[1] ? ' class="num"' : '') + '>' + esc(h[0]) + '</th>').join('') + '</tr></thead><tbody>' + rows + '</tbody></table></div>'; }
+
+  const fmtCell = v => v < 0 ? '(' + fmtBR(-v) + ')' : fmtBR(v);
+  function pCopiar(){
+    const R = S.res, P = $('pn_copiar');
+    let h = '<p class="hint" style="margin-top:12px">Formato da planilha de conciliação: <b>Data · Histórico · Valor</b>. Bloco <b>verde</b> = competência fechada com a guia mensal (guia e provisão negativas, pagamentos positivos); linhas sem cor = rescisórios pagos fora do mês da competência (provisão negativa + pagamento positivo). Cada bloco deve somar zero. A coluna "Status" fica fora da área a copiar.</p>';
+    h += '<label class="chk"><input type="checkbox" id="ckAb"' + (S.abertos ? ' checked' : '') + '><span>Incluir <b>rescisórios pagos no mês</b> cuja guia mensal ainda não foi paga (grupo sem cor, aguardando a guia mensal)</span></label>';
+    h += '<label class="chk"><input type="checkbox" id="ckDiv"' + (S.incluirDiverg ? ' checked' : '') + '><span>Incluir guias com <b>divergência de data ou de valor</b> (revisar antes de colar)</span></label>';
+    h += '<label class="chk"><input type="checkbox" id="ckSG"' + (S.semGuia ? ' checked' : '') + '><span>Gerar o bloco verde também para <b>pagamentos mensais sem guia</b> (competência = mês anterior ao pagamento, ou a que fecha no Resumo)</span></label>';
+    const n = R.copiar.filter(c => c.tipo !== 'sep').length;
+    if (!n){ P.innerHTML = h + '<div class="empty-state neutral"><div class="big">∅</div>Nenhuma linha conciliada ainda. Carregue as guias (passo 2) ou marque a opção de pagamentos sem guia.</div>'; bindCopiar(); return; }
+    h += '<div class="actions-row"><button class="btn-primary" id="btnCopy" type="button">Copiar ' + n + ' linhas (com cor e formato)</button><button class="btn-secondary" id="btnCopyTxt" type="button">Copiar só o texto</button><button class="btn-secondary" id="btnXlsx" type="button">Baixar Excel (.xlsx)</button></div>';
+    let rows = '';
+    R.copiar.forEach(c => {
+      if (c.tipo === 'sep'){ rows += '<tr class="sepr"><td colspan="3"></td><td class="out"></td></tr>'; return; }
+      rows += '<tr class="' + (c.tipo === 'verde' ? 'verde' : '') + (c.aviso ? ' div' : '') + '"><td>' + fmtDate(c.data) + '</td><td>' + esc(c.hist) + '</td><td class="num' + (c.valor < 0 ? ' neg' : '') + '">' + fmtCell(c.valor) + '</td><td class="out">' + (c.status ? stag(c.status) : '') + (c.ref ? ' <span class="mono">' + esc(c.ref) + '</span>' : '') + (c.aviso ? ' <span class="hint err">' + esc(c.aviso) + '</span>' : '') + '</td></tr>';
+    });
+    h += tbl([['Data'], ['Histórico'], ['Valor', 1], ['Status (não copiar)']], rows, 'copy');
+    P.innerHTML = h; bindCopiar();
+  }
+  function copiaTexto(){ return S.res.copiar.map(c => c.tipo === 'sep' ? '' : [fmtDate(c.data), c.hist, fmtPlain(c.valor)].join('\t')).join('\n'); }
+  function copiaHtml(){
+    const NF = '"\\#\\,\\#\\#0\\.00_\\)\;\\[Red\\]\\\\\\(\\#\\,\\#\\#0\\.00\\\\\\)"';
+    let h = '<table>';
+    S.res.copiar.forEach(c => {
+      if (c.tipo === 'sep'){ h += '<tr><td></td><td></td><td></td></tr>'; return; }
+      const bg = c.tipo === 'verde' ? 'background:#92D050;' : '';
+      h += '<tr><td style="' + bg + 'mso-number-format:\'dd\\/mm\\/yyyy\'">' + fmtDate(c.data) + '</td><td style="' + bg + '">' + esc(c.hist) + '</td><td style=\'' + bg + 'mso-number-format:' + NF + '\'>' + fmtPlain(c.valor) + '</td></tr>';
+    });
+    return h + '</table>';
+  }
+  async function copiar(comFormato){
+    const txt = copiaTexto(), n = S.res.copiar.filter(c => c.tipo !== 'sep').length;
+    try{
+      if (comFormato && window.ClipboardItem && navigator.clipboard && navigator.clipboard.write){
+        await navigator.clipboard.write([new ClipboardItem({ 'text/html': new Blob([copiaHtml()], { type: 'text/html' }), 'text/plain': new Blob([txt], { type: 'text/plain' }) })]);
+      } else await navigator.clipboard.writeText(txt);
+      toast(n + ' linhas copiadas. Cole na planilha.', 'ok');
+    }catch(e){
+      const ta = document.createElement('textarea'); ta.value = txt; document.body.appendChild(ta); ta.select();
+      try{ document.execCommand('copy'); toast('Linhas copiadas (só texto).', 'ok'); }catch(_){ toast('Não foi possível copiar.', 'err'); }
+      ta.remove();
+    }
+  }
+  function bindCopiar(){
+    [['ckAb', 'abertos'], ['ckDiv', 'incluirDiverg'], ['ckSG', 'semGuia']].forEach(p => { const el = $(p[0]); if (el) el.addEventListener('change', () => { S[p[1]] = el.checked; run(); }); });
+    const c = $('btnCopy'); if (c) c.addEventListener('click', () => copiar(true));
+    const ct = $('btnCopyTxt'); if (ct) ct.addEventListener('click', () => copiar(false));
+    const x = $('btnXlsx'); if (x) x.addEventListener('click', exportXlsx);
+  }
+
+  function pResumo(){
+    const R = S.res; let rows = '', t = { mensal: 0, d13: 0, arred: 0, consig: 0, provTotal: 0, resc: 0, esperada: 0, pagValor: 0, juros: 0 };
+    R.resumo.forEach(r => {
+      Object.keys(t).forEach(k => { t[k] += (r[k] || 0); });
+      rows += '<tr><td>' + r.comp + '</td><td class="num">' + fmtBR(r.mensal) + '</td><td class="num">' + fmtBR(r.d13) + '</td><td class="num">' + fmtBR(r.arred) + '</td><td class="num">' + fmtBR(r.consig) + '</td><td class="num">' + fmtBR(r.provTotal) + '</td>' +
+        '<td><input type="text" data-resc="' + r.comp + '" value="' + fmtPlain(r.resc) + '"' + (r.rescManual != null ? ' style="border-color:var(--accent)"' : '') + '></td>' +
+        '<td class="num">' + (r.rescGuias != null ? fmtBR(r.rescGuias) : '—') + '</td><td class="num">' + fmtBR(r.esperada) + '</td><td>' + fmtDate(r.pagData) + '</td><td class="num">' + (r.pagValor != null ? fmtBR(r.pagValor) : '—') + '</td><td class="num">' + fmtBR(r.juros) + '</td><td class="num">' + (r.dif != null ? fmtBR(r.dif) : '—') + '</td><td>' + stag(r.situ) + '</td></tr>';
+    });
+    rows += '<tr class="total"><td>TOTAL</td><td class="num">' + fmtBR(t.mensal) + '</td><td class="num">' + fmtBR(t.d13) + '</td><td class="num">' + fmtBR(t.arred) + '</td><td class="num">' + fmtBR(t.consig) + '</td><td class="num">' + fmtBR(t.provTotal) + '</td><td class="num">' + fmtBR(t.resc) + '</td><td></td><td class="num">' + fmtBR(t.esperada) + '</td><td></td><td class="num">' + fmtBR(t.pagValor) + '</td><td class="num">' + fmtBR(t.juros) + '</td><td></td><td></td></tr>';
+    const bx = R.resumo.filter(r => r.consigBaixa > 0).map(r => r.comp + ': ' + fmtBR(r.consigBaixa)).join('; ');
+    $('pn_resumo').innerHTML = (bx ? '<p class="hint warn" style="margin-top:12px">Débitos de histórico 112 (baixa de consignado) abatidos do consignado da competência — ' + esc(bx) + '. Confira se são baixas por rescisão já pagas em guia à parte.</p>' : '') + '<p class="hint" style="margin-top:12px">Guia mensal esperada = provisão total (FGTS + 13º + arredondamento + consignado) − rescisórios da competência; paga no mês seguinte. "Rescisórios" vem dos pares D=C do razão e pode ser ajustado (campo editável; Enter ou sair do campo recalcula). "Resc. guias" é a soma da coluna Rescisório das guias carregadas, só para comparação.</p>' +
+      tbl([['Comp.'], ['FGTS mensal', 1], ['FGTS 13º', 1], ['Arredond.', 1], ['Consignado', 1], ['Provisão total', 1], ['(−) Rescisórios'], ['Resc. guias', 1], ['Guia esperada', 1], ['Data pgto'], ['Pago no razão', 1], ['(+) Juros', 1], ['Diferença', 1], ['Situação']], rows);
+    $('pn_resumo').querySelectorAll('input[data-resc]').forEach(i => i.addEventListener('change', () => { const v = i.value.trim(); if (v === '') delete S.resc[i.dataset.resc]; else S.resc[i.dataset.resc] = parseNum(v); run(); }));
+  }
+
+  function pGuias(){
+    const R = S.res, P = $('pn_guias');
+    if (!R.guias.length){ P.innerHTML = '<div class="empty-state neutral" style="margin-top:12px"><div class="big">∅</div>Nenhuma guia carregada. Adicione os PDFs no passo 2 para conferir cada guia com o razão.</div>' + semGuiaTbl(R); return; }
+    let rows = '';
+    R.guias.forEach(x => {
+      const d = x.deb;
+      rows += '<tr><td>' + esc(x.g.id || x.g.nome) + (x.g.tag ? '<br><span class="hint">' + esc(x.g.tag) + '</span>' : '') + '</td><td>' + fmtDate(x.g.paga) + '</td><td class="num">' + fmtBR(x.g.total) + '</td><td>' + d.map(l => fmtDate(l.data)).join('<br>') + '</td><td class="num">' + d.map(l => fmtBR(l.deb)).join('<br>') + '</td><td>' + stag(x.status) + '</td><td class="wrap">' + esc(x.nota) + '</td></tr>';
+    });
+    P.innerHTML = '<p class="hint" style="margin-top:12px">Regra: mesmo valor com data dentro da tolerância → lote (um lançamento = várias guias, ou o inverso) → mesmo valor com data fora → valor próximo único. Vários candidatos viram REVISAR; nada é pareado à força.</p>' + tbl([['Guia'], ['Paga em'], ['Total', 1], ['Razão – data'], ['Razão – valor', 1], ['Situação'], ['Observação']], rows) + semGuiaTbl(R);
+  }
+  function semGuiaTbl(R){
+    if (!R.semGuia.length) return '';
+    const rows = R.semGuia.map(l => '<tr><td>' + fmtDate(l.data) + '</td><td class="wrap">' + esc(l.compl) + '</td><td class="num">' + fmtBR(l.deb) + '</td></tr>').join('');
+    return '<h3 style="margin-top:22px;font-size:16px">Pagamentos do razão sem guia correspondente (' + R.semGuia.length + ')</h3>' + tbl([['Data'], ['Complemento'], ['Débito', 1]], rows);
+  }
+
+  function pResc(){
+    const R = S.res; let rows = '';
+    R.resc.forEach(x => { rows += '<tr><td>' + fmtDate(x.p.data) + '</td><td class="num">' + fmtBR(x.p.deb) + '</td><td>' + x.prov.map(l => fmtDate(l.data)).join('<br>') + '</td><td class="num">' + x.prov.map(l => fmtBR(l.cred)).join('<br>') + '</td><td>' + stag(x.sit === 'SEM PAR' ? 'SEM PAR EXATO' : x.sit) + '</td><td class="wrap">' + esc(x.nota) + '</td></tr>'; });
+    let rm = '', t = [0, 0];
+    R.rescMes.forEach(m => { t[0] += m.prov; t[1] += m.pag; rm += '<tr><td>' + m.mes + '</td><td class="num">' + fmtBR(m.prov) + '</td><td class="num">' + fmtBR(m.pag) + '</td><td class="num">' + fmtBR(m.acum) + '</td></tr>'; });
+    $('pn_resc').innerHTML = '<p class="hint" style="margin-top:12px">Pagamentos que não são a guia mensal são pareados com as provisões rescisórias (pares D=C do razão) por soma exata de até 3 valores. Em meses em que o razão agrupa as provisões, o pareamento exato não é possível — use o acumulado mensal abaixo.</p>' +
+      tbl([['Data pgto'], ['Valor pago', 1], ['Provisão(ões) – data'], ['Provisão(ões) – valor', 1], ['Situação'], ['Observação']], rows || '<tr><td colspan="6">—</td></tr>') +
+      '<h3 style="margin-top:22px;font-size:16px">Acumulado mensal: provisões rescisórias × pagamentos</h3>' + tbl([['Mês'], ['Provisão (par D=C)', 1], ['Pago (rescisório)', 1], ['Acumulado a pagar', 1]], rm + '<tr class="total"><td>TOTAL</td><td class="num">' + fmtBR(r2(t[0])) + '</td><td class="num">' + fmtBR(r2(t[1])) + '</td><td class="num">' + fmtBR(r2(t[0] - t[1])) + '</td></tr>') +
+      (R.grandesSemCompetencia.length ? '<p class="hint warn">Fora desta análise (≥ limite de guia mensal e sem competência correspondente no razão): ' + R.grandesSemCompetencia.map(l => fmtDate(l.data) + ' ' + fmtBR(l.deb)).join('; ') + ' — normalmente guias de competência anterior ao razão.</p>' : '');
+  }
+
+  function pJuros(){
+    const R = S.res, P = $('pn_juros');
+    if (!R.jurosMes.length){ P.innerHTML = '<div class="empty-state neutral" style="margin-top:12px"><div class="big">∅</div>Sem encargos nas guias carregadas.</div>'; return; }
+    const rows = R.jurosMes.map(j => '<tr><td>' + j.mes + '</td><td class="num">' + fmtBR(j.encargos) + '</td><td class="num">' + fmtBR(j.lancado) + '</td><td class="num">' + fmtBR(j.falta) + '</td><td>' + stag(Math.abs(j.falta) < 0.005 ? 'OK – lançado' : 'FALTA LANÇAR') + '</td></tr>').join('');
+    P.innerHTML = '<p class="hint" style="margin-top:12px">Juros = coluna Encargos das guias (nada estimado), por mês do pagamento; "lançado" = créditos de juros no razão no mesmo mês. O lançamento é manual (juros × 2751).</p>' + tbl([['Mês do pagamento'], ['Encargos nas guias', 1], ['Juros lançados', 1], ['A lançar', 1], ['Situação']], rows);
+  }
+
+  function pSaldo(){
+    const s = S.res.saldo;
+    const row = (a, v, b) => '<tr' + (b ? ' class="total"' : '') + '><td>' + a + '</td><td class="num">' + fmtBR(v) + '</td></tr>';
+    $('pn_saldo').innerHTML = '<p class="hint" style="margin-top:12px">Saldo credor = créditos − débitos. Negativo = saldo devedor (pagamentos acima das provisões lançadas).</p>' + tbl([['Item'], ['Valor', 1]],
+      row('Saldo inicial (SD anterior + ajuste de exercício anterior)', s.ini) + row('(+) Provisões (FGTS, 13º, arredondamento, consignado)', s.prov) + row('(−) Pagamentos', s.pag) + row('(+) Juros lançados', s.jur) + (s.outros ? row('Outros lançamentos', s.outros) : '') + row('Saldo credor final do razão', s.final, 1));
+  }
+
+  async function exportXlsx(){
+    try{
+      const R = S.res, wb = XLSX.utils.book_new();
+      const ser = ms => ms == null ? '' : Math.round(ms / 86400000) + 25569;
+      const cp = R.copiar.map(c => c.tipo === 'sep' ? ['', '', ''] : [ser(c.data), c.hist, c.valor]);
+      const ws1 = XLSX.utils.aoa_to_sheet(cp);
+      cp.forEach((r, i) => { [0].forEach(c => { const a = XLSX.utils.encode_cell({ r: i, c }); if (ws1[a] && ws1[a].t === 'n') ws1[a].z = 'dd/mm/yyyy'; }); const v = ws1[XLSX.utils.encode_cell({ r: i, c: 2 })]; if (v && v.t === 'n') v.z = '#,##0.00_);[Red](#,##0.00)'; });
+      ws1['!cols'] = [{ wch: 12 }, { wch: 40 }, { wch: 16 }];
+      XLSX.utils.book_append_sheet(wb, ws1, 'Copiar_Conciliado');
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([['Comp.', 'FGTS mensal', 'FGTS 13º', 'Arredond.', 'Consignado', 'Provisão total', 'Rescisórios', 'Guia esperada', 'Data pgto', 'Pago no razão', 'Juros', 'Diferença', 'Situação']].concat(R.resumo.map(r => [r.comp, r.mensal, r.d13, r.arred, r.consig, r.provTotal, r.resc, r.esperada, fmtDate(r.pagData), r.pagValor, r.juros, r.dif, r.situ]))), 'Resumo_Competencia');
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([['Guia', 'Paga em', 'Total', 'Razão – data', 'Razão – valor', 'Situação', 'Observação']].concat(R.guias.map(x => [x.g.id || x.g.nome, fmtDate(x.g.paga), x.g.total, x.deb.map(l => fmtDate(l.data)).join(' + '), x.deb.reduce((a, l) => a + l.deb, 0), x.status, x.nota]))), 'Guia_x_Razao');
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([['Data', 'Complemento', 'Categoria', 'Competência', 'Débito', 'Crédito']].concat(R.lines.map(l => [fmtDate(l.data), l.compl, l.cat, l.comp, l.deb, l.cred]))), 'Razao_Classificado');
+      const out = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+      await salvarArquivo('Conciliacao_FGTS_conciliado.xlsx', new Blob([out], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }));
+      toast('Excel gerado.', 'ok');
+    }catch(e){ toast('Erro ao gerar Excel: ' + (e.message || e), 'err'); }
+  }
+})();
+</script>
+</body>
+</html>

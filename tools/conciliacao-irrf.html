@@ -1,0 +1,742 @@
+<!doctype html>
+<!-- Conciliação de IRRF s/ salário — VERSÃO: 1.0.0 — finalizado em 08/10/2026 (nova ferramenta: razão da conta 2405 × guias DARF 0561 → linhas de copiar e colar conciliadas no formato da planilha manual: bloco verde por DARF, saldo inicial e provisões do 140/139 alocados por FIFO). Base oficial estável: alterar somente o que for solicitado. -->
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Conciliação de IRRF s/ salário</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Sans+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  --bg:#f7f7fb; --surface:#ffffff; --surface-alt:#eef1f8; --ink:#17254d; --muted:#5f6f8f; --border:#dbe2ee;
+  --accent:#28509c; --accent-strong:#1c3a7a; --accent-ink:#f5f8ff; --accent-soft:#e3ebfa;
+  --danger:#b3261e; --danger-soft:#fbe9e6; --warning:#8a5a00; --warning-soft:#fff1d9; --success:#1e7d4a; --success-soft:#e5f4ea;
+  --tag-debito-bg:#fff1d9; --tag-debito-ink:#8a5a00; --tag-credito-bg:#dff1fa; --tag-credito-ink:#17608f;
+  --brand-cyan:#2da6de; --brand-mid:#2b76b9; --brand-navy:#2a4291;
+  --shadow: 0 1px 2px rgba(20,40,100,.06), 0 8px 24px -12px rgba(20,40,100,.22);
+  --radius:14px;
+  --font-display:'IBM Plex Sans Condensed','IBM Plex Sans',sans-serif;
+  --font-body:'IBM Plex Sans',system-ui,sans-serif;
+  --font-mono:'IBM Plex Mono',ui-monospace,SFMono-Regular,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0d1426; --surface:#141d36; --surface-alt:#1a2542; --ink:#e6ecfa; --muted:#93a3c7; --border:#27345a; --accent:#63a9ee; --accent-strong:#a4cdfa;
+    --accent-ink:#06142e; --accent-soft:#172a50; --danger:#ff9d93; --danger-soft:#3a201d; --warning:#ffcf70; --warning-soft:#3a2c12; --success:#8fe3ac; --success-soft:#173425;
+    --tag-debito-bg:#3a2c12; --tag-debito-ink:#ffcf70; --tag-credito-bg:#12304a; --tag-credito-ink:#7fd0f5;
+    --brand-cyan:#38b4ea; --brand-mid:#3b8bd0; --brand-navy:#4a65c4;
+    --shadow: 0 1px 2px rgba(0,0,0,.35), 0 12px 28px -14px rgba(0,0,0,.65);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0d1426; --surface:#141d36; --surface-alt:#1a2542; --ink:#e6ecfa; --muted:#93a3c7; --border:#27345a; --accent:#63a9ee; --accent-strong:#a4cdfa;
+  --accent-ink:#06142e; --accent-soft:#172a50; --danger:#ff9d93; --danger-soft:#3a201d; --warning:#ffcf70; --warning-soft:#3a2c12; --success:#8fe3ac; --success-soft:#173425;
+  --tag-debito-bg:#3a2c12; --tag-debito-ink:#ffcf70; --tag-credito-bg:#12304a; --tag-credito-ink:#7fd0f5;
+  --brand-cyan:#38b4ea; --brand-mid:#3b8bd0; --brand-navy:#4a65c4;
+  --shadow: 0 1px 2px rgba(0,0,0,.35), 0 12px 28px -14px rgba(0,0,0,.65);
+}
+*{ box-sizing:border-box; }
+body{ background:var(--bg); color:var(--ink); font-family:var(--font-body); margin:0; padding-inline:16px; padding-block:20px 60px; }
+h1,h2,h3{ font-family:var(--font-display); font-weight:700; text-wrap:balance; margin:0; }
+.mono{ font-family:var(--font-mono); font-variant-numeric:tabular-nums; }
+.app-shell{ max-width:1180px; margin:0 auto; }
+.topbar{ position:sticky; top:env(safe-area-inset-top,0px); z-index:30; background:color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); border-bottom:1px solid var(--border); margin:-20px -16px 28px; padding:16px; border-top:6px solid; border-image:linear-gradient(90deg,var(--brand-cyan),var(--brand-navy)) 1 0 0 0; }
+.topbar-inner{ max-width:1180px; margin:0 auto; display:flex; flex-wrap:wrap; align-items:center; gap:14px 24px; justify-content:space-between; }
+.brand{ display:flex; align-items:center; gap:12px; }
+.brand-mark{ width:38px; height:38px; border-radius:10px; background:var(--accent); color:var(--accent-ink); display:flex; align-items:center; justify-content:center; font-family:var(--font-mono); font-weight:700; font-size:15px; box-shadow:var(--shadow); flex:none; }
+.brand h1{ font-size:19px; letter-spacing:.2px; }
+.brand p{ margin:2px 0 0; font-size:12.5px; color:var(--muted); }
+.steps-pills{ display:flex; gap:8px; flex-wrap:wrap; }
+.step-pill{ font-family:var(--font-mono); font-size:11.5px; letter-spacing:.03em; padding:6px 11px; border-radius:999px; border:1px solid var(--border); color:var(--muted); background:var(--surface); white-space:nowrap; }
+.step-pill.is-active{ border-color:var(--accent); color:var(--accent-strong); background:var(--accent-soft); font-weight:600; }
+.step-pill.is-done{ color:var(--success); border-color:var(--success); }
+.step-card{ background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:26px; margin-bottom:22px; box-shadow:var(--shadow); }
+.step-card[data-locked="true"]{ opacity:.45; pointer-events:none; }
+.step-head{ display:flex; align-items:flex-start; gap:14px; margin-bottom:18px; }
+.step-num{ width:32px; height:32px; border-radius:9px; background:var(--surface-alt); color:var(--ink); font-family:var(--font-mono); font-weight:600; font-size:14px; display:flex; align-items:center; justify-content:center; flex:none; border:1px solid var(--border); }
+.step-head h2{ font-size:20px; }
+.step-head .step-sub{ margin:3px 0 0; color:var(--muted); font-size:13.5px; max-width:70ch; }
+.dropzone{ border:1.5px dashed var(--border); border-radius:12px; padding:26px 20px; text-align:center; background:var(--surface-alt); cursor:pointer; transition:border-color .15s, background .15s; }
+.dropzone:hover, .dropzone.is-dragover{ border-color:var(--accent); background:var(--accent-soft); }
+.dropzone strong{ display:block; font-size:15px; margin-bottom:4px; }
+.dropzone span{ font-size:12.5px; color:var(--muted); }
+.file-chip{ display:inline-flex; align-items:center; gap:8px; margin:14px 8px 0 0; padding:7px 12px; border-radius:9px; background:var(--accent-soft); color:var(--accent-strong); font-size:13px; font-family:var(--font-mono); }
+.field-row{ display:flex; flex-wrap:wrap; gap:16px; margin-top:16px; }
+.field{ display:flex; flex-direction:column; gap:5px; min-width:190px; flex:1; }
+.field label{ font-size:12px; color:var(--muted); font-weight:600; letter-spacing:.02em; text-transform:uppercase; }
+select, input[type="text"], input[type="number"]{ font-family:var(--font-body); font-size:13.5px; padding:9px 10px; border-radius:8px; border:1px solid var(--border); background:var(--surface); color:var(--ink); width:100%; }
+select:focus, input:focus, button:focus-visible{ outline:2px solid var(--accent); outline-offset:1px; }
+.table-wrap{ overflow-x:auto; border:1px solid var(--border); border-radius:10px; margin-top:14px; max-height:520px; overflow-y:auto; }
+table{ border-collapse:collapse; width:100%; font-size:13px; }
+thead th{ position:sticky; top:0; background:var(--surface-alt); text-align:left; padding:9px 10px; font-size:11.5px; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); border-bottom:1px solid var(--border); white-space:nowrap; z-index:1; }
+tbody td{ padding:8px 10px; border-bottom:1px solid var(--border); white-space:nowrap; }
+tbody tr:last-child td{ border-bottom:none; }
+td.num, th.num{ text-align:right; font-family:var(--font-mono); font-variant-numeric:tabular-nums; }
+td.wrap{ white-space:normal; min-width:220px; }
+tr.total td{ font-weight:700; background:var(--surface-alt); }
+button{ font-family:var(--font-body); cursor:pointer; border:none; border-radius:9px; font-weight:600; font-size:13.5px; }
+.btn-primary{ background:var(--accent); color:var(--accent-ink); padding:11px 20px; box-shadow:var(--shadow); }
+.btn-primary:disabled{ opacity:.45; cursor:not-allowed; box-shadow:none; }
+.btn-secondary{ background:var(--surface-alt); color:var(--ink); border:1px solid var(--border); padding:10px 16px; }
+.btn-ghost{ background:transparent; color:var(--muted); border:1px solid var(--border); padding:7px 10px; font-size:12px; }
+.btn-icon{ background:var(--surface-alt); border:1px solid var(--border); color:var(--ink); width:28px; height:28px; border-radius:7px; display:inline-flex; align-items:center; justify-content:center; padding:0; }
+.actions-row{ display:flex; flex-wrap:wrap; gap:12px; margin-top:18px; align-items:center; }
+.hint{ font-size:12.5px; color:var(--muted); }
+.hint.warn{ color:var(--warning); }
+.hint.err{ color:var(--danger); }
+.summary-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; margin:16px 0 4px; }
+.summary-tile{ background:var(--surface-alt); border:1px solid var(--border); border-radius:10px; padding:14px 16px; }
+.summary-tile .n{ font-family:var(--font-mono); font-size:20px; font-weight:600; }
+.summary-tile .l{ font-size:11.5px; color:var(--muted); text-transform:uppercase; letter-spacing:.03em; margin-top:2px; }
+.summary-tile.accent{ background:var(--accent-soft); }
+.summary-tile.accent .n{ color:var(--accent-strong); }
+.summary-tile.warn .n{ color:var(--warning); }
+.tag{ display:inline-flex; align-items:center; gap:5px; font-family:var(--font-mono); font-size:11.5px; font-weight:600; padding:4px 9px; border-radius:999px; white-space:nowrap; }
+.tag-debito{ background:var(--tag-debito-bg); color:var(--tag-debito-ink); }
+.tag-credito{ background:var(--tag-credito-bg); color:var(--tag-credito-ink); }
+.st-ok{ background:var(--success-soft); color:var(--success); }
+.st-warn{ background:var(--warning-soft); color:var(--warning); }
+.st-err{ background:var(--danger-soft); color:var(--danger); }
+.empty-state{ text-align:center; padding:34px 16px; color:var(--success); }
+.empty-state .big{ font-size:28px; }
+.empty-state.neutral{ color:var(--muted); }
+fieldset{ border:1px solid var(--border); border-radius:10px; padding:16px; margin:16px 0 0; }
+legend{ padding:0 6px; font-size:12.5px; font-weight:700; color:var(--accent-strong); text-transform:uppercase; letter-spacing:.03em; }
+.toast-host{ position:fixed; right:16px; bottom:calc(16px + env(safe-area-inset-bottom,0px)); z-index:60; display:flex; flex-direction:column; gap:8px; max-width:min(360px, calc(100vw - 32px)); }
+.toast{ background:var(--ink); color:var(--bg); padding:11px 14px; border-radius:9px; font-size:13px; box-shadow:var(--shadow); animation:toast-in .18s ease-out; }
+.toast.toast-err{ background:var(--danger); color:var(--accent-ink); }
+.toast.toast-ok{ background:var(--success); color:var(--accent-ink); }
+@keyframes toast-in{ from{ transform:translateY(6px); opacity:0; } to{ transform:none; opacity:1; } }
+code.k{ background:var(--surface-alt); border:1px solid var(--border); padding:1px 5px; border-radius:5px; font-family:var(--font-mono); font-size:12px; }
+/* específicos */
+.tabs{ display:flex; flex-wrap:wrap; gap:8px; margin:6px 0 4px; }
+.tab{ background:var(--surface); color:var(--muted); border:1px solid var(--border); padding:9px 14px; border-radius:9px; }
+.tab.is-active{ background:var(--accent-soft); color:var(--accent-strong); border-color:var(--accent); }
+.tab .cnt{ font-family:var(--font-mono); font-size:11px; margin-left:6px; opacity:.8; }
+.panel[hidden]{ display:none; }
+table.copy tr.verde td:not(.out){ background:#92D050; color:#111; }
+table.copy td.neg{ color:var(--danger); }
+table.copy tr.verde td.neg{ color:#b00020; }
+table.copy tr.sepr td{ height:14px; padding:0; background:var(--surface); }
+table.copy td{ background:var(--surface); font-family:var(--font-mono); font-size:12.5px; }
+table.copy td.out{ background:var(--surface); color:var(--muted); font-family:var(--font-body); font-size:12px; border-left:2px solid var(--border); }
+table.copy tr.div td:not(.out){ outline:1px solid var(--warning); }
+.chk{ display:flex; gap:8px; align-items:flex-start; font-size:13px; margin-top:10px; }
+.chk input{ margin-top:3px; }
+td input[type="text"]{ padding:5px 7px; font-size:12.5px; min-width:98px; font-family:var(--font-mono); }
+details{ margin-top:12px; font-size:12.5px; color:var(--muted); }
+details pre{ white-space:pre-wrap; background:var(--surface-alt); border:1px solid var(--border); padding:10px; border-radius:8px; max-height:220px; overflow:auto; font-family:var(--font-mono); font-size:11.5px; }
+.ver{ text-align:center; color:var(--muted); font-size:12px; margin-top:24px; }
+</style>
+</head>
+<body>
+<div class="app-shell">
+  <header class="topbar"><div class="topbar-inner">
+    <div class="brand"><div class="brand-mark">IR</div><div><h1>Conciliação de IRRF s/ salário</h1><p>Centro Médico Cirúrgico de Catalão · conta 2405 · Razão × Guias DARF 0561 × Provisão</p></div></div>
+    <div class="steps-pills" id="pills">
+      <span class="step-pill is-active" data-p="1">1 · Razão</span><span class="step-pill" data-p="2">2 · Guias</span><span class="step-pill" data-p="3">3 · Resultado</span>
+    </div>
+  </div></header>
+
+  <section class="step-card" id="s1">
+    <div class="step-head"><div class="step-num">1</div><div><h2>Razão da conta 2405</h2><p class="step-sub">Aceita o layout curto (Data movimento; Complemento; Valor débito; Valor crédito — com ou sem a coluna Valor) e o layout completo do Tasy (23 colunas, UTF-16). A codificação é detectada sozinha. Reconhece: Implantação de Saldo, Parcelamento, IRRF SALARIOS A RECOLHER (hist. 140), IRRF FERIAS (hist. 139) e Transferência de Saldo (pagamento).</p></div></div>
+    <div class="dropzone" id="dzRazao"><strong>Arraste o CSV/TXT do razão aqui</strong><span>ou clique para escolher o arquivo</span></div>
+    <input type="file" id="fRazao" accept=".csv,.txt" hidden>
+    <div id="razaoInfo"></div>
+  </section>
+
+  <section class="step-card" id="s2" data-locked="true">
+    <div class="step-head"><div class="step-num">2</div><div><h2>Guias DARF 0561 — opcional</h2><p class="step-sub">Com as guias, a data da linha "DARF IRRF" é a do pagamento real (o razão lança a "Transferência de Saldo" em outra data) e guias ainda não lançadas no razão também geram bloco. Sem guias, cada Transferência de Saldo do razão vira um bloco com a data do razão. Os campos podem ser corrigidos na tabela.</p></div></div>
+    <div class="dropzone" id="dzGuias"><strong>Arraste os PDFs dos DARF aqui</strong><span>vários arquivos de uma vez · ou clique para escolher · leitura aproximada: confira data e valor</span></div>
+    <input type="file" id="fGuias" accept=".pdf" multiple hidden>
+    <div class="actions-row"><button class="btn-secondary" id="btnAddGuia" type="button">+ Adicionar guia manualmente</button><span class="hint" id="guiasHint"></span></div>
+    <div id="guiasBox"></div>
+    <fieldset>
+      <legend>Provisões ainda não lançadas no razão (opcional)</legend>
+      <p class="hint" style="margin:0 0 4px">Ex.: IRRF da folha do mês corrente, ainda não contabilizada. Entram na fila apenas para guias com data posterior à da provisão. Tipo 140 = eventos 304 + 308; tipo 139 = evento 311.</p>
+      <div class="actions-row" style="margin-top:8px"><button class="btn-secondary" id="btnAddExtra" type="button">+ Adicionar provisão</button></div>
+      <div id="extrasBox"></div>
+    </fieldset>
+  </section>
+
+  <section class="step-card" id="s4" data-locked="true">
+    <div class="step-head"><div class="step-num">3</div><div><h2>Resultado</h2><p class="step-sub" id="resSub">—</p></div></div>
+    <div class="summary-grid" id="tiles"></div>
+    <div class="tabs" id="tabs"></div>
+    <div id="panels"></div>
+  </section>
+  <div class="ver">Conciliação de IRRF s/ salário · v1.0.0 · Contabilidade Integrada</div>
+</div>
+<div class="toast-host" id="toasts"></div>
+
+<script>
+/* ponte de capacidades do hub (download) */
+(function(){
+  if (window.top === window.self) return;
+  if (window.claude && window.claude.use) return;
+  let proximoId = 1;
+  const pendentes = {};
+  window.addEventListener('message', (ev) => {
+    const msg = ev.data;
+    if (!msg || msg.__ponteClaude !== true || msg.tipo !== 'resposta') return;
+    const p = pendentes[msg.id];
+    if (!p) return;
+    delete pendentes[msg.id];
+    if (msg.erro) p.reject(msg.erro); else p.resolve(msg.resultado);
+  });
+  function chamarHub(acao, payload){
+    return new Promise((resolve, reject) => {
+      const id = proximoId++;
+      pendentes[id] = { resolve, reject };
+      window.parent.postMessage({ __ponteClaude: true, tipo: 'chamada', id, acao, payload }, '*');
+    });
+  }
+  window.claude = {
+    use: async (nome) => {
+      if (nome !== 'downloads') return null;
+      return { save: (req) => chamarHub('downloads.save', req) };
+    }
+  };
+})();
+async function salvarArquivo(filename, blob){
+  if (typeof window.claude !== 'undefined' && typeof window.claude.use === 'function'){
+    try{
+      const downloads = await window.claude.use('downloads');
+      if (downloads){ await downloads.save({ filename, data: blob }); return true; }
+    }catch(err){
+      alert('Não foi possível salvar o arquivo (' + (err && (err.code || err.message) || 'erro') + ').');
+      return false;
+    }
+  }
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+  return true;
+}
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script type="module">
+try{
+  const pdfjsLib = await import('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/6.1.200/pdf.mjs');
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/6.1.200/pdf.worker.mjs';
+  window.pdfTexto = async function(buf){
+    const doc = await pdfjsLib.getDocument({ data: buf }).promise;
+    let out = '';
+    for (let p = 1; p <= doc.numPages; p++){
+      const pg = await doc.getPage(p);
+      const tc = await pg.getTextContent();
+      const it = tc.items.filter(x => x.str && x.str.trim()).map(x => ({ s: x.str, x: x.transform[4], y: x.transform[5] }));
+      it.sort((a, b) => b.y - a.y || a.x - b.x);
+      let line = [], ly = null;
+      const flush = () => { if (line.length){ line.sort((a, b) => a.x - b.x); out += line.map(z => z.s).join(' ') + '\n'; } line = []; };
+      for (const z of it){ if (ly === null || Math.abs(z.y - ly) > 3){ flush(); ly = z.y; } line.push(z); }
+      flush(); out += '\n';
+    }
+    return out;
+  };
+}catch(e){ window.pdfErro = e; }
+</script>
+<script>
+/* ===== CORE: motor de conciliação IRRF s/ salário (sem DOM) ===== */
+const norm = s => (s == null ? '' : String(s)).normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase().replace(/\s+/g, ' ').trim();
+const r2 = x => Math.round((x + Number.EPSILON) * 100) / 100;
+const DAY = 86400000;
+
+function parseNum(s) {
+  if (s == null) return 0;
+  s = String(s).trim().replace(/"/g, '');
+  if (!s) return 0;
+  let neg = false;
+  if (/^\(.*\)$/.test(s)) { neg = true; s = s.slice(1, -1); }
+  s = s.replace(/R\$|\s/g, '');
+  if (s.includes(',')) s = s.replace(/\./g, '').replace(',', '.');
+  const v = parseFloat(s);
+  return isNaN(v) ? 0 : (neg ? -v : v);
+}
+function parseDate(s) {
+  if (s == null) return null;
+  let m = /(\d{2})\/(\d{2})\/(\d{4})/.exec(String(s));
+  if (m) return Date.UTC(+m[3], +m[2] - 1, +m[1]);
+  m = /(\d{4})-(\d{2})-(\d{2})/.exec(String(s));
+  if (m) return Date.UTC(+m[1], +m[2] - 1, +m[3]);
+  return null;
+}
+const p2 = n => String(n).padStart(2, '0');
+function fmtDate(ms) { if (ms == null) return ''; const d = new Date(ms); return p2(d.getUTCDate()) + '/' + p2(d.getUTCMonth() + 1) + '/' + d.getUTCFullYear(); }
+function compOf(ms) { const d = new Date(ms); return p2(d.getUTCMonth() + 1) + '/' + d.getUTCFullYear(); }
+function compKey(c) { const m = /^(\d{2})\/(\d{4})$/.exec(c); return m ? +m[2] * 100 + +m[1] : 0; }
+function nextComp(c) { const m = /^(\d{2})\/(\d{4})$/.exec(c); let mo = +m[1] + 1, y = +m[2]; if (mo > 12) { mo = 1; y++; } return p2(mo) + '/' + y; }
+function monthRange(c) { const m = /^(\d{2})\/(\d{4})$/.exec(c); return [Date.UTC(+m[2], +m[1] - 1, 1), Date.UTC(+m[2], +m[1], 0)]; }
+function fmtBR(v) { return (v < 0 ? '-' : '') + Math.abs(v).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+function fmtPlain(v) { return (Math.round(v * 100) / 100).toFixed(2).replace('.', ','); }
+
+/* ---------- decodificação e CSV ---------- */
+function decodeBuffer(buf) {
+  const u = new Uint8Array(buf);
+  if (u[0] === 0xFF && u[1] === 0xFE) return new TextDecoder('utf-16le').decode(u.subarray(2));
+  if (u[0] === 0xFE && u[1] === 0xFF) return new TextDecoder('utf-16be').decode(u.subarray(2));
+  let zeros = 0; const n = Math.min(u.length, 400);
+  for (let i = 1; i < n; i += 2) if (u[i] === 0) zeros++;
+  if (n > 20 && zeros > n / 2 * 0.6) return new TextDecoder('utf-16le').decode(u);
+  try { return new TextDecoder('utf-8', { fatal: true }).decode(u); }
+  catch (e) { return new TextDecoder('windows-1252').decode(u); }
+}
+function parseCSV(text, sep) {
+  const rows = []; let row = [], cur = '', q = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (q) {
+      if (c === '"') { if (text[i + 1] === '"') { cur += '"'; i++; } else q = false; }
+      else cur += c;
+    } else if (c === '"') q = true;
+    else if (c === sep) { row.push(cur); cur = ''; }
+    else if (c === '\n' || c === '\r') {
+      if (c === '\r' && text[i + 1] === '\n') i++;
+      row.push(cur); cur = ''; rows.push(row); row = [];
+    } else cur += c;
+  }
+  if (cur !== '' || row.length) { row.push(cur); rows.push(row); }
+  return rows;
+}
+
+/* ---------- razão ---------- */
+function parseRazao(text) {
+  text = text.replace(/^﻿/, '');
+  const first = text.split(/\r?\n/, 1)[0] || '';
+  const sep = (first.split(';').length >= first.split('\t').length && first.split(';').length >= first.split(',').length) ? ';' : (first.split('\t').length > first.split(',').length ? '\t' : ',');
+  const rows = parseCSV(text, sep);
+  let hi = -1, ix = {};
+  for (let i = 0; i < Math.min(rows.length, 15); i++) {
+    const h = rows[i].map(norm);
+    if (h.some(x => x === 'DATA MOVIMENTO' || x === 'DATA') && h.some(x => x === 'COMPLEMENTO')) {
+      hi = i;
+      const f = n => h.indexOf(n);
+      ix = { data: h.indexOf('DATA MOVIMENTO') >= 0 ? f('DATA MOVIMENTO') : f('DATA'), compl: f('COMPLEMENTO'), deb: f('VALOR DEBITO'), cred: f('VALOR CREDITO'), cod: f('CODIGO HISTORICO'), lote: f('LOTE'), lanc: f('LANCAMENTO') };
+      break;
+    }
+  }
+  if (hi < 0) throw new Error('Cabeçalho do razão não reconhecido (esperado: Data movimento, Complemento, Valor débito, Valor crédito).');
+  if (ix.deb < 0 || ix.cred < 0) throw new Error('Colunas "Valor débito" e "Valor crédito" não encontradas no razão.');
+  const layout = rows[hi].length >= 15 ? 'completo (' + rows[hi].length + ' colunas)' : 'curto (' + rows[hi].length + ' colunas)';
+  const lines = [];
+  for (let i = hi + 1; i < rows.length; i++) {
+    const r = rows[i];
+    const d = parseDate(r[ix.data]);
+    if (d == null) continue;
+    const deb = Math.abs(parseNum(r[ix.deb])), cred = Math.abs(parseNum(r[ix.cred]));
+    if (!deb && !cred) continue;
+    const l = { i: lines.length, row: i + 1, data: d, compl: (r[ix.compl] || '').replace(/\s+/g, ' ').trim(), deb: r2(deb), cred: r2(cred), cod: ix.cod >= 0 ? String(r[ix.cod] || '').trim() : '', lote: ix.lote >= 0 ? String(r[ix.lote] || '').trim() : '' };
+    l.cat = classify(l);
+    l.comp = compOf(l.data);
+    lines.push(l);
+  }
+  return { lines, layout, sep };
+}
+
+function monthEnd(ms) { const d = new Date(ms); return Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 0); }
+function monthStart(ms) { const d = new Date(ms); return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1); }
+
+/* ---------- classificação do razão da conta 2405 ---------- */
+function classify(l) {
+  const n = norm(l.compl), cod = l.cod;
+  const par = l.deb > 0 && l.cred > 0 && Math.abs(l.deb - l.cred) < 0.005;
+  if (par) return 'PAR D=C';
+  if (/IMPLANTA|SD ANTERIOR|SALDO INICIAL|AJUSTE DE SALDO/.test(n)) return 'SALDO INICIAL';
+  if (l.deb > 0 && !l.cred) {
+    if (/PARCELAMENTO/.test(n)) return 'PARCELAMENTO';
+    if (/TRANSFERENCIA DE SALDO|PAGAMENTO|BAIXA DE TITULOS|DARF/.test(n)) return 'PAGAMENTO';
+    return 'OUTRO DÉBITO';
+  }
+  if (l.cred > 0 && !l.deb) {
+    if (cod === '139' || /IRRF FERIAS/.test(n)) return 'IRRF FÉRIAS (139)';
+    if (cod === '140' || /IRRF SALARIO/.test(n)) return 'IRRF SALÁRIOS (140)';
+    return 'OUTRO CRÉDITO';
+  }
+  return 'OUTRO';
+}
+function reclassify(lines) { lines.forEach(l => { l.cat = classify(l); }); return lines; }
+
+/* ---------- guias DARF (texto extraído do PDF) — leitura aproximada, sempre conferir ---------- */
+function parseDarfText(txt, nome) {
+  const t = txt.replace(/ /g, ' ');
+  const MONEY = /\d{1,3}(?:\.\d{3})*,\d{2}/g;
+  const pages = t.split(/\n\s*\n/).filter(p => p.trim());
+  const out = [];
+  pages.forEach((pg, pi) => {
+    const lines = pg.split(/\r?\n/);
+    const idx = lines.findIndex(l => /(^|\D)0561(\D|$)/.test(l));
+    if (idx < 0) return;
+    const g = { nome: nome + (pages.length > 1 ? ' (pág. ' + (pi + 1) + ')' : ''), id: '', paga: null, total: 0, avisos: [], raw: pg };
+    let m = /(?:Data (?:de )?(?:Pagamento|Arrecada[cç][aã]o)|Pago em|Arrecadado em)[^\d]{0,40}(\d{2}\/\d{2}\/\d{4})/i.exec(pg);
+    if (m) g.paga = parseDate(m[1]); else g.avisos.push('Data do pagamento não encontrada — preencha manualmente.');
+    m = /\b(\d{2}\.\d{3}\.\d{5}\.\d\b|\d{17,}\b)/.exec(pg); if (m) g.id = m[1];
+    let vals = (lines[idx].match(MONEY) || []);
+    if (!vals.length && lines[idx + 1]) vals = (lines[idx + 1].match(MONEY) || []);
+    if (vals.length) { g.total = parseNum(vals[vals.length - 1]); g.avisos.push('Valor lido na linha do código 0561 (último valor da linha) — confira se é o total do 0561.'); }
+    else g.avisos.push('Valor do código 0561 não encontrado — preencha manualmente.');
+    out.push(g);
+  });
+  return out;
+}
+
+/* ---------- conciliação ---------- */
+function labelIni(sIni, parc) {
+  const ti = sIni.length ? fmtDate(Math.min(...sIni.map(l => l.data))) : '', tp = parc.length ? fmtDate(Math.min(...parc.map(l => l.data))) : '';
+  if (ti && tp) return 'Saldo inicial IRRF s/ salário (implantação ' + ti + ' − parcelamento ' + tp + ')';
+  if (ti) return 'Saldo inicial IRRF s/ salário (implantação ' + ti + ')';
+  return 'Saldo inicial IRRF s/ salário (parcelamento ' + tp + ')';
+}
+
+function conciliarIRRF(lines, guias, opts) {
+  opts = opts || {};
+  const semGuia = opts.semGuia !== false;
+  const extras = (opts.extras || []).filter(e => e && e.valor > 0 && e.data != null);
+  const avisos = [];
+  const sIni = lines.filter(l => l.cat === 'SALDO INICIAL'), parc = lines.filter(l => l.cat === 'PARCELAMENTO');
+  const iniVal = r2(sIni.reduce((a, l) => a + l.cred - l.deb, 0) - parc.reduce((a, l) => a + l.deb, 0));
+  const q140 = [], q139 = [];
+  const mk = (kind, data, valor, label, comp, extra) => ({ kind, data, valor: r2(valor), rest: r2(valor), label, comp, extra: !!extra });
+  if (Math.abs(iniVal) > 0.004) {
+    if (iniVal < 0) avisos.push('Saldo inicial líquido negativo (' + fmtBR(iniVal) + '): parcelamento maior que a implantação — REVISAR.');
+    q140.push(mk('ini', sIni.length ? Math.min(...sIni.map(l => l.data)) : Math.min(...parc.map(l => l.data)), iniVal, labelIni(sIni, parc), 'Saldo inicial'));
+  }
+  const grp = (cat, q, label, kind) => {
+    const m = new Map();
+    lines.filter(l => l.cat === cat).forEach(l => { const k = monthEnd(l.data); m.set(k, r2((m.get(k) || 0) + l.cred)); });
+    [...m.keys()].sort((a, b) => a - b).forEach(k => q.push(mk(kind, k, m.get(k), label, compOf(k))));
+  };
+  grp('IRRF SALÁRIOS (140)', q140, 'IRRF SALARIOS A RECOLHER', '140');
+  grp('IRRF FÉRIAS (139)', q139, 'IRRF FERIAS', '139');
+  lines.filter(l => l.cat === 'OUTRO CRÉDITO').forEach(l => { q140.push(mk('out', l.data, l.cred, l.compl, compOf(l.data))); avisos.push('Crédito não classificado em ' + fmtDate(l.data) + ' (' + fmtBR(l.cred) + ' — ' + l.compl + ') tratado como provisão do 140 — REVISAR.'); });
+  extras.forEach(e => {
+    const lab = e.tipo === '139' ? 'IRRF FERIAS' : 'IRRF SALARIOS A RECOLHER (' + (e.desc || ('folha ' + compOf(e.data) + ', ainda não lançada')) + ')';
+    (e.tipo === '139' ? q139 : q140).push(mk('x' + (e.tipo === '139' ? '139' : '140'), e.data, e.valor, lab, compOf(e.data), true));
+  });
+  const rank = { ini: 0, '140': 1, out: 2, x140: 3, '139': 1, x139: 3 };
+  [q140, q139].forEach(q => q.forEach((it, i) => { it._o = i; }));
+  q140.sort((a, b) => a.data - b.data || rank[a.kind] - rank[b.kind] || a._o - b._o);
+  q139.sort((a, b) => a.data - b.data || rank[a.kind] - rank[b.kind] || a._o - b._o);
+
+  /* DARFs */
+  const pags = lines.filter(l => l.cat === 'PAGAMENTO').map(l => ({ l, used: false }));
+  const darfs = [];
+  const G = (guias || []).filter(g => g && g.total > 0);
+  G.forEach((g, gi) => {
+    let best = null;
+    pags.forEach(p => { if (p.used || Math.abs(p.l.deb - g.total) > 0.005) return; const dd = g.paga != null ? Math.abs(p.l.data - g.paga) : 0; if (!best || dd < best.dd) best = { p, dd }; });
+    if (best) {
+      best.p.used = true;
+      darfs.push({ data: g.paga != null ? g.paga : best.p.l.data, valor: r2(g.total), guia: g, pag: best.p.l, status: g.paga != null ? 'CONCILIADO' : 'CONCILIADO – sem data na guia (usada a do razão)', ref: g.id || g.nome, nota: 'Lançado no razão em ' + fmtDate(best.p.l.data) + '.' , ord: gi });
+    } else {
+      darfs.push({ data: g.paga, valor: r2(g.total), guia: g, pag: null, status: g.paga != null ? 'GUIA SEM LANÇAMENTO NO RAZÃO' : 'GUIA SEM DATA E SEM LANÇAMENTO NO RAZÃO', ref: g.id || g.nome, nota: 'Nenhum débito de mesmo valor no razão.', ord: gi });
+    }
+  });
+  const pagsFora = [];
+  pags.forEach((p, i) => {
+    if (p.used) return;
+    if (semGuia) darfs.push({ data: p.l.data, valor: p.l.deb, guia: null, pag: p.l, status: 'SEM GUIA – data do razão', ref: '', nota: 'Pagamento do razão sem guia carregada; a data é a do lançamento.', ord: 1000 + i });
+    else pagsFora.push(p.l);
+  });
+  darfs.sort((a, b) => (a.data == null ? Infinity : a.data) - (b.data == null ? Infinity : b.data) || a.ord - b.ord);
+
+  /* alocação FIFO */
+  const copiar = [];
+  const sep = () => { if (copiar.length) copiar.push({ tipo: 'sep' }); };
+  let Ar_nd = 0, Ax_rd = 0, Sp_rd = 0, Sp_total = 0;
+  darfs.forEach(d => {
+    d.aloc = []; let rest = d.valor;
+    const ref = d.data;
+    const take = (it, lim) => {
+      if (rest <= 0.004 || it.rest <= 0.004) return;
+      if (it.extra && (ref == null || ref <= it.data)) return;
+      if (lim && !lim(it)) return;
+      const t = r2(Math.min(rest, it.rest));
+      d.aloc.push({ it, valor: t, parcial: Math.abs(t - it.valor) > 0.004 });
+      it.rest = r2(it.rest - t); rest = r2(rest - t);
+      if (it.extra) { if (d.pag) Ax_rd += t; } else if (!d.pag) Ar_nd += t;
+    };
+    const ms = ref != null ? monthStart(ref) : -Infinity;
+    q139.forEach(it => take(it, x => x.data < ms));
+    q140.forEach(it => take(it));
+    d.sem = r2(rest);
+    if (d.sem > 0.004) { Sp_total += d.sem; if (d.pag) Sp_rd += d.sem; }
+    sep();
+    copiar.push({ tipo: 'verde', data: d.data, hist: 'DARF IRRF', valor: d.valor, status: d.status, ref: d.ref, aviso: d.data == null ? 'Informe a data da guia' : '' });
+    d.aloc.forEach(a => {
+      const it = a.it;
+      copiar.push({ tipo: 'verde', data: it.data, hist: it.label + (a.parcial ? ' (parcial)' : ''), valor: -a.valor, status: it.extra ? 'PROVISÃO FORA DO RAZÃO' : (it.kind === 'out' ? 'REVISAR – crédito não classificado' : ''), ref: it.comp !== 'Saldo inicial' ? it.comp : '' });
+    });
+    if (d.sem > 0.004) copiar.push({ tipo: 'verde', data: d.data, hist: 'SEM PROVISÃO NO RAZÃO – diferença a regularizar', valor: -d.sem, status: 'REVISAR', ref: '', aviso: 'Pagamento maior que as provisões disponíveis' });
+  });
+
+  /* resumo por competência */
+  const rows = new Map();
+  const row = (k, ord) => { if (!rows.has(k)) rows.set(k, { comp: k, ord, ini: 0, p140: 0, p139: 0, extra: 0, pago: 0 }); return rows.get(k); };
+  [...q140, ...q139].forEach(it => {
+    const k = it.comp, r = row(k, k === 'Saldo inicial' ? 0 : compKey(k));
+    if (it.kind === 'ini') r.ini += it.valor; else if (it.extra) r.extra += it.valor; else if (it.kind === '139') r.p139 += it.valor; else r.p140 += it.valor;
+  });
+  darfs.forEach(d => d.aloc.forEach(a => { row(a.it.comp, a.it.comp === 'Saldo inicial' ? 0 : compKey(a.it.comp)).pago += a.valor; }));
+  const resumo = [...rows.values()].sort((a, b) => a.ord - b.ord).map(r => {
+    const total = r2(r.ini + r.p140 + r.p139 + r.extra), pago = r2(r.pago), aberto = r2(total - pago);
+    r.total = total; r.pago = pago; r.aberto = aberto;
+    r.situ = Math.abs(aberto) < 0.005 ? 'OK – totalmente paga' : (pago > 0 ? 'PARCIAL – restante aguarda guia' : 'EM ABERTO – aguarda guia');
+    if (r.extra) r.situ += ' (inclui provisão fora do razão)';
+    return r;
+  });
+
+  /* saldo */
+  const sum = cat => r2(lines.filter(l => l.cat === cat).reduce((a, l) => a + l.cred - l.deb, 0));
+  const prov = r2(sum('IRRF SALÁRIOS (140)') + sum('IRRF FÉRIAS (139)') + sum('OUTRO CRÉDITO'));
+  const pagTot = r2(lines.filter(l => l.cat === 'PAGAMENTO').reduce((a, l) => a + l.deb, 0));
+  const outDeb = r2(lines.filter(l => l.cat === 'OUTRO DÉBITO').reduce((a, l) => a + l.deb, 0));
+  const saldo = { ini: iniVal, prov, pag: pagTot, outDeb, final: r2(iniVal + prov - pagTot - outDeb) };
+  const openR = r2(q140.concat(q139).filter(i => !i.extra).reduce((a, i) => a + i.rest, 0));
+  const E = r2(pagsFora.reduce((a, l) => a + l.deb, 0));
+  saldo.openR = openR; saldo.Ar_nd = r2(Ar_nd); saldo.Ax_rd = r2(Ax_rd); saldo.Sp_rd = r2(Sp_rd); saldo.E = E;
+  saldo.prova = r2(saldo.final - (openR + Ar_nd - Ax_rd - Sp_rd - E - outDeb));
+  lines.filter(l => l.cat === 'OUTRO DÉBITO').forEach(l => avisos.push('Débito não classificado em ' + fmtDate(l.data) + ' (' + fmtBR(l.deb) + ' — ' + l.compl + ') — fora dos blocos; REVISAR.'));
+  return { lines, darfs, copiar, resumo, saldo, avisos, semGuiaIgnorados: pagsFora, q140, q139, semProvisaoTotal: r2(Sp_total) };
+}
+
+if (typeof module !== 'undefined') module.exports = { conciliarIRRF, parseDarfText, parseRazao, reclassify, decodeBuffer, parseNum, parseDate, fmtDate, fmtBR, fmtPlain, classify, r2, compOf, norm };
+
+</script>
+<script>
+(function(){
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const S = { dirty: false, timer: null, razao: null, nomeRazao: '', guias: [], extras: [], res: null, tab: 'copiar', semGuia: true };
+
+  function toast(msg, kind){ const t = document.createElement('div'); t.className = 'toast' + (kind ? ' toast-' + kind : ''); t.textContent = msg; $('toasts').appendChild(t); setTimeout(() => t.remove(), 4200); }
+  /* edições nos campos adiam o recálculo: evita perder o clique em "Copiar" quando o campo perde o foco e a tela é redesenhada */
+  function agenda(){ S.dirty = true; clearTimeout(S.timer); S.timer = setTimeout(() => { if (S.dirty) run(); }, 400); }
+  function pills(n){ document.querySelectorAll('#pills .step-pill').forEach(p => { const k = +p.dataset.p; p.classList.toggle('is-active', k === n); p.classList.toggle('is-done', k < n); }); }
+  function unlock(id){ $(id).removeAttribute('data-locked'); }
+  function setupDrop(dz, input, handler){
+    dz.addEventListener('click', () => input.click());
+    dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('is-dragover'); });
+    dz.addEventListener('dragleave', () => dz.classList.remove('is-dragover'));
+    dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('is-dragover'); handler(e.dataTransfer.files); });
+    input.addEventListener('change', () => { handler(input.files); input.value = ''; });
+  }
+  const tile = (n, l, cls) => '<div class="summary-tile ' + (cls || '') + '"><div class="n">' + n + '</div><div class="l">' + l + '</div></div>';
+  const stCls = s => /^(OK|CONCILIADO)/.test(s) ? 'st-ok' : /SEM GUIA|PARCIAL|EM ABERTO|FORA DO RAZ|REVISAR|DIFEREN|sem data|conferir/i.test(s) ? 'st-warn' : 'st-err';
+  const stag = s => '<span class="tag ' + stCls(s) + '">' + esc(s) + '</span>';
+
+  /* ---- 1: razão ---- */
+  async function loadRazao(files){
+    files = Array.from(files); const f = files[0]; if (!f) return;
+    try{
+      const buf = await f.arrayBuffer();
+      const p = parseRazao(decodeBuffer(buf));
+      if (!p.lines.length) throw new Error('Nenhum lançamento com data válida foi encontrado.');
+      S.razao = p; S.nomeRazao = f.name; S.res = null;
+      const L = p.lines, ds = L.map(l => l.data);
+      const cred = L.reduce((a, l) => a + l.cred, 0), deb = L.reduce((a, l) => a + l.deb, 0);
+      const cats = {}; L.forEach(l => cats[l.cat] = (cats[l.cat] || 0) + 1);
+      const nc = (cats['OUTRO DÉBITO'] || 0) + (cats['OUTRO CRÉDITO'] || 0) + (cats['OUTRO'] || 0);
+      $('razaoInfo').innerHTML = '<span class="file-chip">' + esc(f.name) + '</span><span class="file-chip">layout ' + esc(p.layout) + '</span>' +
+        '<div class="summary-grid">' + tile(L.length, 'lançamentos') + tile(fmtDate(Math.min(...ds)) + ' – ' + fmtDate(Math.max(...ds)), 'período') + tile(fmtBR(r2(cred - deb)), 'saldo credor (créd. − déb.)', 'accent') + tile(cats['PAGAMENTO'] || 0, 'pagamentos (Transferência de Saldo)') + tile(nc, 'não classificados', nc ? 'warn' : '') + '</div>';
+      unlock('s2'); pills(2); run();
+      toast('Razão lido: ' + L.length + ' lançamentos.', 'ok');
+    }catch(e){ toast('Razão: ' + (e.message || e), 'err'); }
+  }
+  setupDrop($('dzRazao'), $('fRazao'), loadRazao);
+
+  /* ---- 2: guias ---- */
+  async function loadGuias(files){
+    files = Array.from(files);
+    if (!window.pdfTexto){ toast('Leitor de PDF indisponível (sem acesso ao CDN). Use "Adicionar guia manualmente".', 'err'); return; }
+    let n = 0, sem = [];
+    for (const f of files){
+      try{
+        const txt = await window.pdfTexto(await f.arrayBuffer());
+        const gs = parseDarfText(txt, f.name);
+        if (!gs.length) sem.push(f.name);
+        gs.forEach(g => { S.guias.push(g); n++; });
+      }catch(e){ toast(f.name + ': ' + (e.message || e), 'err'); }
+    }
+    renderGuias();
+    toast(n + ' guia(s) com código 0561 lida(s). Confira data e valor.' + (sem.length ? ' Sem 0561: ' + sem.join(', ') : ''), n ? 'ok' : 'err');
+    if (S.res) run();
+  }
+  setupDrop($('dzGuias'), $('fGuias'), loadGuias);
+  $('btnAddGuia').addEventListener('click', () => { S.guias.push({ nome: 'manual', id: '', paga: null, total: 0, avisos: [], raw: '' }); renderGuias(); });
+  function renderGuias(){
+    const G = S.guias; $('guiasHint').textContent = G.length ? G.length + ' guia(s)' : '';
+    if (!G.length){ $('guiasBox').innerHTML = ''; return; }
+    let h = '<div class="table-wrap"><table><thead><tr><th>Arquivo</th><th>Identificador</th><th>Pago em</th><th class="num">Valor do 0561</th><th></th></tr></thead><tbody>';
+    G.forEach((g, i) => {
+      h += '<tr data-i="' + i + '"><td>' + esc(g.nome) + (g.avisos && g.avisos.length ? '<br><span class="hint warn">' + esc(g.avisos.join(' ')) + '</span>' : '') + '</td>' +
+        '<td><input type="text" data-f="id" value="' + esc(g.id) + '"></td>' +
+        '<td><input type="text" data-f="paga" placeholder="dd/mm/aaaa" value="' + esc(fmtDate(g.paga)) + '"></td>' +
+        '<td><input type="text" data-f="total" value="' + (g.total ? fmtPlain(g.total) : '') + '"></td>' +
+        '<td><button class="btn-icon" data-del="' + i + '" title="Remover">×</button></td></tr>';
+    });
+    h += '</tbody></table></div>';
+    const raws = G.filter(g => g.raw).map(g => '<details><summary>Texto lido de ' + esc(g.nome) + '</summary><pre>' + esc(g.raw) + '</pre></details>').join('');
+    $('guiasBox').innerHTML = h + raws;
+  }
+  $('guiasBox').addEventListener('change', e => {
+    const inp = e.target.closest('input[data-f]'); if (!inp) return;
+    const i = +inp.closest('tr').dataset.i, f = inp.dataset.f, g = S.guias[i];
+    if (f === 'paga') g.paga = parseDate(inp.value); else if (f === 'id') g.id = inp.value.trim(); else g[f] = parseNum(inp.value);
+    if (S.res) agenda();
+  });
+  $('guiasBox').addEventListener('click', e => { const b = e.target.closest('[data-del]'); if (!b) return; S.guias.splice(+b.dataset.del, 1); renderGuias(); if (S.res) run(); });
+
+  /* provisões fora do razão */
+  $('btnAddExtra').addEventListener('click', () => { S.extras.push({ data: null, tipo: '140', valor: 0, desc: '' }); renderExtras(); });
+  function renderExtras(){
+    const X = S.extras;
+    if (!X.length){ $('extrasBox').innerHTML = ''; return; }
+    let h = '<div class="table-wrap"><table><thead><tr><th>Data da provisão</th><th>Tipo</th><th class="num">Valor</th><th>Descrição (opcional)</th><th></th></tr></thead><tbody>';
+    X.forEach((x, i) => {
+      h += '<tr data-i="' + i + '"><td><input type="text" data-f="data" placeholder="dd/mm/aaaa" value="' + esc(fmtDate(x.data)) + '"></td>' +
+        '<td><select data-f="tipo"><option value="140"' + (x.tipo === '140' ? ' selected' : '') + '>140 — eventos 304 + 308</option><option value="139"' + (x.tipo === '139' ? ' selected' : '') + '>139 — evento 311</option></select></td>' +
+        '<td><input type="text" data-f="valor" value="' + (x.valor ? fmtPlain(x.valor) : '') + '"></td>' +
+        '<td><input type="text" data-f="desc" style="min-width:260px" placeholder="folha MM/AAAA, ainda não lançada" value="' + esc(x.desc) + '"></td>' +
+        '<td><button class="btn-icon" data-delx="' + i + '" title="Remover">×</button></td></tr>';
+    });
+    $('extrasBox').innerHTML = h + '</tbody></table></div>';
+  }
+  $('extrasBox').addEventListener('change', e => {
+    const inp = e.target.closest('[data-f]'); if (!inp) return;
+    const i = +inp.closest('tr').dataset.i, f = inp.dataset.f, x = S.extras[i];
+    if (f === 'data') x.data = parseDate(inp.value); else if (f === 'valor') x.valor = parseNum(inp.value); else x[f] = inp.value.trim();
+    if (S.res) agenda();
+  });
+  $('extrasBox').addEventListener('click', e => { const b = e.target.closest('[data-delx]'); if (!b) return; S.extras.splice(+b.dataset.delx, 1); renderExtras(); if (S.res) run(); });
+
+  /* ---- 3: conciliar ---- */
+  function run(){
+    if (!S.razao) return;
+    S.dirty = false; clearTimeout(S.timer);
+    try{
+      S.res = conciliarIRRF(S.razao.lines, S.guias, { semGuia: S.semGuia, extras: S.extras });
+      unlock('s4'); pills(3); render();
+    }catch(e){ toast('Erro na conciliação: ' + (e.message || e), 'err'); console.error(e); }
+  }
+
+  const TABS = [['copiar', 'Copiar e colar'], ['resumo', 'Resumo por competência'], ['guias', 'Guia × Razão'], ['saldo', 'Saldo']];
+  function render(){
+    const R = S.res;
+    const nl = R.copiar.filter(c => c.tipo !== 'sep').length;
+    const okG = R.darfs.filter(d => /^CONCILIADO/.test(d.status)).length;
+    const pend = R.resumo.filter(r => !/^OK/.test(r.situ)).length;
+    $('resSub').textContent = 'Razão: ' + S.nomeRazao + ' · ' + R.darfs.length + ' DARF(s) · ' + R.resumo.length + ' linha(s) de competência.';
+    $('tiles').innerHTML = tile(nl, 'linhas para copiar', 'accent') + tile(R.darfs.length, 'blocos (DARF)') + tile(S.guias.length ? okG + '/' + R.darfs.length : '—', 'DARF conciliados com guia') + tile(fmtBR(R.semProvisaoTotal), 'sem provisão no razão', R.semProvisaoTotal > 0.004 ? 'warn' : '') + tile(pend, 'competências em aberto', pend ? 'warn' : '') + tile(fmtBR(R.saldo.final), 'saldo credor final');
+    const cnt = { copiar: nl, resumo: R.resumo.length, guias: R.darfs.length, saldo: '' };
+    $('tabs').innerHTML = TABS.map(t => '<button type="button" class="tab' + (S.tab === t[0] ? ' is-active' : '') + '" data-t="' + t[0] + '">' + t[1] + (cnt[t[0]] !== '' ? '<span class="cnt">' + cnt[t[0]] + '</span>' : '') + '</button>').join('');
+    $('panels').innerHTML = TABS.map(t => '<div class="panel" id="pn_' + t[0] + '"' + (S.tab === t[0] ? '' : ' hidden') + '></div>').join('');
+    pCopiar(); pResumo(); pGuias(); pSaldo();
+  }
+  $('tabs').addEventListener('click', e => { const b = e.target.closest('[data-t]'); if (!b) return; S.tab = b.dataset.t; render(); });
+
+  function tbl(head, rows, cls){ return '<div class="table-wrap"><table class="' + (cls || '') + '"><thead><tr>' + head.map(h => '<th' + (h[1] ? ' class="num"' : '') + '>' + esc(h[0]) + '</th>').join('') + '</tr></thead><tbody>' + rows + '</tbody></table></div>'; }
+
+  const fmtCell = v => fmtBR(v);
+  function pCopiar(){
+    const R = S.res, P = $('pn_copiar');
+    let h = '<p class="hint" style="margin-top:12px">Formato da planilha de conciliação: <b>Data · Histórico · Valor</b>, sem título, um bloco <b>verde</b> por DARF. A linha "DARF IRRF" é positiva; as provisões que ela quita são negativas, alocadas em ordem cronológica (FIFO): primeiro o IRRF férias (139) de competências anteriores ao mês do pagamento, depois o saldo inicial e o IRRF salários (140) por mês. Cada bloco soma zero. A coluna "Status" fica fora da área a copiar.</p>';
+    h += '<label class="chk"><input type="checkbox" id="ckSG"' + (S.semGuia ? ' checked' : '') + '><span>Gerar bloco também para <b>pagamentos do razão sem guia</b> (a data da linha DARF é a do lançamento no razão)</span></label>';
+    if (R.avisos.length) h += '<p class="hint warn">' + R.avisos.map(esc).join('<br>') + '</p>';
+    const n = R.copiar.filter(c => c.tipo !== 'sep').length;
+    if (!n){ P.innerHTML = h + '<div class="empty-state neutral"><div class="big">∅</div>Nenhuma linha gerada. O razão não tem Transferência de Saldo e nenhuma guia foi carregada.</div>'; bindCopiar(); return; }
+    h += '<div class="actions-row"><button class="btn-primary" id="btnCopy" type="button">Copiar ' + n + ' linhas (com cor e formato)</button><button class="btn-secondary" id="btnCopyTxt" type="button">Copiar só o texto</button><button class="btn-secondary" id="btnXlsx" type="button">Baixar Excel (.xlsx)</button></div>';
+    let rows = '';
+    R.copiar.forEach(c => {
+      if (c.tipo === 'sep'){ rows += '<tr class="sepr"><td colspan="3"></td><td class="out"></td></tr>'; return; }
+      rows += '<tr class="verde' + (c.aviso ? ' div' : '') + '"><td>' + fmtDate(c.data) + '</td><td>' + esc(c.hist) + '</td><td class="num' + (c.valor < 0 ? ' neg' : '') + '">' + fmtCell(c.valor) + '</td><td class="out">' + (c.status ? stag(c.status) : '') + (c.ref ? ' <span class="mono">' + esc(c.ref) + '</span>' : '') + (c.aviso ? ' <span class="hint err">' + esc(c.aviso) + '</span>' : '') + '</td></tr>';
+    });
+    h += tbl([['Data'], ['Histórico'], ['Valor', 1], ['Status (não copiar)']], rows, 'copy');
+    P.innerHTML = h; bindCopiar();
+  }
+  function copiaTexto(){ return S.res.copiar.map(c => c.tipo === 'sep' ? '' : [fmtDate(c.data), c.hist, fmtPlain(c.valor)].join('\t')).join('\n'); }
+  function copiaHtml(){
+    const NF = '"\\#\\,\\#\\#0\\.00\;\\[Red\\]\\-\\#\\,\\#\\#0\\.00\;\\-"';
+    let h = '<table>';
+    S.res.copiar.forEach(c => {
+      if (c.tipo === 'sep'){ h += '<tr><td></td><td></td><td></td></tr>'; return; }
+      const bg = 'background:#92D050;';
+      h += '<tr><td style="' + bg + 'mso-number-format:\'dd\\/mm\\/yyyy\'">' + fmtDate(c.data) + '</td><td style="' + bg + '">' + esc(c.hist) + '</td><td style=\'' + bg + 'mso-number-format:' + NF + '\'>' + fmtPlain(c.valor) + '</td></tr>';
+    });
+    return h + '</table>';
+  }
+  async function copiar(comFormato){
+    if (S.dirty) run();
+    const txt = copiaTexto(), n = S.res.copiar.filter(c => c.tipo !== 'sep').length;
+    try{
+      if (comFormato && window.ClipboardItem && navigator.clipboard && navigator.clipboard.write){
+        await navigator.clipboard.write([new ClipboardItem({ 'text/html': new Blob([copiaHtml()], { type: 'text/html' }), 'text/plain': new Blob([txt], { type: 'text/plain' }) })]);
+      } else await navigator.clipboard.writeText(txt);
+      toast(n + ' linhas copiadas. Cole na planilha.', 'ok');
+    }catch(e){
+      const ta = document.createElement('textarea'); ta.value = txt; document.body.appendChild(ta); ta.select();
+      try{ document.execCommand('copy'); toast('Linhas copiadas (só texto).', 'ok'); }catch(_){ toast('Não foi possível copiar.', 'err'); }
+      ta.remove();
+    }
+  }
+  function bindCopiar(){
+    const sg = $('ckSG'); if (sg) sg.addEventListener('change', () => { S.semGuia = sg.checked; run(); });
+    const c = $('btnCopy'); if (c) c.addEventListener('click', () => copiar(true));
+    const ct = $('btnCopyTxt'); if (ct) ct.addEventListener('click', () => copiar(false));
+    const x = $('btnXlsx'); if (x) x.addEventListener('click', exportXlsx);
+  }
+
+  function pResumo(){
+    const R = S.res; let rows = '', t = { ini: 0, p140: 0, p139: 0, extra: 0, total: 0, pago: 0, aberto: 0 };
+    R.resumo.forEach(r => {
+      Object.keys(t).forEach(k => { t[k] += r[k]; });
+      rows += '<tr><td>' + esc(r.comp) + '</td><td class="num">' + fmtBR(r.ini) + '</td><td class="num">' + fmtBR(r.p140) + '</td><td class="num">' + fmtBR(r.p139) + '</td><td class="num">' + fmtBR(r.extra) + '</td><td class="num">' + fmtBR(r.total) + '</td><td class="num">' + fmtBR(r.pago) + '</td><td class="num">' + fmtBR(r.aberto) + '</td><td>' + stag(r.situ) + '</td></tr>';
+    });
+    rows += '<tr class="total"><td>TOTAL</td>' + ['ini', 'p140', 'p139', 'extra', 'total', 'pago', 'aberto'].map(k => '<td class="num">' + fmtBR(r2(t[k])) + '</td>').join('') + '<td></td></tr>';
+    $('pn_resumo').innerHTML = '<p class="hint" style="margin-top:12px">Provisão do razão por competência (hist. 140 = eventos 304 + 308; hist. 139 = evento 311), quanto dela foi quitado pelos DARF na alocação FIFO e quanto segue em aberto. "Provisão fora do razão" vem do passo 2.</p>' +
+      tbl([['Competência'], ['Saldo inicial', 1], ['IRRF sal. (140)', 1], ['IRRF férias (139)', 1], ['Fora do razão', 1], ['Provisão total', 1], ['Pago (DARF)', 1], ['Em aberto', 1], ['Situação']], rows);
+  }
+
+  function pGuias(){
+    const R = S.res; let rows = '';
+    R.darfs.forEach(d => {
+      const comp = d.aloc.map(a => (a.it.comp === 'Saldo inicial' ? 'saldo inicial' : a.it.comp + (a.it.kind === '139' || a.it.kind === 'x139' ? ' (139)' : ''))).join(', ');
+      rows += '<tr><td>' + fmtDate(d.data) + '</td><td class="num">' + fmtBR(d.valor) + '</td><td>' + (d.pag ? fmtDate(d.pag.data) : '—') + '</td><td class="num">' + (d.pag ? fmtBR(d.pag.deb) : '—') + '</td><td>' + stag(d.status) + '</td><td class="wrap">' + esc(comp + (d.sem > 0.004 ? (comp ? ' + ' : '') + 'sem provisão ' + fmtBR(d.sem) : '')) + '</td><td class="wrap">' + esc((d.ref ? d.ref + ' · ' : '') + d.nota) + '</td></tr>';
+    });
+    const ign = R.semGuiaIgnorados.length ? '<p class="hint warn">Pagamentos do razão sem guia fora dos blocos (opção desmarcada): ' + R.semGuiaIgnorados.map(l => fmtDate(l.data) + ' ' + fmtBR(l.deb)).join('; ') + '.</p>' : '';
+    $('pn_guias').innerHTML = '<p class="hint" style="margin-top:12px">Regra: a guia é pareada ao débito do razão de mesmo valor (data do razão ≠ data do pagamento é normal: a Transferência de Saldo costuma ser lançada no fim do mês). Nada é pareado por valor aproximado.</p>' + ign +
+      tbl([['Data DARF'], ['Valor DARF', 1], ['Razão – data'], ['Razão – valor', 1], ['Situação'], ['Provisões quitadas'], ['Referência / observação']], rows || '<tr><td colspan="7">—</td></tr>');
+  }
+
+  function pSaldo(){
+    const s = S.res.saldo;
+    const row = (a, v, b) => '<tr' + (b ? ' class="total"' : '') + '><td>' + a + '</td><td class="num">' + fmtBR(v) + '</td></tr>';
+    let h = row('Saldo inicial (implantação − parcelamento)', s.ini) + row('(+) Provisões (hist. 140 e 139)', s.prov) + row('(−) Pagamentos (Transferência de Saldo)', s.pag) + (s.outDeb ? row('(−) Outros débitos', s.outDeb) : '') + row('Saldo credor final do razão', s.final, 1);
+    let p = row('Provisões em aberto no razão (fila)', s.openR) + (s.Ar_nd ? row('(+) Quitado por guias ainda não lançadas no razão', s.Ar_nd) : '') + (s.Ax_rd ? row('(−) Provisão fora do razão quitada por pagamento do razão', -s.Ax_rd) : '') + row('(−) Pagamentos sem provisão ("SEM PROVISÃO NO RAZÃO")', -s.Sp_rd) + (s.E ? row('(−) Pagamentos do razão fora dos blocos', -s.E) : '') + (s.outDeb ? row('(−) Outros débitos', -s.outDeb) : '') + row('Diferença para o saldo do razão (deve ser 0,00)', s.prova, 1);
+    $('pn_saldo').innerHTML = '<p class="hint" style="margin-top:12px">Saldo credor = créditos − débitos. Negativo = pagamentos acima das provisões lançadas; a diferença aparece como "SEM PROVISÃO NO RAZÃO" no bloco do DARF e precisa de lançamento de regularização (decisão do contador).</p>' +
+      tbl([['Item'], ['Valor', 1]], h) + '<h3 style="margin-top:22px;font-size:16px">Prova do saldo pela conciliação</h3>' + tbl([['Item'], ['Valor', 1]], p);
+  }
+
+  async function exportXlsx(){
+    if (S.dirty) run();
+    try{
+      const R = S.res, wb = XLSX.utils.book_new();
+      const ser = ms => ms == null ? '' : Math.round(ms / 86400000) + 25569;
+      const cp = R.copiar.map(c => c.tipo === 'sep' ? ['', '', ''] : [ser(c.data), c.hist, c.valor]);
+      const ws1 = XLSX.utils.aoa_to_sheet(cp);
+      cp.forEach((r, i) => { const a = XLSX.utils.encode_cell({ r: i, c: 0 }); if (ws1[a] && ws1[a].t === 'n') ws1[a].z = 'dd/mm/yyyy'; const v = ws1[XLSX.utils.encode_cell({ r: i, c: 2 })]; if (v && v.t === 'n') v.z = '#,##0.00;[Red]-#,##0.00;-'; });
+      ws1['!cols'] = [{ wch: 13 }, { wch: 62 }, { wch: 16 }];
+      XLSX.utils.book_append_sheet(wb, ws1, 'Copiar_Conciliado');
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([['Competência', 'Saldo inicial', 'IRRF salários (140)', 'IRRF férias (139)', 'Fora do razão', 'Provisão total', 'Pago (DARF)', 'Em aberto', 'Situação']].concat(R.resumo.map(r => [r.comp, r.ini, r.p140, r.p139, r.extra, r.total, r.pago, r.aberto, r.situ]))), 'Resumo_Competencia');
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([['Data DARF', 'Valor DARF', 'Razão – data', 'Razão – valor', 'Situação', 'Sem provisão', 'Referência']].concat(R.darfs.map(d => [fmtDate(d.data), d.valor, d.pag ? fmtDate(d.pag.data) : '', d.pag ? d.pag.deb : '', d.status, d.sem, d.ref]))), 'Guia_x_Razao');
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([['Data', 'Complemento', 'Categoria', 'Competência', 'Débito', 'Crédito']].concat(R.lines.map(l => [fmtDate(l.data), l.compl, l.cat, l.comp, l.deb, l.cred]))), 'Razao_Classificado');
+      const out = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+      await salvarArquivo('Conciliacao_IRRF_conciliado.xlsx', new Blob([out], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }));
+      toast('Excel gerado.', 'ok');
+    }catch(e){ toast('Erro ao gerar Excel: ' + (e.message || e), 'err'); }
+  }
+})();
+</script>
+</body>
+</html>
