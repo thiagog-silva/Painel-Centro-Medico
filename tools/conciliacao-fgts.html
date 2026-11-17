@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Conciliação de FGTS — VERSÃO: 2.4.0 — finalizado em 17/11/2026 (2.4.0: Tag da guia que vem com data/hora no lugar do nome (guia sem Tag) não vira nome no histórico; pagamentos do razão sem guia abaixo do limite de guia mensal entram no copiar e colar em bloco amarelo "SEM GUIA" (opção); no Resumo, quando o razão não tem pares D=C, os rescisórios da competência vêm da soma das guias rescisórias carregadas (editável). 2.3.0: histórico das linhas de rescisório com " - NOME DO FUNCIONÁRIO" (Tag da guia), com opção para desligar. 2.2.0: 2.2.0: guias pagas depois do último lançamento do razão entram no copiar e colar com a data e o valor da própria guia, marcadas "ainda não lançada" (caso da guia do mês 10 com competência 09); opção para desligar. 2.1.1: removida a etapa Parâmetros: conciliação automática ao carregar o razão e as guias; copiar e colar no formato da planilha manual: blocos GUIA FGTS / PROVISAO FGTS RESCISORIO / PAGTO; leitura das guias GFD reais: Total da Guia com dois-pontos, colunas com Quantidade, consignado, vencimento em linha separada; débitos hist. 112 abatem o consignado). Base oficial estável: alterar somente o que for solicitado. -->
+<!-- Conciliação de FGTS — VERSÃO: 2.7.0 — finalizado em 17/11/2026 (2.7.0: a folha agora é lida por funcionário — rescisões da folha × guias (depósito rescisório e 40% conferidos um a um, rescisão da folha sem guia, guia sem Tag identificada pelo nome na folha); 2.6.0 também: pendências que passam de um mês para o outro (pagamentos sem guia e guias sem data de pagamento) com arquivo JSON/memória do navegador e baixa automática quando a guia chega; 2.6.0: leitura opcional da Folha (PDF) com aba "Folha × Razão" (FGTS e consignado da folha × provisão do razão × guias); validação de arquivo errado no razão (conta 2751) e nas guias (não é GFD / empregador diferente); 2.5.0: "Mês a gerar" automático (último mês do razão): o copiar e colar só leva pagamentos desse mês em diante, então um razão com vários meses não repete o que já foi colado antes (seletor para escolher outro mês ou todos); painel "Conferência do mês" com o que está certo e o que falta (guias sem data, sem Tag, pagamentos sem guia, blocos que não fecham). 2.4.0: Tag da guia que vem com data/hora no lugar do nome (guia sem Tag) não vira nome no histórico; pagamentos do razão sem guia abaixo do limite de guia mensal entram no copiar e colar em bloco amarelo "SEM GUIA" (opção); no Resumo, quando o razão não tem pares D=C, os rescisórios da competência vêm da soma das guias rescisórias carregadas (editável). 2.3.0: histórico das linhas de rescisório com " - NOME DO FUNCIONÁRIO" (Tag da guia), com opção para desligar. 2.2.0: 2.2.0: guias pagas depois do último lançamento do razão entram no copiar e colar com a data e o valor da própria guia, marcadas "ainda não lançada" (caso da guia do mês 10 com competência 09); opção para desligar. 2.1.1: removida a etapa Parâmetros: conciliação automática ao carregar o razão e as guias; copiar e colar no formato da planilha manual: blocos GUIA FGTS / PROVISAO FGTS RESCISORIO / PAGTO; leitura das guias GFD reais: Total da Guia com dois-pontos, colunas com Quantidade, consignado, vencimento em linha separada; débitos hist. 112 abatem o consignado). Base oficial estável: alterar somente o que for solicitado. -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -116,6 +116,16 @@ code.k{ background:var(--surface-alt); border:1px solid var(--border); padding:1
 .panel[hidden]{ display:none; }
 table.copy tr.verde td:not(.out){ background:#92D050; color:#111; }
 table.copy td.neg{ color:var(--danger); }
+#conf .conf{ margin:14px 0 6px; padding:12px 16px; border:1px solid var(--border); border-radius:10px; background:var(--surface); }
+#conf h3{ margin:0 0 8px; font-size:15px; }
+#conf ul{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:6px; }
+#conf li{ display:flex; gap:10px; align-items:flex-start; font-size:13.5px; }
+#conf .cf-i{ flex:0 0 20px; height:20px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; }
+#conf .cf-ok .cf-i{ background:var(--success-soft); color:var(--success); }
+#conf .cf-warn .cf-i{ background:var(--warning-soft); color:var(--warning); }
+#conf .cf-info .cf-i{ background:var(--accent-soft); color:var(--accent-strong); }
+#conf .cf-d{ color:var(--muted); font-weight:400; }
+select#selMes{ padding:6px 8px; border:1px solid var(--border); border-radius:8px; background:var(--surface); font:inherit; }
 table.copy tr.semg td:not(.out){ background:#FFF2CC; color:#111; }
 table.copy tr.verde td.neg{ color:#b00020; }
 table.copy tr.sepr td{ height:14px; padding:0; background:var(--surface); }
@@ -127,6 +137,9 @@ table.copy tr.div td:not(.out){ outline:1px solid var(--warning); }
 td input[type="text"]{ padding:5px 7px; font-size:12.5px; min-width:98px; font-family:var(--font-mono); }
 details{ margin-top:12px; font-size:12.5px; color:var(--muted); }
 details pre{ white-space:pre-wrap; background:var(--surface-alt); border:1px solid var(--border); padding:10px; border-radius:8px; max-height:220px; overflow:auto; font-family:var(--font-mono); font-size:11.5px; }
+.cmp-ok{ color:var(--success); font-weight:600; }
+.cmp-bad{ color:var(--danger,#b3261e); font-weight:600; }
+.cmp-sub td{ font-size:12px; color:var(--muted); }
 .ver{ text-align:center; color:var(--muted); font-size:12px; margin-top:24px; }
 </style>
 </head>
@@ -152,15 +165,24 @@ details pre{ white-space:pre-wrap; background:var(--surface-alt); border:1px sol
     <input type="file" id="fGuias" accept=".pdf" multiple hidden>
     <div class="actions-row"><button class="btn-secondary" id="btnAddGuia" type="button">+ Adicionar guia manualmente</button><span class="hint" id="guiasHint"></span></div>
     <div id="guiasBox"></div>
+    <div class="step-head" style="margin-top:18px"><div class="step-num" style="background:var(--brand-cyan)">+</div><div><h2>Folha de pagamento (PDF) — opcional</h2><p class="step-sub">PDF (ou TXT) da folha do mês. A ferramenta lê só o "Resumo dos Eventos — C.Custo: Total da Empresa" e compara o FGTS e o consignado da folha com a provisão do razão e com as guias (aba "Folha × Razão").</p></div></div>
+    <div class="dropzone" id="dzFolha"><strong>Arraste o PDF da folha aqui</strong><span>ou clique para escolher · pode ser o PDF completo da folha</span></div>
+    <input type="file" id="fFolha" accept=".pdf,.txt" hidden>
+    <div id="folhaInfo"></div>
+    <div class="step-head" style="margin-top:18px"><div class="step-num" style="background:var(--brand-cyan)">+</div><div><h2>Pendências do mês anterior — opcional</h2><p class="step-sub">Arquivo de pendências salvo no fechamento anterior (pagamentos que ficaram sem guia e guias sem data de pagamento). Quando a guia chega, a ferramenta dá baixa e inclui o grupo na colagem. Se você salvou neste mesmo navegador, elas são carregadas sozinhas.</p></div></div>
+    <div class="dropzone" id="dzPend"><strong>Arraste o arquivo de pendências (.json) aqui</strong><span>ou clique para escolher</span></div>
+    <input type="file" id="fPend" accept=".json" hidden>
+    <div id="pendBox"></div>
   </section>
 
   <section class="step-card" id="s4" data-locked="true">
     <div class="step-head"><div class="step-num">3</div><div><h2>Resultado</h2><p class="step-sub" id="resSub">—</p></div></div>
     <div class="summary-grid" id="tiles"></div>
+    <div id="conf"></div>
     <div class="tabs" id="tabs"></div>
     <div id="panels"></div>
   </section>
-  <div class="ver">Conciliação de FGTS · v2.4.0 · Contabilidade Integrada</div>
+  <div class="ver">Conciliação de FGTS · v2.7.0 · Contabilidade Integrada</div>
 </div>
 <div class="toast-host" id="toasts"></div>
 
@@ -230,6 +252,24 @@ try{
     }
     return out;
   };
+  // folha: varre as páginas do fim para o começo até achar "C.Custo: Total da Empresa" (o resumo fica perto do fim do PDF)
+  window.pdfTextoFolha = async function(buf, prog){
+    const doc = await pdfjsLib.getDocument({ data: buf }).promise;
+    const pgs = [];
+    for (let p = doc.numPages; p >= 1; p--){
+      if (prog && (p % 10 === 0)) prog(doc.numPages - p + 1, doc.numPages);
+      const pg = await doc.getPage(p);
+      const tc = await pg.getTextContent();
+      const it = tc.items.filter(x => x.str && x.str.trim()).map(x => ({ s: x.str, x: x.transform[4], y: x.transform[5] }));
+      it.sort((a, b) => b.y - a.y || a.x - b.x);
+      let out = '', line = [], ly = null;
+      const flush = () => { if (line.length){ line.sort((a, b) => a.x - b.x); out += line.map(z => z.s).join(' ') + '\n'; } line = []; };
+      for (const z of it){ if (ly === null || Math.abs(z.y - ly) > 3){ flush(); ly = z.y; } line.push(z); }
+      flush();
+      pgs.unshift(out);
+    }
+    return { texto: pgs.join('\n'), paginas: doc.numPages, lidas: pgs.length };
+  };
 }catch(e){ window.pdfErro = e; }
 </script>
 <script>
@@ -295,6 +335,136 @@ function parseCSV(text, sep) {
   return rows;
 }
 
+
+/* ---------- folha: Resumo dos Eventos — C.Custo: Total da Empresa ---------- */
+const FOLHA_13 = ['393'];   // evento FGTS que a contabilidade lança no histórico 145 (13º); os demais FGTS vão no 156
+function parseFolhaResumo(text) {
+  const T = String(text || '').replace(/ /g, ' ').replace(/\r/g, '');
+  if (!/Resumo dos Eventos|Relação de Cálculo|Cod\.\s*Descri/i.test(T)) throw new Error('não parece uma folha de pagamento (não encontrei "Resumo dos Eventos").');
+  // período e tipo (cabeçalho da página)
+  let per = /(\d{2}\/\d{2}\/\d{4})\s+a\s+(\d{2}\/\d{2}\/\d{4})\s+Tipo:\s*([^\n]+)/i.exec(T);
+  const out = { ini: null, fim: null, comp: '', tipo: '', emp: '', ev: [], avisos: [] };
+  if (per) { out.ini = parseDate(per[1]); out.fim = parseDate(per[2]); out.comp = compOf(out.fim); out.tipo = per[3].trim().replace(/\s+/g, ' '); }
+  const em = /\n\s*([A-ZÀ-Ú][A-ZÀ-Ú .&-]{6,}LTDA|[A-ZÀ-Ú][A-ZÀ-Ú .&-]{6,}S\.?A\.?)\s+Pág/.exec(T) || /(CENTRO MEDICO[^\n]*?LTDA)/.exec(T); if (em) out.emp = em[1].trim();
+  // seção do total da empresa (usa a última ocorrência: é o resumo geral)
+  const re = /C\.?\s*Custo:\s*Total da Empresa/gi; let mm, ini = -1; while ((mm = re.exec(T))) ini = mm.index;
+  if (ini < 0) throw new Error('não encontrei "Resumo dos Eventos — C.Custo: Total da Empresa" nesta folha (é preciso o PDF que inclui o resumo geral da empresa).');
+  let sec = T.slice(ini);
+  const fim = sec.search(/Legenda de incid[êe]ncia|\n\s*C\.?\s*Custo:\s*\d/i); if (fim > 0) sec = sec.slice(0, fim);
+  const col = sec.replace(/\n/g, ' ');
+  const NUM = '\\d{1,3}(?:\\.\\d{3})*,\\d{2}';
+  const rx = new RegExp('(?<![\\d.,])(\\d{3,4})\\s+((?:(?!' + NUM + ').){2,48}?)\\s+((?:' + NUM + '\\s+){1,2})(?:[A-Z]-?\\s+){0,4}(\\d{1,4})\\s+(\\d{1,4})(?=\\s|$)', 'g');
+  const seen = new Set();
+  while ((mm = rx.exec(col))) {
+    const cod = mm[1], desc = mm[2].trim().replace(/\s+/g, ' ');
+    const isF = /^FGTS/i.test(desc), isC = /^(Desc\s+eConsig|Desc\s+Prov\s+eConsig|Estorno\s+Prov\s+eConsig)/i.test(desc);
+    if (!isF && !isC) continue;
+    if (seen.has(cod)) { out.avisos.push('Evento ' + cod + ' aparece mais de uma vez no resumo — usei a primeira ocorrência.'); continue; }
+    seen.add(cod);
+    const nums = mm[3].trim().split(/\s+/).map(parseNum);
+    out.ev.push({ cod, desc, valor: nums[nums.length - 1], grupo: isF ? 'fgts' : /^Estorno/i.test(desc) ? 'consigEstorno' : /^Desc\s+Prov/i.test(desc) ? 'consigProv' : 'consigDesc', qtd: +mm[4] });
+  }
+  const sum = g => r2(out.ev.filter(e => e.grupo === g).reduce((a, e) => a + e.valor, 0));
+  out.fgtsTotal = sum('fgts');
+  out.fgts13 = r2(out.ev.filter(e => e.grupo === 'fgts' && FOLHA_13.includes(e.cod)).reduce((a, e) => a + e.valor, 0));
+  out.fgtsMensal = r2(out.fgtsTotal - out.fgts13);
+  out.consigDesc = sum('consigDesc'); out.consigProv = sum('consigProv'); out.consigEstorno = sum('consigEstorno');
+  out.consigBruto = r2(out.consigDesc + out.consigProv);
+  out.consigLiquido = r2(out.consigBruto - out.consigEstorno);
+  out.resc = parseFolhaColab(T);
+  { const somaE = c => r2(out.resc.reduce((a, e) => a + (e.ev[c] || 0), 0)), tot = c => r2(out.ev.filter(e => e.cod === c).reduce((a, e) => a + e.valor, 0));
+    ['497', '498', '5065'].forEach(c => { if (Math.abs(somaE(c) - tot(c)) > 0.05) out.avisos.push('Soma por funcionário do evento ' + c + ' (' + fmtBR(somaE(c)) + ') difere do resumo da empresa (' + fmtBR(tot(c)) + ') — confira a leitura da folha.'); });
+    if (!out.resc.length) out.avisos.push('Nenhum funcionário com rescisão de FGTS foi lido na folha (blocos "Colaborador:"). A conferência por funcionário não será feita.'); }
+  if (!out.ev.some(e => e.grupo === 'fgts')) throw new Error('o resumo da empresa foi encontrado, mas nenhum evento de FGTS foi reconhecido — confira se é o PDF correto.');
+  if (!out.comp) out.avisos.push('Período da folha não identificado — a competência foi assumida pelo último mês do razão.');
+  else if (!/m(ensal)?/i.test(out.tipo)) out.avisos.push('Tipo de cálculo "' + out.tipo + '" — esperado "Cálculo Mensal".');
+  return out;
+}
+
+// v2.7.0: blocos por colaborador ("Colaborador: - 11414 - NOME" ... eventos FGTS 300/335/393/497/498/5065) — só quem tem rescisão
+function parseFolhaColab(T) {
+  const NUM = '\\d{1,3}(?:\\.\\d{3})*,\\d{2}';
+  const map = new Map();
+  for (const b0 of String(T).split(/\n(?=\s*Colaborador:)/)) {
+    const b = b0.split(/\n\s*(?:Totais:|Resumo dos Eventos)/)[0];   // o último colaborador de cada C.Custo arrasta o resumo do C.Custo: corta no fim do colaborador
+    const m = /^\s*Colaborador:\s*-?\s*(\d+)\s*-\s*([^\n]+)/.exec(b); if (!m) continue;
+    const e = map.get(m[1]) || { mat: m[1], nome: m[2].replace(/\s+/g, ' ').trim(), status: '', demissao: null, ev: {} };
+    const st = /St:\s*([A-Za-zÀ-ú]+)/.exec(b); if (st) e.status = st[1];
+    const dm = /Demiss[ãa]o:\s*(\d{2}\/\d{2}\/\d{4})/.exec(b); if (dm) e.demissao = parseDate(dm[1]);
+    for (const cod of ['300', '335', '393', '497', '498', '5065']) {
+      const mm = new RegExp('(?<![\\d.,])' + cod + '\\s+(?:\\d{2}\\s+)?FGTS(?:(?!' + NUM + ')[^\\n]){0,40}?\\s((?:' + NUM + '\\s*){1,2})').exec(b);
+      if (mm) e.ev[cod] = parseNum(mm[1].trim().split(/\s+/).pop());
+    }
+    map.set(m[1], e);
+  }
+  const g = (e, c) => e.ev[c] || 0;
+  return Array.from(map.values()).filter(e => g(e, '497') > 0 || g(e, '498') > 0 || (/demitid/i.test(e.status) && (g(e, '335') > 0 || g(e, '5065') > 0)))
+    .map(e => Object.assign(e, { depRes: r2(g(e, '335') + g(e, '497') + g(e, '5065')), multa: r2(g(e, '498')) }));
+}
+const tokNome = s => norm(s).replace(/[^A-Z ]/g, ' ').split(' ').filter(Boolean);
+const nomeDaTag = t => String(t || '').replace(/^\s*RESC[IÍ]S[AÃ]O\b\s*[-:]?\s*/i, '').replace(/\s+/g, ' ').trim();
+const guiaRescComp = (g, comp) => { let r = 0, i = 0, n = 0; (g.comps || []).forEach(c => { if (c.tipo !== 'consig' && c.comp === comp && ((c.resc || 0) > 0 || (c.indeniz || 0) > 0)) { r += c.resc || 0; i += c.indeniz || 0; n++; } }); return { n, resc: r2(r), indeniz: r2(i) }; };
+// guias sem Tag: identifica o funcionário pelo valor do depósito rescisório (e do 40%) na folha
+function nomesDaFolha(f, guias) {
+  if (!f || !f.resc || !f.resc.length) return 0;
+  const usados = new Set();
+  (guias || []).forEach(g => { if ((g.tag || '').trim()) { const tk = tokNome(nomeDaTag(g.tag)); f.resc.forEach(e => { const te = tokNome(e.nome); if (tk.length >= 2 && tk.every(t => te.includes(t))) usados.add(e.mat); }); } });
+  let n = 0;
+  (guias || []).forEach(g => {
+    delete g.tagAuto;
+    if ((g.tag || '').trim() || !(g.total > 0)) return;
+    const v = guiaRescComp(g, f.comp); if (!v.n || !v.resc) return;
+    const cand = f.resc.filter(e => !usados.has(e.mat) && Math.abs(e.depRes - v.resc) <= 0.05 && Math.abs(e.multa - v.indeniz) <= 20);
+    if (cand.length === 1) { g.tagAuto = 'RESCISAO ' + cand[0].nome; usados.add(cand[0].mat); n++; }
+  });
+  return n;
+}
+// rescisões da folha × guias, funcionário por funcionário
+function compararResc(f, guias) {
+  const TOL = 0.05, out = [], usadas = new Set();
+  const gs = (guias || []).filter(g => g.total > 0);
+  for (const e of f.resc || []) {
+    const te = tokNome(e.nome);
+    let cand = gs.filter(g => { const t = (g.tag || g.tagAuto || '').trim(); if (!t) return false; const tk = tokNome(nomeDaTag(t)); return tk.length >= 2 && tk.every(x => te.includes(x)); });
+    if (cand.length > 1) { const perto = cand.filter(g => { const v = guiaRescComp(g, f.comp); return v.n && Math.abs(v.resc - e.depRes) <= TOL; }); if (perto.length) cand = perto; }
+    const g = cand[0];
+    const base = { nome: e.nome, mat: e.mat, demissao: e.demissao, depFolha: e.depRes, multaFolha: e.multa };
+    if (!g) { out.push(Object.assign(base, { sit: 'SEM GUIA', esperado: r2(e.depRes + e.multa) })); continue; }
+    usadas.add(g.k != null ? g.k : gs.indexOf(g));
+    const v = guiaRescComp(g, f.comp);
+    if (!v.n) { const cs = Array.from(new Set((g.comps || []).map(c => c.comp))).join(', '); out.push(Object.assign(base, { sit: 'GUIA DE OUTRA COMPETÊNCIA (' + cs + ')', guia: g })); continue; }
+    const d1 = r2(v.resc - e.depRes), d2 = r2(v.indeniz - e.multa);
+    out.push(Object.assign(base, { guia: g, depGuia: v.resc, multaGuia: v.indeniz, d1, d2, sit: Math.abs(d1) <= TOL && Math.abs(d2) <= TOL ? 'CONFERE' : 'DIFERENÇA' }));
+  }
+  const sobra = gs.filter(g => !usadas.has(g.k != null ? g.k : gs.indexOf(g)) && guiaRescComp(g, f.comp).n && g.total < 50000);
+  return { linhas: out, guiasSemFuncionario: sobra };
+}
+function compararFolha(f, res, guias) {
+  const comp = f.comp || (res.meses && res.meses[res.meses.length - 1]) || '';
+  const r = (res.resumo || []).find(x => x.comp === comp);
+  const linhas = [];
+  const add = (item, folha, razao, nota) => linhas.push({ item, folha, razao, dif: razao == null ? null : r2(razao - folha), nota: nota || '' });
+  if (r) {
+    add('FGTS mensal + rescisão + 40% (eventos ' + f.ev.filter(e => e.grupo === 'fgts' && !FOLHA_13.includes(e.cod)).map(e => e.cod).join('/') + ') × razão hist. 156', f.fgtsMensal, r2(r.mensal + r.arred), r.arred ? 'razão inclui arredondamento de ' + fmtBR(r.arred) : '');
+    add('FGTS 13º (evento ' + FOLHA_13.join('/') + ') × razão hist. 145', f.fgts13, r.d13);
+    add('FGTS total da folha × provisão total do razão', f.fgtsTotal, r2(r.mensal + r.d13 + r.arred));
+    add('Consignado bruto (descontos + provisão férias) × créditos hist. 112', f.consigBruto, r2(r.consig + r.consigBaixa));
+    add('Estorno prov. consignado férias × débitos hist. 112 (baixas)', f.consigEstorno, r.consigBaixa);
+    add('Consignado líquido da folha × razão (créditos − débitos)', f.consigLiquido, r.consig);
+  } else add('Competência ' + comp + ' não tem provisão no razão carregado', f.fgtsTotal, null, 'carregue o razão que inclui o fechamento de ' + comp);
+  // guias da competência (valores de FGTS, sem encargos; consignado)
+  let gm = 0, gr = 0, gi = 0, ge = 0, gc = 0, n = 0;
+  for (const g of guias || []) for (const c of g.comps || []) if (c.comp === comp) {
+    n++;
+    if (c.tipo === 'consig') gc += c.consig || 0; else { gm += c.mensal || 0; gr += c.resc || 0; gi += c.indeniz || 0; ge += c.enc || 0; }
+  }
+  const guiasInfo = { n, mensal: r2(gm), resc: r2(gr), indeniz: r2(gi), enc: r2(ge), consig: r2(gc), fgts: r2(gm + gr + gi) };
+  const dif = linhas.filter(l => l.dif != null && Math.abs(l.dif) > 0.015);
+  const resc = compararResc(f, guias);
+  const rescRuins = resc.linhas.filter(l => l.sit !== 'CONFERE');
+  return { comp, linhas, guias: guiasInfo, resc, divergencias: dif.length + rescRuins.length, achouRazao: !!r };
+}
+
 /* ---------- razão ---------- */
 function parseRazao(text) {
   text = text.replace(/^﻿/, '');
@@ -307,12 +477,12 @@ function parseRazao(text) {
     if (h.some(x => x === 'DATA MOVIMENTO' || x === 'DATA') && h.some(x => x === 'COMPLEMENTO')) {
       hi = i;
       const f = n => h.indexOf(n);
-      ix = { data: h.indexOf('DATA MOVIMENTO') >= 0 ? f('DATA MOVIMENTO') : f('DATA'), compl: f('COMPLEMENTO'), deb: f('VALOR DEBITO'), cred: f('VALOR CREDITO'), cod: f('CODIGO HISTORICO'), lote: f('LOTE'), lanc: f('LANCAMENTO') };
+      ix = { data: h.indexOf('DATA MOVIMENTO') >= 0 ? f('DATA MOVIMENTO') : f('DATA'), compl: f('COMPLEMENTO'), deb: f('VALOR DEBITO'), cred: f('VALOR CREDITO'), cod: f('CODIGO HISTORICO'), lote: f('LOTE'), lanc: f('LANCAMENTO'), conta: f('CONTA'), ctb: f('CONTA CONTABIL') };
       break;
     }
   }
   if (hi < 0) throw new Error('Cabeçalho do razão não reconhecido (esperado: Data movimento, Complemento, Valor débito, Valor crédito).');
-  if (ix.deb < 0 || ix.cred < 0) throw new Error('Colunas "Valor débito" e "Valor crédito" não encontradas no razão.');
+  if (ix.deb < 0 || ix.cred < 0) throw new Error('Colunas "Valor débito" e "Valor crédito" não encontradas — este não parece o razão da conta 2751 (exporte o razão com as colunas Valor débito e Valor crédito).');
   const layout = rows[hi].length >= 15 ? 'completo (' + rows[hi].length + ' colunas)' : 'curto (' + rows[hi].length + ' colunas)';
   const lines = [];
   for (let i = hi + 1; i < rows.length; i++) {
@@ -326,7 +496,25 @@ function parseRazao(text) {
     l.comp = compOf(l.data);
     lines.push(l);
   }
-  return { lines, layout, sep };
+  // validação: é mesmo o razão da conta 2751 (FGTS a recolher)?
+  const avisos = [];
+  let contas = '';
+  if (ix.conta >= 0 || ix.ctb >= 0) {
+    const cnt = {}; let tot = 0;
+    for (let i = hi + 1; i < rows.length; i++) {
+      const r = rows[i]; if (parseDate(r[ix.data]) == null) continue;
+      const nome = ix.conta >= 0 ? String(r[ix.conta] || '').trim() : '', ctb = ix.ctb >= 0 ? String(r[ix.ctb] || '').trim() : '';
+      const k = (nome || ctb) + (nome && ctb ? ' (' + ctb + ')' : ''); cnt[k] = (cnt[k] || 0) + 1; tot++;
+    }
+    const ok = Object.entries(cnt).filter(([k]) => /FGTS/i.test(k) || /\b2751\b/.test(k)).reduce((a, [, v]) => a + v, 0);
+    const top = Object.entries(cnt).sort((a, b) => b[1] - a[1]).map(([k, v]) => k + ' ×' + v).slice(0, 3).join('; ');
+    contas = top;
+    if (tot && ok / tot < 0.5) throw new Error('Este arquivo não parece o razão da conta 2751 (Fgts A Recolher). Contas encontradas: ' + top + '. Exporte o razão da conta 2751 do Tasy.');
+    if (tot && ok < tot) avisos.push((tot - ok) + ' lançamento(s) de outra conta no arquivo (' + top + ') — confira se exportou só a conta 2751.');
+  } else if (!lines.some(l => ['FGTS MENSAL', 'FGTS 13º', 'PAGAMENTO'].includes(l.cat))) {
+    throw new Error('Nenhum lançamento de FGTS (histórico 156/145) nem de pagamento (47) foi reconhecido — este arquivo não parece o razão da conta 2751.');
+  } else avisos.push('O arquivo não tem a coluna "Conta": não foi possível confirmar que é a conta 2751. Use o layout completo do Tasy para a conferência automática.');
+  return { lines, layout, sep, avisos, contas };
 }
 function classify(l) {
   const n = norm(l.compl), cod = l.cod;
@@ -353,8 +541,10 @@ function classify(l) {
 function parseGuiaText(txt, nome) {
   const t = txt.replace(/\u00a0/g, ' ');
   const MONEY = '(\\d{1,3}(?:\\.\\d{3})*,\\d{2})';
-  const g = { nome: nome || '', id: '', tag: '', venc: null, paga: null, total: 0, valorRecolher: 0, encargos: 0, resc: 0, consig: 0, comps: [], avisos: [] };
+  if (!/Guia do FGTS Digital|\bGFD\b|Identificador[\s\S]{0,200}\d{16}/i.test(t)) throw new Error('não parece uma guia do FGTS Digital (GFD)' + (/Folha|Relação de Cálculo|Resumo dos Eventos/i.test(t) ? ' — parece uma folha; use o campo "Folha de pagamento"' : '') + '.');
+  const g = { nome: nome || '', emp: '', empNome: '', id: '', tag: '', venc: null, paga: null, total: 0, valorRecolher: 0, encargos: 0, resc: 0, consig: 0, comps: [], avisos: [] };
   let m = /\b(\d{16}-\d{1,2})\b/.exec(t) || /\b(\d{16})\b/.exec(t); if (m) g.id = m[1];
+  m = /CPF\/CNPJ do Empregador[\s\S]{0,120}?(\d{2}\.\d{3}\.\d{3}(?:\/\d{4}-\d{2})?|\d{8,14})\s+([A-ZÀ-Ú][^\n]{3,80}?)(?=\s{2,}|\s+(?:às|Pagar|\d{2}\/\d{2}\/\d{4})|\n|$)/i.exec(t); if (m) { g.emp = m[1].replace(/\D/g, '').slice(0, 8); g.empNome = m[2].trim(); }
   m = /Pagar este documento at[eé][\s\S]{0,250}?(\d{2}\/\d{2}\/\d{4})/i.exec(t); if (m) g.venc = parseDate(m[1]);
   m = /Guia paga em\s*:?\s*(\d{2}\/\d{2}\/\d{4})/i.exec(t); if (m) g.paga = parseDate(m[1]);
   m = new RegExp('Total da Guia\\s*:?\\s*(?:R\\$)?\\s*' + MONEY, 'i').exec(t); if (m) g.total = parseNum(m[1]);
@@ -567,6 +757,7 @@ function conciliar(lines, guias, opts) {
 
   /* 6) linhas de copiar e colar */
   res.lines = lines;
+  res.meses = Array.from(new Set(lines.map(l => compOf(l.data)))).sort((a, b) => compKey(a) - compKey(b));
   res.copiar = copiarLinhas(res, opts, lines);
   return res;
 }
@@ -593,13 +784,24 @@ function copiarLinhas(res, opts, lines) {
   if (opts.incluirPosRazao !== false) res.guias.filter(x => x.status === 'PAGA APÓS O PERÍODO DO RAZÃO' && x.g.paga && x.g.total > 0).forEach((x, n) => {
     matched.push({ g: x.g, status: 'PAGA APÓS O RAZÃO – ainda não lançada', deb: [{ i: -(n + 1), data: x.g.paga, deb: x.g.total, pseudo: true }], nota: x.nota });
   });
+  // v2.5.0: mês a gerar (automático = último mês do razão). Só entram pagamentos dessa data em diante; meses anteriores já foram colados.
+  let mesF = opts.mesFechamento;
+  if (!mesF || mesF === 'auto') mesF = (res.meses && res.meses.length) ? res.meses[res.meses.length - 1] : 'todos';
+  const iniMes = (mesF && mesF !== 'todos') ? monthRange(mesF)[0] : null;
+  // v2.6.0: pagamentos pendentes de meses anteriores (sem guia na época) passam pelo filtro do mês; assim, quando a guia chega, o grupo entra na colagem
+  const pendMap = {}; (opts.pendencias || []).forEach(k => { pendMap[k] = 1; });
+  const noMes = (data, valor) => iniMes === null || data >= iniMes || (valor != null && pendMap[data + '|' + r2(valor)] === 1);
+  const ign = { guias: 0, pag: 0, valor: 0 };
+  res.copiarInfo = { mes: mesF, ign };
   const rows = [];
   const R = (tipo, data, hist, valor, status, ref) => ({ tipo, data, hist, valor: r2(valor), status: status || '', ref: ref || '' });
   const lab = c => c.replace('/', '.');
   // v2.3.0: nome do funcionário (da Tag da guia, sem a palavra RESCISAO) como sufixo " - NOME" no histórico das linhas de rescisório
-  const nomeG = g => { const t = String((g && g.tag) || '').replace(/^\s*RESC[IÍ]S[AÃ]O\b\s*[-:]?\s*/i, '').replace(/\s+/g, ' ').trim(); return t.toUpperCase(); };
+  const nomeG = g => { const t = String((g && (g.tag || g.tagAuto)) || '').replace(/^\s*RESC[IÍ]S[AÃ]O\b\s*[-:]?\s*/i, '').replace(/\s+/g, ' ').trim(); return t.toUpperCase(); };
   const suf = gs => { if (opts.comNome === false) return ''; const ns = []; (Array.isArray(gs) ? gs : [gs]).forEach(g => { const n = nomeG(g); if (n && ns.indexOf(n) < 0) ns.push(n); }); return ns.length ? ' - ' + ns.join(' / ') : ''; };
-  const mensais = matched.filter(x => x.g.total >= lim), resc = matched.filter(x => x.g.total < lim);
+  const matchedAll = matched;
+  const mensais = matchedAll.filter(x => x.g.total >= lim && x.deb.some(d => noMes(d.data, d.deb))), resc = matchedAll.filter(x => x.g.total < lim);
+  matchedAll.forEach(x => { if (!x.deb.some(d => noMes(d.data, d.deb))) { ign.guias++; x.deb.forEach(d => { ign.pag++; ign.valor = r2(ign.valor + d.deb); }); } });
   const compsDe = g => Array.from(new Set((g.comps || []).map(c => c.comp)));
   const provPorComp = g => { const m = {}; (g.comps || []).forEach(c => { m[c.comp] = r2((m[c.comp] || 0) + (c.total || 0)); }); return m; };
   const mesmoMes = x => { const cs = compsDe(x.g); return x.deb.length > 0 && cs.length === 1 && x.deb.every(d => compOf(d.data) === cs[0]); };
@@ -641,7 +843,7 @@ function copiarLinhas(res, opts, lines) {
   });
   // pagamentos mensais sem guia (competência = mês anterior ao pagamento, ou a do resumo)
   if (opts.semGuia) {
-    res.semGuia.filter(p => p.deb >= lim).forEach(p => {
+    res.semGuia.filter(p => p.deb >= lim && noMes(p.data, p.deb)).forEach(p => {
       const hit = res.resumo.find(r => r.pagLinha === p.i);
       const M = hit ? hit.comp : prevComp(compOf(p.data));
       blocoVerde(M, p.deb, 0, [p], 'sem guia – competência ' + M + (hit ? ' (fecha com a provisão)' : ' assumida pelo mês anterior'), '');
@@ -655,7 +857,7 @@ function copiarLinhas(res, opts, lines) {
   resc.forEach(x => {
     if (mesmoMes(x) && opts.incluirAbertos === false) return;
     if (mesmoMes(x) && consumido.has(compsDe(x.g)[0])) return;
-    x.deb.forEach(d => addGrupo(d, x, mesmoMes(x)));
+    x.deb.forEach(d => { if (noMes(d.data, d.deb)) addGrupo(d, x, mesmoMes(x)); else if (!(mesmoMes(x) && consumido.has(compsDe(x.g)[0]))) { /* contado abaixo */ } });
   });
   const gl = Object.values(grupos).sort((a, b) => a.d.data - b.d.data || a.d.i - b.d.i);
   // blocos abertos (rescisórios do mês sem guia mensal) viram uma provisão agregada + pagamentos
@@ -680,13 +882,16 @@ function copiarLinhas(res, opts, lines) {
   });
   // v2.4.0: pagamentos do razão sem guia abaixo do limite de guia mensal (não geram bloco verde): entram em bloco amarelo, só o pagamento
   if (opts.semGuiaPeq !== false) {
-    const peq = (res.semGuia || []).filter(p => p.deb < lim).sort((a, b) => a.data - b.data || a.i - b.i);
+    const peqAll = (res.semGuia || []).filter(p => p.deb < lim);
+    const peq = peqAll.filter(p => noMes(p.data, p.deb)).sort((a, b) => a.data - b.data || a.i - b.i);
     if (peq.length) {
       if (rows.length && rows[rows.length - 1].tipo !== 'sep') rows.push(R('sep'));
       peq.forEach(p => rows.push(R('semguia', p.data, 'PAGTO FGTS - SEM GUIA', p.deb, 'SEM GUIA – anexe a guia deste pagamento para gerar a provisão', (p.compl || '').replace(/\s+/g, ' ').slice(0, 90))));
     }
   }
+  (res.semGuia || []).filter(p => !noMes(p.data, p.deb)).forEach(p => { ign.pag++; ign.valor = r2(ign.valor + p.deb); });
   while (rows.length && rows[rows.length - 1].tipo === 'sep') rows.pop();
+  rows.forEach(r => { if (r.tipo !== 'sep' && r.valor > 0 && iniMes !== null && r.data < iniMes && pendMap[r.data + '|' + r.valor] === 1) { r.status = (r.status ? r.status + ' · ' : '') + (r.tipo === 'semguia' || /^sem guia/i.test(r.status) ? 'pendência de mês anterior, ainda sem guia' : 'pendência de mês anterior resolvida pela guia — substitui a linha SEM GUIA já colada'); r.pend = true; } });
   return rows;
 }
 
@@ -698,7 +903,7 @@ if (typeof module !== 'undefined') module.exports = { copiarLinhas, parseRazao, 
 (function(){
   const $ = id => document.getElementById(id);
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  const S = { razao: null, nomeRazao: '', guias: [], res: null, tab: 'copiar', resc: {}, incluirDiverg: false, semGuia: true, abertos: true, posRazao: true, comNome: true, semGuiaPeq: true };
+  const S = { pend: null, folha: null, nomeFolha: '', razao: null, nomeRazao: '', guias: [], res: null, tab: 'copiar', resc: {}, incluirDiverg: false, semGuia: true, abertos: true, posRazao: true, comNome: true, semGuiaPeq: true, mesFech: 'auto' };
 
   function toast(msg, kind){ const t = document.createElement('div'); t.className = 'toast' + (kind ? ' toast-' + kind : ''); t.textContent = msg; $('toasts').appendChild(t); setTimeout(() => t.remove(), 4200); }
   function pills(n){ document.querySelectorAll('#pills .step-pill').forEach(p => { const k = +p.dataset.p; p.classList.toggle('is-active', k === n); p.classList.toggle('is-done', k < n); }); }
@@ -727,7 +932,9 @@ if (typeof module !== 'undefined') module.exports = { copiarLinhas, parseRazao, 
       const cats = {}; L.forEach(l => cats[l.cat] = (cats[l.cat] || 0) + 1);
       $('razaoInfo').innerHTML = '<span class="file-chip">' + esc(f.name) + '</span><span class="file-chip">layout ' + esc(p.layout) + '</span>' +
         '<div class="summary-grid">' + tile(L.length, 'lançamentos') + tile(fmtDate(Math.min(...ds)) + ' – ' + fmtDate(Math.max(...ds)), 'período') + tile(fmtBR(r2(cred - deb)), 'saldo credor (créd. − déb.)', 'accent') + tile(cats['PAGAMENTO'] || 0, 'pagamentos (débitos)') + tile((cats['OUTRO DÉBITO'] || 0) + (cats['OUTRO CRÉDITO'] || 0) + (cats['OUTRO'] || 0), 'não classificados', (cats['OUTRO DÉBITO'] || cats['OUTRO CRÉDITO'] || cats['OUTRO']) ? 'warn' : '') + '</div>';
-      unlock('s2'); pills(2); S.resc = {}; S.semGuia = true; run();
+      unlock('s2'); pills(2); S.resc = {}; S.semGuia = true;
+      if (!S.pend){ const m = lsGet(); if (m){ try{ const pn = normPend(m); const meses = Array.from(new Set(L.map(l => l.comp))).sort((a, b) => compKey(a) - compKey(b)); if (pn.mes && pn.mes !== meses[meses.length - 1] && (pn.pagtoSemGuia.length || pn.guiaSemPagto.length)){ S.pend = pn; renderPend(); toast('Pendências de ' + pn.mes + ' carregadas deste navegador.', 'ok'); } }catch(e){} } }
+      run();
       toast('Razão lido: ' + L.length + ' lançamentos.', 'ok');
     }catch(e){ toast('Razão: ' + (e.message || e), 'err'); }
   }
@@ -736,14 +943,28 @@ if (typeof module !== 'undefined') module.exports = { copiarLinhas, parseRazao, 
   /* ---- 2: guias ---- */
   async function loadGuias(files){
     files = Array.from(files);
+    const naoPdf = files.filter(f => !/\.pdf$/i.test(f.name)); if (naoPdf.length){ toast('Guias precisam ser PDF do FGTS Digital — ignorado(s): ' + naoPdf.map(f => f.name).join(', '), 'err'); files = files.filter(f => /\.pdf$/i.test(f.name)); if (!files.length) return; }
     if (!window.pdfTexto){ toast('Leitor de PDF indisponível (sem acesso ao CDN). Use "Adicionar guia manualmente".', 'err'); return; }
+    let ok = 0;
     for (const f of files){
       try{
         const txt = await window.pdfTexto(await f.arrayBuffer());
-        const g = parseGuiaText(txt, f.name); g.raw = txt; S.guias.push(g);
+        const g = parseGuiaText(txt, f.name); g.raw = txt; S.guias.push(g); ok++;
       }catch(e){ toast(f.name + ': ' + (e.message || e), 'err'); }
     }
-    renderGuias(); toast(files.length + ' PDF(s) lido(s). Confira os campos extraídos.', 'ok'); if (S.res) run();
+    checaEmpregador();
+    renderGuias(); toast(ok + ' de ' + files.length + ' PDF(s) lido(s) como guia. Confira os campos extraídos.', ok ? 'ok' : 'err'); if (S.res) run();
+  }
+  // guias de outro empregador: compara com o empregador mais frequente entre as guias carregadas (e com o nome da folha, se houver)
+  function checaEmpregador(){
+    const cnt = {}; S.guias.forEach(g => { if (g.emp) cnt[g.emp] = (cnt[g.emp] || 0) + 1; });
+    const ref = Object.entries(cnt).sort((a, b) => b[1] - a[1])[0]; if (!ref) return;
+    S.guias.forEach(g => {
+      g.avisos = (g.avisos || []).filter(a => !/^Empregador diferente/.test(a));
+      if (g.emp && g.emp !== ref[0]) g.avisos.push('Empregador diferente da maioria das guias (' + (g.empNome || g.emp) + ') — pode ser guia de outra empresa; remova se for o caso.');
+    });
+    const outras = S.guias.filter(g => g.emp && g.emp !== ref[0]);
+    if (outras.length) toast(outras.length + ' guia(s) de empregador diferente — confira.', 'err');
   }
   setupDrop($('dzGuias'), $('fGuias'), loadGuias);
   $('btnAddGuia').addEventListener('click', () => { S.guias.push({ nome: 'manual', id: '', venc: null, paga: null, total: 0, encargos: 0, resc: 0, comps: [], avisos: [], raw: '' }); renderGuias(); });
@@ -752,7 +973,7 @@ if (typeof module !== 'undefined') module.exports = { copiarLinhas, parseRazao, 
     if (!G.length){ $('guiasBox').innerHTML = ''; return; }
     let h = '<div class="table-wrap"><table><thead><tr><th>Arquivo</th><th>Identificador</th><th>Guia paga em</th><th class="num">Total da guia</th><th class="num">Encargos</th><th class="num">Rescisório</th><th>Competências</th><th></th></tr></thead><tbody>';
     G.forEach((g, i) => {
-      h += '<tr data-i="' + i + '"><td>' + esc(g.nome) + (g.tag ? '<br><span class="hint">' + esc(g.tag) + '</span>' : '') + (g.avisos && g.avisos.length ? '<br><span class="hint warn">' + esc(g.avisos.join(' ')) + '</span>' : '') + '</td>' +
+      h += '<tr data-i="' + i + '"><td>' + esc(g.nome) + (g.tag ? '<br><span class="hint">' + esc(g.tag) + '</span>' : (g.tagAuto ? '<br><span class="hint">pela folha: ' + esc(g.tagAuto) + '</span>' : '')) + (g.avisos && g.avisos.length ? '<br><span class="hint warn">' + esc(g.avisos.join(' ')) + '</span>' : '') + '</td>' +
         '<td><input type="text" data-f="id" value="' + esc(g.id) + '"></td>' +
         '<td><input type="text" data-f="paga" placeholder="dd/mm/aaaa" value="' + esc(fmtDate(g.paga)) + '"></td>' +
         '<td><input type="text" data-f="total" value="' + (g.total ? fmtPlain(g.total) : '') + '"></td>' +
@@ -773,28 +994,118 @@ if (typeof module !== 'undefined') module.exports = { copiarLinhas, parseRazao, 
   });
   $('guiasBox').addEventListener('click', e => { const b = e.target.closest('[data-del]'); if (!b) return; S.guias.splice(+b.dataset.del, 1); renderGuias(); if (S.res) run(); });
 
+  /* ---- pendências entre meses ---- */
+  const LS_KEY = 'painel_fgts_pendencias';
+  const lsGet = () => { try{ const v = localStorage.getItem(LS_KEY); return v ? JSON.parse(v) : null; }catch(e){ return null; } };
+  const lsSet = o => { try{ localStorage.setItem(LS_KEY, JSON.stringify(o)); return true; }catch(e){ return false; } };
+  function normPend(o){
+    if (!o || o.ferramenta !== 'fgts' || !Array.isArray(o.pagtoSemGuia) || !Array.isArray(o.guiaSemPagto)) throw new Error('não é um arquivo de pendências do FGTS (esperado o .json salvo por esta ferramenta).');
+    return { mes: o.mes || '', geradoEm: o.geradoEm || '',
+      pagtoSemGuia: o.pagtoSemGuia.map(p => ({ data: parseDate(p.data), valor: r2(parseNum(p.valor)), compl: p.compl || '' })).filter(p => p.data != null && p.valor > 0),
+      guiaSemPagto: o.guiaSemPagto.map(g => ({ id: String(g.id || ''), tag: g.tag || '', total: r2(parseNum(g.total)), comp: g.comp || '' })) };
+  }
+  async function loadPend(files){
+    const f = Array.from(files)[0]; if (!f) return;
+    try{
+      const txt = new TextDecoder('utf-8').decode(await f.arrayBuffer());
+      let o; try{ o = JSON.parse(txt.replace(/^﻿/, '')); }catch(e){ throw new Error('arquivo inválido (não é JSON).'); }
+      S.pend = normPend(o); S.pend.origem = f.name; renderPend(); if (S.res) run();
+      toast('Pendências carregadas: ' + S.pend.pagtoSemGuia.length + ' pagamento(s) sem guia e ' + S.pend.guiaSemPagto.length + ' guia(s) sem data.', 'ok');
+    }catch(e){ toast('Pendências: ' + (e.message || e), 'err'); }
+  }
+  setupDrop($('dzPend'), $('fPend'), loadPend);
+  function renderPend(){
+    const P = S.pend;
+    if (!P){ $('pendBox').innerHTML = ''; return; }
+    $('pendBox').innerHTML = '<span class="file-chip">' + esc(P.origem || 'memória do navegador') + '</span><span class="file-chip">salvas no fechamento de ' + esc(P.mes || '?') + '</span><span class="file-chip">' + P.pagtoSemGuia.length + ' pagamento(s) sem guia · ' + P.guiaSemPagto.length + ' guia(s) sem data</span> <button class="btn-secondary" id="btnPendDesc" type="button">Descartar pendências carregadas</button>';
+    $('btnPendDesc').addEventListener('click', () => { S.pend = null; renderPend(); if (S.res) run(); });
+  }
+  // situação de cada pendência carregada, frente ao razão e às guias atuais
+  function pendSituacao(){
+    const R = S.res, P = S.pend, out = { pag: [], guia: [] };
+    if (!P) return out;
+    const semKeys = new Set((R.semGuia || []).map(l => l.data + '|' + r2(l.deb)));
+    const razaoKeys = new Set(S.razao.lines.filter(l => l.cat === 'PAGAMENTO').map(l => l.data + '|' + r2(l.deb)));
+    P.pagtoSemGuia.forEach(p => { const k = p.data + '|' + p.valor; out.pag.push(Object.assign({}, p, { sit: semKeys.has(k) ? 'pendente' : razaoKeys.has(k) ? 'resolvida' : 'fora do razão' })); });
+    P.guiaSemPagto.forEach(g => {
+      const hit = S.guias.find(x => (g.id && x.id === g.id) || (!g.id && Math.abs(x.total - g.total) < 0.005 && (x.tag || '') === (g.tag || '')));
+      out.guia.push(Object.assign({}, g, { sit: !hit ? 'guia não carregada' : hit.paga ? 'resolvida' : 'pendente' }));
+    });
+    return out;
+  }
+  // pendências a salvar para o próximo mês
+  function pendParaSalvar(){
+    const R = S.res, inf = R.copiarInfo || {}, sit = pendSituacao();
+    const ini = inf.mes && inf.mes !== 'todos' ? monthRange(inf.mes)[0] : null;
+    const pag = [], seen = new Set();
+    const add = (data, valor, compl) => { const k = data + '|' + r2(valor); if (seen.has(k)) return; seen.add(k); pag.push({ data: fmtDate(data), valor: r2(valor), compl: (compl || '').replace(/\s+/g, ' ').slice(0, 120) }); };
+    (R.semGuia || []).filter(l => ini === null || l.data >= ini).forEach(l => add(l.data, l.deb, l.compl));
+    sit.pag.filter(p => p.sit !== 'resolvida').forEach(p => add(p.data, p.valor, p.compl));
+    const gu = [], gs = new Set();
+    const addG = (id, tag, total, comp) => { const k = id + '|' + total; if (gs.has(k)) return; gs.add(k); gu.push({ id, tag, total: r2(total), comp }); };
+    S.guias.filter(g => g.total > 0 && !g.paga).forEach(g => addG(g.id || g.nome, g.tag || '', g.total, (g.comps && g.comps[0] && g.comps[0].comp) || ''));
+    sit.guia.filter(g => g.sit !== 'resolvida').forEach(g => addG(g.id, g.tag, g.total, g.comp));
+    return { versao: 1, ferramenta: 'fgts', mes: inf.mes || '', geradoEm: new Date().toISOString().slice(0, 10), pagtoSemGuia: pag, guiaSemPagto: gu };
+  }
+  async function salvarPend(){
+    try{
+      const o = pendParaSalvar(), nome = 'pendencias-fgts-' + String(o.mes || 'mes').replace('/', '-') + '.json';
+      const okLs = lsSet(o);
+      await salvarArquivo(nome, new Blob([JSON.stringify(o, null, 1)], { type: 'application/json' }));
+      toast('Pendências salvas (' + o.pagtoSemGuia.length + ' pagamento(s), ' + o.guiaSemPagto.length + ' guia(s))' + (okLs ? ' no arquivo e neste navegador.' : ' no arquivo.') + ' No próximo fechamento elas voltam sozinhas.', 'ok');
+    }catch(e){ toast('Erro ao salvar pendências: ' + (e.message || e), 'err'); }
+  }
+
+  /* ---- folha (opcional) ---- */
+  async function loadFolha(files){
+    const f = Array.from(files)[0]; if (!f) return;
+    if (!/\.(pdf|txt)$/i.test(f.name)){ toast('Folha: envie o PDF (ou TXT) da folha de pagamento — este arquivo é ' + (f.name.split('.').pop() || '?').toUpperCase() + '.', 'err'); return; }
+    $('folhaInfo').innerHTML = '<span class="hint">Lendo a folha…</span>';
+    try{
+      let texto;
+      if (/\.txt$/i.test(f.name)) texto = decodeBuffer(await f.arrayBuffer());
+      else {
+        if (!window.pdfTextoFolha) throw new Error('Leitor de PDF indisponível (sem acesso ao CDN). Use o TXT da folha.');
+        const r = await window.pdfTextoFolha(await f.arrayBuffer(), (a, b) => { $('folhaInfo').innerHTML = '<span class="hint">Lendo a folha… página ' + a + ' de ' + b + '</span>'; }); texto = r.texto;
+      }
+      const fo = parseFolhaResumo(texto);
+      S.folha = fo; S.nomeFolha = f.name;
+      renderFolhaInfo(); if (S.res) run();
+      toast('Folha lida: ' + fo.ev.length + ' eventos de FGTS/consignado.', 'ok');
+    }catch(e){ S.folha = null; $('folhaInfo').innerHTML = '<div class="hint warn">' + esc(f.name) + ': ' + esc(e.message || e) + '</div>'; toast('Folha: ' + (e.message || e), 'err'); }
+  }
+  setupDrop($('dzFolha'), $('fFolha'), loadFolha);
+  function renderFolhaInfo(){
+    const fo = S.folha; if (!fo){ $('folhaInfo').innerHTML = ''; return; }
+    $('folhaInfo').innerHTML = '<span class="file-chip">' + esc(S.nomeFolha) + '</span><span class="file-chip">competência ' + esc(fo.comp || '?') + (fo.tipo ? ' · ' + esc(fo.tipo) : '') + '</span>' +
+      '<div class="summary-grid">' + tile(fmtBR(fo.fgtsTotal), 'FGTS da folha (eventos ' + fo.ev.filter(e => e.grupo === 'fgts').map(e => e.cod).join('/') + ')') + tile(fmtBR(fo.consigBruto), 'consignado bruto (descontos + prov. férias)') + tile(fmtBR(fo.consigEstorno), 'estorno prov. consignado') + '</div>' +
+      (fo.avisos.length ? '<div class="hint warn">' + esc(fo.avisos.join(' ')) + '</div>' : '');
+  }
+
   /* ---- 3/4: conciliar ---- */
   // parâmetros fixos (a tela de parâmetros foi removida): tolerância de 3 dias; sem filtro de competência; guia mensal = total ≥ R$ 50.000
-  function opts(){ return { tolDias: 3, de: '', ate: '', limiteResc: 50000, resc: S.resc, incluirDiverg: S.incluirDiverg, semGuia: S.semGuia, incluirAbertos: S.abertos, incluirPosRazao: S.posRazao, comNome: S.comNome, semGuiaPeq: S.semGuiaPeq }; }
+  function opts(){ return { tolDias: 3, de: '', ate: '', limiteResc: 50000, resc: S.resc, incluirDiverg: S.incluirDiverg, semGuia: S.semGuia, incluirAbertos: S.abertos, incluirPosRazao: S.posRazao, comNome: S.comNome, semGuiaPeq: S.semGuiaPeq, pendencias: (S.pend && S.pend.pagtoSemGuia || []).map(p => p.data + '|' + r2(p.valor)), mesFechamento: S.mesFech }; }
   function run(){
     if (!S.razao) return;
     try{
+      if (S.folha && nomesDaFolha(S.folha, S.guias)) renderGuias();
       S.res = conciliar(S.razao.lines, S.guias, opts());
+      S.res.folha = S.folha ? compararFolha(S.folha, S.res, S.guias) : null;
       unlock('s4'); pills(3); render();
     }catch(e){ toast('Erro na conciliação: ' + (e.message || e), 'err'); console.error(e); }
   }
 
-  const TABS = [['copiar', 'Copiar e colar'], ['resumo', 'Resumo por competência'], ['guias', 'Guia × Razão'], ['resc', 'Rescisórios'], ['juros', 'Juros'], ['saldo', 'Saldo']];
+  const TABS = [['copiar', 'Copiar e colar'], ['resumo', 'Resumo por competência'], ['folha', 'Folha × Razão'], ['guias', 'Guia × Razão'], ['resc', 'Rescisórios'], ['juros', 'Juros'], ['saldo', 'Saldo']];
   function render(){
     const R = S.res;
     const okG = R.guias.filter(x => /^CONCILIADO/.test(x.status)).length;
     $('resSub').textContent = 'Razão: ' + S.nomeRazao + ' · ' + R.guias.length + ' guia(s) · ' + R.resumo.length + ' competência(s).';
     const difs = R.resumo.filter(r => !r.situ.startsWith('OK')).length;
     $('tiles').innerHTML = tile(R.copiar.filter(c => c.tipo !== 'sep').length, 'linhas para copiar', 'accent') + tile(fmtBR(r2(R.copiar.filter(c => c.tipo !== 'sep' && c.tipo !== 'semguia' && c.valor > 0).reduce((a, c) => a + c.valor, 0))), 'pagamentos conciliados') + tile(R.guias.length ? okG + '/' + R.guias.length : '—', 'guias conciliadas') + tile(difs, 'competências com pendência', difs ? 'warn' : '') + tile(fmtBR(R.saldo.final), 'saldo credor final');
-    const cnt = { copiar: R.copiar.filter(c => c.tipo !== 'sep').length, resumo: R.resumo.length, guias: R.guias.length, resc: R.resc.length, juros: R.jurosMes.length, saldo: '' };
+    const cnt = { copiar: R.copiar.filter(c => c.tipo !== 'sep').length, resumo: R.resumo.length, folha: R.folha ? (R.folha.divergencias || '') : '', guias: R.guias.length, resc: R.resc.length, juros: R.jurosMes.length, saldo: '' };
     $('tabs').innerHTML = TABS.map(t => '<button type="button" class="tab' + (S.tab === t[0] ? ' is-active' : '') + '" data-t="' + t[0] + '">' + t[1] + (cnt[t[0]] !== '' ? '<span class="cnt">' + cnt[t[0]] + '</span>' : '') + '</button>').join('');
     $('panels').innerHTML = TABS.map(t => '<div class="panel" id="pn_' + t[0] + '"' + (S.tab === t[0] ? '' : ' hidden') + '></div>').join('');
-    pCopiar(); pResumo(); pGuias(); pResc(); pJuros(); pSaldo();
+    pConf(); pCopiar(); pResumo(); pFolha(); pGuias(); pResc(); pJuros(); pSaldo();
   }
   $('tabs').addEventListener('click', e => { const b = e.target.closest('[data-t]'); if (!b) return; S.tab = b.dataset.t; render(); });
 
@@ -806,6 +1117,8 @@ if (typeof module !== 'undefined') module.exports = { copiarLinhas, parseRazao, 
     let h = '<p class="hint" style="margin-top:12px">Formato da planilha de conciliação: <b>Data · Histórico · Valor</b>. Bloco <b>verde</b> = competência fechada com a guia mensal (guia e provisão negativas, pagamentos positivos); linhas sem cor = rescisórios pagos fora do mês da competência (provisão negativa + pagamento positivo). Cada bloco deve somar zero. A coluna "Status" fica fora da área a copiar.</p>';
     h += '<label class="chk"><input type="checkbox" id="ckAb"' + (S.abertos ? ' checked' : '') + '><span>Incluir <b>rescisórios pagos no mês</b> cuja guia mensal ainda não foi paga (grupo sem cor, aguardando a guia mensal)</span></label>';
     h += '<label class="chk"><input type="checkbox" id="ckDiv"' + (S.incluirDiverg ? ' checked' : '') + '><span>Incluir guias com <b>divergência de data ou de valor</b> (revisar antes de colar)</span></label>';
+    const mesesO = R.meses || [], inf = R.copiarInfo || {};
+    h += '<div class="chk" style="gap:10px"><span><b>Mês a gerar</b>:</span><select id="selMes">' + '<option value="auto"' + (S.mesFech === 'auto' ? ' selected' : '') + '>Automático — último mês do razão (' + esc(mesesO.length ? mesesO[mesesO.length - 1] : '—') + ')</option>' + mesesO.map(m => '<option value="' + m + '"' + (S.mesFech === m ? ' selected' : '') + '>' + m + '</option>').join('') + '<option value="todos"' + (S.mesFech === 'todos' ? ' selected' : '') + '>Todos os meses do razão</option></select><span class="hint">Só entram pagamentos desse mês em diante; o que foi pago antes já foi colado no mês anterior.</span></div>';
     h += '<label class="chk"><input type="checkbox" id="ckNome"' + (S.comNome ? ' checked' : '') + '><span>Colocar <b>" - NOME DO FUNCIONÁRIO"</b> no histórico das linhas de rescisório (nome vem da Tag da guia)</span></label>';
     h += '<label class="chk"><input type="checkbox" id="ckPR"' + (S.posRazao ? ' checked' : '') + '><span>Incluir <b>guias pagas depois do último lançamento do razão</b> (usa a data e o valor da própria guia; a guia paga no mês seguinte pode trazer a competência do mês do razão)</span></label>';
     h += '<label class="chk"><input type="checkbox" id="ckSG"' + (S.semGuia ? ' checked' : '') + '><span>Gerar o bloco verde também para <b>pagamentos mensais sem guia</b> (competência = mês anterior ao pagamento, ou a que fecha no Resumo)</span></label>';
@@ -846,12 +1159,94 @@ if (typeof module !== 'undefined') module.exports = { copiarLinhas, parseRazao, 
     }
   }
   function bindCopiar(){
+    const sm = $('selMes'); if (sm) sm.addEventListener('change', () => { S.mesFech = sm.value; run(); });
     [['ckAb', 'abertos'], ['ckDiv', 'incluirDiverg'], ['ckPR', 'posRazao'], ['ckNome', 'comNome'], ['ckSG', 'semGuia'], ['ckSP', 'semGuiaPeq']].forEach(p => { const el = $(p[0]); if (el) el.addEventListener('change', () => { S[p[1]] = el.checked; run(); }); });
     const c = $('btnCopy'); if (c) c.addEventListener('click', () => copiar(true));
     const ct = $('btnCopyTxt'); if (ct) ct.addEventListener('click', () => copiar(false));
     const x = $('btnXlsx'); if (x) x.addEventListener('click', exportXlsx);
   }
 
+  function pConf(){
+    const R = S.res, L = S.razao.lines, inf = R.copiarInfo || {};
+    const it = (k, t, d) => '<li class="cf-' + k + '"><span class="cf-i">' + (k === 'ok' ? '✓' : k === 'warn' ? '!' : 'i') + '</span><span><b>' + t + '</b>' + (d ? ' <span class="cf-d">' + d + '</span>' : '') + '</span></li>';
+    const ds = L.map(l => l.data), pags = L.filter(l => l.cat === 'PAGAMENTO');
+    const nm = g => esc((g.tag || '').replace(/^\s*RESC[IÍ]S[AÃ]O\s*/i, '') || g.id || g.nome);
+    let h = '';
+    h += it('ok', 'Razão lido', fmtDate(Math.min(...ds)) + ' a ' + fmtDate(Math.max(...ds)) + ' · ' + L.length + ' lançamentos · ' + pags.length + ' pagamentos');
+    h += it('ok', 'Mês gerado: ' + esc(inf.mes === 'todos' ? 'todos os meses' : inf.mes), (S.mesFech === 'auto' ? 'escolhido automaticamente (último mês do razão)' : 'escolhido por você') + (inf.ign && inf.ign.pag ? ' · ' + inf.ign.pag + ' pagamento(s) de meses anteriores (R$ ' + fmtBR(inf.ign.valor) + ') não repetidos na colagem' : ''));
+    if (!R.guias.length) h += it('warn', 'Nenhuma guia carregada', 'anexe os PDFs das guias (inclusive as pagas no mês seguinte) para gerar provisões e nomes');
+    else {
+      const by = st => R.guias.filter(x => st.test(x.status));
+      const ok = by(/^CONCILIADO/), apos = by(/APÓS/), semd = by(/SEM DATA/), rev = by(/REVISAR|DIVERG/), nao = by(/NÃO ENCONTRADA/);
+      h += it(ok.length === R.guias.length ? 'ok' : 'info', R.guias.length + ' guia(s) lida(s)', ok.length + ' conciliada(s) com o razão' + (apos.length ? ' · ' + apos.length + ' paga(s) depois do razão (entram como "ainda não lançada")' : ''));
+      if (semd.length) h += it('warn', semd.length + ' guia(s) sem data de pagamento — não entram na colagem', semd.map(x => nm(x.g)).join('; ') + ' (guia ainda não paga? preencha "Guia paga em" no passo 2 se já foi paga)');
+      if (rev.length) h += it('warn', rev.length + ' guia(s) para revisar (divergência de valor/data ou vários candidatos)', rev.map(x => nm(x.g)).join('; '));
+      if (nao.length) h += it('warn', nao.length + ' guia(s) paga(s) sem lançamento no razão', nao.map(x => nm(x.g)).join('; '));
+      const st = R.guias.filter(x => !(x.g.tag || '').trim() && !x.g.tagAuto);
+      const sa = R.guias.filter(x => !(x.g.tag || '').trim() && x.g.tagAuto);
+      if (sa.length) h += it('ok', sa.length + ' guia(s) sem Tag identificada(s) pela folha', sa.map(x => esc(x.g.id || x.g.nome) + ' → ' + esc(nomeDaTag(x.g.tagAuto))).join('; ') + ' (pelo valor do depósito rescisório e do 40%)');
+      if (st.length) h += it('warn', st.length + ' guia(s) sem Tag (nome do funcionário)', st.map(x => esc(x.g.id || x.g.nome)).join('; ') + ' — o histórico dessas linhas sai sem nome');
+    }
+    if (S.pend){
+      const ps = pendSituacao(), n = (a, k) => a.filter(x => x.sit === k);
+      const rs = n(ps.pag, 'resolvida').length + n(ps.guia, 'resolvida').length, pe = n(ps.pag, 'pendente').length + n(ps.guia, 'pendente').length, fo = n(ps.pag, 'fora do razão').length + n(ps.guia, 'guia não carregada').length;
+      if (rs) h += it('ok', rs + ' pendência(s) de ' + esc(S.pend.mes || 'mês anterior') + ' resolvida(s)', ps.pag.filter(x => x.sit === 'resolvida').map(x => fmtDate(x.data) + ' ' + fmtBR(x.valor)).concat(ps.guia.filter(x => x.sit === 'resolvida').map(x => esc(x.tag || x.id))).join('; ') + ' — os pagamentos já resolvidos entram na colagem com a guia (substituem a linha SEM GUIA colada antes)');
+      if (pe) h += it('warn', pe + ' pendência(s) de ' + esc(S.pend.mes || 'mês anterior') + ' ainda em aberto', ps.pag.filter(x => x.sit === 'pendente').map(x => fmtDate(x.data) + ' ' + fmtBR(x.valor) + ' (sem guia)').concat(ps.guia.filter(x => x.sit === 'pendente').map(x => esc(x.tag || x.id) + ' (guia sem data de pagamento)')).join('; '));
+      if (fo) h += it('info', fo + ' pendência(s) que não dá para conferir agora', ps.pag.filter(x => x.sit === 'fora do razão').map(x => fmtDate(x.data) + ' ' + fmtBR(x.valor) + ' não está no razão carregado').concat(ps.guia.filter(x => x.sit === 'guia não carregada').map(x => esc(x.tag || x.id) + ': carregue a guia de novo')).join('; '));
+    }
+    const sg = (R.semGuia || []).filter(p => !inf.mes || inf.mes === 'todos' || p.data >= monthRange(inf.mes)[0]);
+    if (sg.length) h += it('warn', sg.length + ' pagamento(s) do razão sem guia (R$ ' + fmtBR(r2(sg.reduce((a, p) => a + p.deb, 0))) + ')', 'anexe a guia de cada um para gerar a provisão; hoje saem como "SEM GUIA"');
+    else if (R.guias.length) h += it('ok', 'Todos os pagamentos do mês têm guia');
+    if (R.folha){
+      const F = R.folha;
+      if (!F.achouRazao) h += it('warn', 'Folha de ' + esc(F.comp) + ' sem provisão no razão carregado', 'o razão não inclui o fechamento dessa competência');
+      else if (F.linhas.some(l => l.dif != null && Math.abs(l.dif) > 0.015)) h += it('warn', 'Folha × razão de ' + esc(F.comp) + ': ' + F.linhas.filter(l => l.dif != null && Math.abs(l.dif) > 0.015).length + ' diferença(s) na provisão', F.linhas.filter(l => l.dif != null && Math.abs(l.dif) > 0.015).map(l => esc(l.item.split(' × ')[0]) + ' ' + fmtBR(l.dif)).join('; ') + ' — veja a aba "Folha × Razão"');
+      else h += it('ok', 'Folha de ' + esc(F.comp) + ' confere com a provisão do razão', 'FGTS ' + fmtBR(S.folha.fgtsTotal) + ' · consignado líquido ' + fmtBR(S.folha.consigLiquido));
+      const RS = F.resc && F.resc.linhas || [];
+      if (RS.length){
+        const ok = RS.filter(l => l.sit === 'CONFERE'), sg = RS.filter(l => l.sit === 'SEM GUIA'), df = RS.filter(l => l.sit === 'DIFERENÇA'), oc = RS.filter(l => /OUTRA COMPET/.test(l.sit));
+        h += it(ok.length === RS.length ? 'ok' : 'info', RS.length + ' rescisão(ões) com FGTS na folha de ' + esc(F.comp), ok.length + ' com guia que confere');
+        if (sg.length) h += it('warn', sg.length + ' rescisão(ões) da folha sem guia carregada (R$ ' + fmtBR(r2(sg.reduce((a, l) => a + l.esperado, 0))) + ' esperados)', sg.map(l => esc(l.nome) + ' ' + fmtBR(l.esperado)).join('; ') + ' — anexe a guia ou confirme se ainda não foi gerada');
+        if (df.length) h += it('warn', df.length + ' guia(s) de rescisão com valor diferente da folha', df.map(l => esc(l.nome) + (Math.abs(l.d1) > 0.05 ? ' depósito ' + fmtBR(l.d1) : '') + (Math.abs(l.d2) > 0.05 ? ' 40% ' + fmtBR(l.d2) : '')).join('; ') + ' (o 40% da guia usa o saldo real da conta; diferenças pequenas são comuns, confira as grandes)');
+        if (oc.length) h += it('info', oc.length + ' rescisão(ões) com guia de outra competência', oc.map(l => esc(l.nome) + ' — ' + esc(l.sit.replace(/^GUIA DE OUTRA COMPETÊNCIA /, ''))).join('; '));
+      }
+    } else h += it('info', 'Folha não anexada', 'opcional: anexe o PDF da folha para conferir a provisão de FGTS e consignado');
+    (S.razao.avisos || []).forEach(a => { h += it('warn', 'Razão', esc(a)); });
+    const nz = R.copiar.filter(c => c.aviso).length;
+    if (nz) h += it('warn', nz + ' linha(s) em bloco que não fecha em zero', 'veja as linhas com contorno na aba Copiar e colar');
+    else if (R.copiar.length) h += it('ok', 'Todos os blocos de provisão × pagamento fecham em zero');
+    const gaps = R.resumo.filter(r => !r.situ.startsWith('OK'));
+    if (gaps.length) h += it('info', 'Resumo por competência: ' + gaps.length + ' competência(s) sem fechamento com a guia mensal', gaps.map(r => r.comp + ' — ' + r.situ.toLowerCase()).join('; '));
+    const nPend = pendParaSalvar(), totP = nPend.pagtoSemGuia.length + nPend.guiaSemPagto.length;
+    $('conf').innerHTML = '<div class="conf"><h3>Conferência do mês</h3><ul>' + h + '</ul>' + (totP ? '<div class="actions-row"><button class="btn-secondary" id="btnPend" type="button">Salvar pendências para o próximo mês (' + totP + ')</button><span class="hint">pagamentos sem guia + guias sem data de pagamento · no próximo fechamento a ferramenta dá baixa quando a guia chegar</span></div>' : '') + '</div>';
+    const bp = $('btnPend'); if (bp) bp.addEventListener('click', salvarPend);
+  }
+  function pFolha(){
+    const R = S.res, P = $('pn_folha'), F = R.folha;
+    if (!F){ P.innerHTML = '<div class="empty-state neutral" style="margin-top:12px"><div class="big">∅</div>Nenhuma folha carregada. Anexe o PDF da folha (passo 2, "Folha de pagamento") para comparar o FGTS e o consignado da folha com a provisão do razão.</div>'; return; }
+    let rows = '';
+    F.linhas.forEach(l => {
+      const ok = l.dif != null && Math.abs(l.dif) <= 0.015;
+      rows += '<tr><td class="wrap">' + esc(l.item) + (l.nota ? '<br><span class="hint">' + esc(l.nota) + '</span>' : '') + '</td><td class="num">' + fmtBR(l.folha) + '</td><td class="num">' + (l.razao != null ? fmtBR(l.razao) : '—') + '</td><td class="num ' + (l.dif == null ? '' : ok ? 'cmp-ok' : 'cmp-bad') + '">' + (l.dif == null ? '—' : ok ? '✓ confere' : fmtBR(l.dif)) + '</td></tr>';
+    });
+    const ev = S.folha.ev.map(e => '<tr class="cmp-sub"><td>' + esc(e.cod + ' · ' + e.desc) + '</td><td class="num">' + fmtBR(e.valor) + '</td><td class="num">' + e.qtd + ' colab.</td><td></td></tr>').join('');
+    const g = F.guias;
+    const gTxt = g.n ? 'Guias carregadas da competência ' + esc(F.comp) + ': FGTS mensal ' + fmtBR(g.mensal) + ' + rescisório ' + fmtBR(g.resc) + ' + indenização 40% ' + fmtBR(g.indeniz) + ' = <b>' + fmtBR(g.fgts) + '</b> (encargos ' + fmtBR(g.enc) + ' à parte) · consignado ' + fmtBR(g.consig) + '. Folha − guias (FGTS) = <b>' + fmtBR(r2(S.folha.fgtsTotal - g.fgts)) + '</b>' + (Math.abs(S.folha.fgtsTotal - g.fgts) > 0.015 ? ' — ainda falta guia, ou a guia do mês é paga só no mês seguinte.' : ' — confere.') :
+      'Nenhuma guia carregada da competência ' + esc(F.comp) + ' (a guia mensal é paga no mês seguinte — normal no fechamento).';
+    let rr = '';
+    const RS = F.resc && F.resc.linhas || [];
+    if (RS.length){
+      const cls = sit => sit === 'CONFERE' ? 'cmp-ok' : sit === 'SEM GUIA' || sit === 'DIFERENÇA' ? 'cmp-bad' : '';
+      const cel = (v, d) => v == null ? '—' : fmtBR(v) + (d != null && Math.abs(d) > 0.05 ? '<br><span class="cmp-bad">dif. ' + fmtBR(d) + '</span>' : '');
+      const trs = RS.map(l => '<tr><td class="wrap">' + esc(l.nome) + '<br><span class="hint">' + esc(l.mat) + (l.demissao ? ' · demitido em ' + fmtDate(l.demissao) : '') + '</span></td><td class="num">' + fmtBR(l.depFolha) + '</td><td class="num">' + cel(l.depGuia, l.d1) + '</td><td class="num">' + fmtBR(l.multaFolha) + '</td><td class="num">' + cel(l.multaGuia, l.d2) + '</td><td class="wrap ' + cls(l.sit) + '">' + esc(l.sit) + (l.guia ? '<br><span class="hint">' + esc(l.guia.id || l.guia.nome) + '</span>' : '') + '</td></tr>').join('');
+      const sobra = (F.resc.guiasSemFuncionario || []);
+      rr = '<h3 style="margin-top:22px;font-size:16px">Rescisões da folha × guias (' + RS.length + ')</h3><p class="hint">Depósito rescisório = eventos 335 + 497 + 5065; multa de 40% = evento 498. A guia confere com tolerância de R$ 0,05; o 40% da guia usa o saldo real da conta e pode diferir um pouco da folha.</p>' +
+        tbl([['Funcionário'], ['Depósito folha', 1], ['Depósito guia', 1], ['40% folha', 1], ['40% guia', 1], ['Situação']], trs) +
+        (sobra.length ? '<p class="hint warn" style="margin-top:8px">Guia(s) de rescisão da competência sem funcionário correspondente na folha: ' + esc(sobra.map(g => g.tag || g.id || g.nome).join('; ')) + '</p>' : '');
+    }
+    P.innerHTML = '<p class="hint" style="margin-top:12px">Folha de <b>' + esc(F.comp) + '</b> (' + esc(S.nomeFolha) + ') × provisão lançada no razão. Diferença = razão − folha.</p>' +
+      tbl([['Item'], ['Folha', 1], ['Razão', 1], ['Diferença', 1]], rows + ev) + '<p class="hint" style="margin-top:10px">' + gTxt + '</p>' + rr;
+  }
   function pResumo(){
     const R = S.res; let rows = '', t = { mensal: 0, d13: 0, arred: 0, consig: 0, provTotal: 0, resc: 0, esperada: 0, pagValor: 0, juros: 0 };
     R.resumo.forEach(r => {
@@ -925,6 +1320,8 @@ if (typeof module !== 'undefined') module.exports = { copiarLinhas, parseRazao, 
       toast('Excel gerado.', 'ok');
     }catch(e){ toast('Erro ao gerar Excel: ' + (e.message || e), 'err'); }
   }
+  // gancho para os testes automáticos do mês (não altera o uso normal)
+  window.__fgts = { S, run, pendParaSalvar, pendSituacao };
 })();
 </script>
 </body>

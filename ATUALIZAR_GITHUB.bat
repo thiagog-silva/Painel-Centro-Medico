@@ -20,6 +20,10 @@ if not exist ".git" (
   goto :fim
 )
 
+if exist "%~dp0sincronizar_versoes.ps1" (
+  powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0sincronizar_versoes.ps1"
+  if errorlevel 1 echo [AVISO] A sincronizacao das versoes falhou - o envio continua, mas confira as pastas tools e Paineis.
+)
 echo Arquivos alterados desde o ultimo envio:
 echo.
 git status --short

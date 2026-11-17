@@ -426,6 +426,7 @@ const TOOLS = [
    ========================================================= */
 const state = {
   fixas: [],            // ferramentas registradas em TOOLS (pasta tools/)
+  versoes: {},          // tools/versoes.json: { 'arquivo.html': { versao, bytes } } (gerado por sincronizar_versoes.ps1)
   custom: [],           // ferramentas adicionadas pelo usuário (neste navegador)
   frameDireto: false,   // true quando a ferramenta fixa abriu por src (sem sandbox)
   theme: 'auto',        // auto | light | dark
@@ -753,6 +754,31 @@ function renderMenu(r){
   nav.replaceChildren(...kids);
 }
 
+/* versões publicadas (tools/versoes.json) */
+function nomeArquivo(t){ return String(t.arquivo || '').split('/').pop(); }
+function versaoDe(t){ const v = state.versoes[nomeArquivo(t)]; return v && v.versao ? v.versao : ''; }
+async function carregarVersoes(){
+  if (location.protocol === 'file:') return;   // o navegador não deixa ler arquivos locais
+  try{
+    const r = await fetch('tools/versoes.json', { cache: 'no-store' });
+    if (!r.ok) return;
+    const j = await r.json();
+    if (j && j.ferramentas && typeof j.ferramentas === 'object') state.versoes = j.ferramentas;
+  }catch(_){ /* sem versoes.json: o painel funciona normalmente, só sem as etiquetas de versão */ }
+}
+function versaoDoHtml(html){
+  const m = /VERS.{1,2}O:\s*([0-9]+(?:\.[0-9]+){1,3})/.exec(String(html || '').slice(0, 3000));
+  return m ? m[1] : '';
+}
+// aviso quando o arquivo carregado não é a versão que o versoes.json diz estar publicada (cache do navegador ou pasta desatualizada)
+function avisarVersao(t, html){
+  const esperada = versaoDe(t), real = versaoDoHtml(html);
+  if (!esperada || !real || esperada === real) return;
+  const box = $('alertaFerramenta'); if (!box) return;
+  $('alertaTexto').textContent = 'Versão diferente da publicada: o arquivo carregado é a v' + real + ', mas o painel registra a v' + esperada + '. Pode ser cache do navegador (use Ctrl+F5) ou uma cópia antiga da pasta tools — rode o ATUALIZAR_GITHUB.bat para sincronizar.';
+  box.hidden = false;
+}
+
 function cardFerramenta(t){
   const quebrada = t._ausente === true;
   return h('article', { class: 'tool-card' + (quebrada ? ' is-broken' : ''), dataset: { id: t.id } },
@@ -762,6 +788,7 @@ function cardFerramenta(t){
         h('h3', { text: t.nome }),
         h('div', { style: 'margin-top:6px;display:flex;gap:6px;flex-wrap:wrap' },
           h('span', { class: 'tag tag-neutral', text: t.categoria }),
+          versaoDe(t) ? h('span', { class: 'tag tag-neutral', title: 'Versão publicada desta ferramenta (tools/versoes.json)', text: 'v' + versaoDe(t) }) : null,
           quebrada ? h('span', { class: 'tag tag-warn', text: 'arquivo ausente' }) : null))),
     h('p', { class: 'desc', text: t.descricao || 'Sem descrição.' }),
     h('div', { class: 'tool-actions' },
@@ -941,6 +968,7 @@ async function montarFrame(t, wrap){
   state.frameDireto = direto;
   wrap.replaceChildren(frame);
   if (direto) frame.src = encodeURI(t.arquivo); else frame.srcdoc = prepararDocumento(html);
+  if (t.fixa && html) avisarVersao(t, html);
 }
 
 async function abrirEmNovaAba(t){
@@ -1285,6 +1313,7 @@ async function iniciar(){
   if (!state.lsOk) state.metaPersistida = false;
   mostrarBannerArmazenamento();
   ligarEventos();
+  await carregarVersoes();
   await renderizar();
 }
 iniciar().catch(() => {

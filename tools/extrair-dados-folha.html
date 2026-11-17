@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- VERSÃO: 1.4.0 — CSV do mês anterior (vincula férias/rescisões pagas antes do período sem entrar na colagem) e rescisão com nome parcial no banco; 1.3.0 — padrão do Painel de Automação com paleta exclusiva São Nicolau, aplicado em 01/10/2026; 1.2.0 paleta; 1.1.0 layout da planilha; 1.0.0 base -->
+<!-- VERSÃO: 1.5.0 — validação de arquivo errado (PDF que não é a folha, CSV sem férias/rescisão, período do CSV diferente do da folha, arquivo que não é CSV/PDF); 1.4.0: CSV do mês anterior (vincula férias/rescisões pagas antes do período sem entrar na colagem) e rescisão com nome parcial no banco; 1.3.0 — padrão do Painel de Automação com paleta exclusiva São Nicolau, aplicado em 01/10/2026; 1.2.0 paleta; 1.1.0 layout da planilha; 1.0.0 base -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -422,6 +422,7 @@ function truncarNome(nomeCompleto){
 const planilha={ferias:'',resc:''};
 
 function showError(msg){ errorBox.style.display='block'; errorBox.textContent='Deu erro ao processar:\n'+msg+'\n\nManda esse texto pra eu corrigir.'; }
+function showProblema(msg){ errorBox.style.display='block'; errorBox.textContent=msg; }
 function clearError(){ errorBox.style.display='none'; errorBox.textContent=''; }
 function showNotice(msg){ notice.style.display=msg?'block':'none'; notice.innerHTML=msg||''; }
 const tick = () => new Promise(r=>setTimeout(r,0));
@@ -443,12 +444,18 @@ function refreshFiles(){
   dzPrev.classList.toggle('filled',prevFiles.length>0);
   runBtn.disabled = !pdfFile;
 }
-bindDrop(dzPdf,pdfInput,fs=>{ pdfFile=fs.find(f=>/\.pdf$/i.test(f.name))||fs[0]; refreshFiles(); });
+bindDrop(dzPdf,pdfInput,fs=>{
+  const p=fs.find(f=>/\.pdf$/i.test(f.name));
+  if(!p){ showProblema('Este campo espera o PDF da folha de pagamento. Arquivo recebido: '+(fs[0]?fs[0].name:'(nenhum)')+'.'); return; }
+  clearError(); pdfFile=p; refreshFiles();
+});
 bindDrop(dzCsv,csvInput,fs=>{
+  const nao=fs.filter(f=>!/\.csv$/i.test(f.name)); if(nao.length) showProblema('Estes arquivos não são CSV e foram ignorados: '+nao.map(f=>f.name).join(', ')+'. Use o Movimentos do Tasy em CSV.');
   fs.filter(f=>/\.csv$/i.test(f.name)).forEach(f=>{ if(!csvFiles.some(x=>x.name===f.name&&x.size===f.size)) csvFiles.push(f); });
   refreshFiles();
 });
 bindDrop(dzPrev,prevInput,fs=>{
+  const nao=fs.filter(f=>!/\.csv$/i.test(f.name)); if(nao.length) showProblema('Estes arquivos não são CSV e foram ignorados: '+nao.map(f=>f.name).join(', ')+'.');
   fs.filter(f=>/\.csv$/i.test(f.name)).forEach(f=>{ if(!prevFiles.some(x=>x.name===f.name&&x.size===f.size)) prevFiles.push(f); });
   refreshFiles();
 });
@@ -485,11 +492,12 @@ function parseCSV(text){
   return rows;
 }
 async function readBank(files){
-  const out=[], seen=new Set(); let ignoradas=0;
+  const out=[], seen=new Set(), cabInvalido=[]; let ignoradas=0;
   for(const file of files){
     const rows=parseCSV(decodeBuf(await file.arrayBuffer()));
     if(!rows.length) continue;
     const head=rows[0].map(norm);
+    if(!head.includes('DATA MOVIMENTO')||!head.includes('VALOR')){ cabInvalido.push(file.name); continue; }
     const ix=(name,fb)=>{ const i=head.findIndex(h=>h===name); return i>=0?i:fb; };
     const iL=ix('LANCAMENTO',1), iD=ix('DATA MOVIMENTO',2), iV=ix('VALOR',5), iH=ix('HISTORICO',7), iC=ix('COMPLEMENTO',8), iA=ix('CONTA',11);
     for(const r of rows.slice(1)){
@@ -511,7 +519,7 @@ async function readBank(files){
       out.push(rec);
     }
   }
-  return {bank:out, ignoradas};
+  return {bank:out, ignoradas, cabInvalido};
 }
 
 /* ---------- PDF ---------- */
@@ -826,7 +834,10 @@ async function run(){
     const thr=Math.max(0,parseInt($('thrField').value||'5',10));
     const win=Math.max(0,parseInt($('winField').value||'7',10));
     const rc=await readBank(csvFiles), rp=await readBank(prevFiles);
+    const cab=rc.cabInvalido.concat(rp.cabInvalido);
+    if(cab.length){ showProblema('Estes arquivos não parecem o Movimentos do Tasy (faltam as colunas "Data movimento" e "Valor"): '+cab.join(', ')+'. Confira se exportou o relatório certo.'); progressWrap.style.display='none'; runBtn.disabled=!pdfFile; return; }
     const folha=await readFolha(pdfFile);
+    if(!folha.periodo&&!folha.ferias.length&&!folha.resc.length){ showProblema('O PDF "'+pdfFile.name+'" não parece a folha de pagamento: não achei "Período:", nem o relatório de férias, nem "Líquido Rescisão". Use o PDF completo da folha do mês.'); progressWrap.style.display='none'; runBtn.disabled=!pdfFile; return; }
     const iniMs=folha.periodo?parseDate(folha.periodo.ini):null;
     const bank=[], bankPrev=[], keyOf=b=>b.lanc+'|'+b.ms+'|'+b.cents, seenPrev=new Set();
     let roteados=0, foraPeriodo=0;
@@ -842,6 +853,17 @@ async function run(){
     if(roteados) avisos.push(`${roteados} lançamento(s) dos CSVs principais têm data anterior ao período e foram tratados como mês anterior (só conferência, não entram na colagem).`);
     if(foraPeriodo) avisos.push(`${foraPeriodo} lançamento(s) do CSV do mês anterior têm data dentro do período e foram ignorados (confira se subiu o arquivo certo).`);
     if(prevFiles.length&&!bankPrev.length) avisos.push('O CSV do mês anterior não trouxe lançamentos de datas anteriores ao período.');
+    if(folha.periodo&&bank.length){
+      const fimMs=parseDate(folha.periodo.fim), uteis=bank.filter(b=>b.tipo!=='outro');
+      if(uteis.length&&iniMs!==null&&fimMs!==null){
+        const depois=uteis.filter(b=>b.ms>fimMs).length;
+        if(depois===uteis.length) avisos.push('⚠ ATENÇÃO: todos os lançamentos de férias/rescisão dos CSVs são posteriores ao fim do período da folha ('+folha.periodo.ini+' a '+folha.periodo.fim+'). O CSV é de outro mês?');
+        else if(depois) avisos.push('⚠ '+depois+' lançamento(s) de férias/rescisão dos CSVs são posteriores ao fim do período da folha ('+folha.periodo.fim+') e não casam com nada — confira o arquivo.');
+      }
+    }
+    if(csvFiles.length&&!bank.length&&!bankPrev.length) avisos.push('⚠ ATENÇÃO: os CSVs principais não trouxeram nenhum lançamento válido.');
+    else if(csvFiles.length&&!bank.length&&bankPrev.length) avisos.push('⚠ ATENÇÃO: todos os lançamentos dos CSVs principais têm data anterior ao início da folha ('+(folha.periodo?folha.periodo.ini:'?')+'). Subiu o CSV do mês errado? Eles só serão usados como conferência do mês anterior.');
+    else if(csvFiles.length&&bank.length&&!bank.some(b=>b.tipo!=='outro')&&!bankPrev.some(b=>b.tipo!=='outro')) avisos.push('⚠ ATENÇÃO: nenhum lançamento dos CSVs é de férias ou rescisão — este é o Movimentos da conta certa (pagamento de férias/rescisão)?');
     const outros=bank.filter(b=>b.tipo==='outro').length;
     if(outros) avisos.push(`${outros} lançamento(s) dos CSVs não são de férias nem de rescisão e foram ignorados.`);
     if(ignoradas) avisos.push(`${ignoradas} linha(s) dos CSVs sem data/valor válidos foram ignoradas.`);

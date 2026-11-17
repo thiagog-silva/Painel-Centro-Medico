@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- VERSÃO: 1.3.0 (paleta Hospital São Nicolau) — Extratos Bancários Tasy (padrão Painel de Automação). 1.3.0: extratos de CONTA APLICAÇÃO (BB/Bradesco/Unicred) tratados como banco próprio (1103/1102/1104): linhas 'CB - Aplicações' não são lançadas (já vêm do extrato principal) e são conferidas contra ele; Rendimento/IOF da aplicação são lançados na conta de aplicação; regras novas: 13º Salário → 1652 e Baixa Recebimento de Empréstimo (BB) → 2359. 1.2.1: BB Conta Garantida → 2370 (regra por origem) e CR 44 na regra do Centro de Convivência (4211). 1.2.0: plano de contas atualizado (634 contas, export de 17/11/2026; substitui o plano salvo no navegador uma única vez); novas 'Regras por Origem/Destino' (conta definida pelo nome da origem, ex.: Ministério do Trabalho → 2751 FGTS) e lista de lançamentos enviados a Pendências para reclassificar à mão, com base no movimento de setembro/2026. 1.1.1: regras/bancos/histórico (47) padrão alinhados ao TXT de agosto/2026 (antes dependiam do localStorage do navegador); novas regras de setembro/2026. -->
+<!-- VERSÃO: 1.4.0 (paleta Hospital São Nicolau) — Extratos Bancários Tasy (padrão Painel de Automação). 1.4.0: validação de arquivo errado (cabeçalho sem Transação/Valor/Data da transação é recusado; aviso de banco não identificado pelo nome e de extratos de meses diferentes). 1.3.0: extratos de CONTA APLICAÇÃO (BB/Bradesco/Unicred) tratados como banco próprio (1103/1102/1104): linhas 'CB - Aplicações' não são lançadas (já vêm do extrato principal) e são conferidas contra ele; Rendimento/IOF da aplicação são lançados na conta de aplicação; regras novas: 13º Salário → 1652 e Baixa Recebimento de Empréstimo (BB) → 2359. 1.2.1: BB Conta Garantida → 2370 (regra por origem) e CR 44 na regra do Centro de Convivência (4211). 1.2.0: plano de contas atualizado (634 contas, export de 17/11/2026; substitui o plano salvo no navegador uma única vez); novas 'Regras por Origem/Destino' (conta definida pelo nome da origem, ex.: Ministério do Trabalho → 2751 FGTS) e lista de lançamentos enviados a Pendências para reclassificar à mão, com base no movimento de setembro/2026. 1.1.1: regras/bancos/histórico (47) padrão alinhados ao TXT de agosto/2026 (antes dependiam do localStorage do navegador); novas regras de setembro/2026. -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -787,20 +787,43 @@ document.getElementById('crFile').addEventListener('change', e => { if (e.target
 
 async function handleFiles(fileList) {
   for (const file of Array.from(fileList)) {
-    const rows = await parseTabular(file);
-    if (!rows.length) continue;
+    let rows;
+    try { rows = await parseTabular(file); } catch (e) { toast(file.name + ': não consegui ler o arquivo (' + (e.message || e) + '). Envie o extrato em XLSX ou CSV.', 'err'); continue; }
+    if (!rows.length) { toast(file.name + ': arquivo vazio.', 'err'); continue; }
     const header = rows[0].map(h => String(h||'').trim());
+    const hn = header.map(h => norm(h));
+    const faltam = ['Transação', 'Valor', 'Data da transação'].filter(c => !hn.includes(norm(c)));
+    if (faltam.length) { toast(file.name + ': não parece o extrato bancário do Tasy (faltam as colunas ' + faltam.join(', ') + '). Arquivo ignorado.', 'err'); continue; }
     const dataRows = rows.slice(1).filter(r => r.some(v => v !== '' && v != null));
     const bancoSugerido = sugerirBanco(file.name);
     ARQUIVOS.push({
       id: 'f' + Date.now() + Math.random().toString(36).slice(2,6),
       nome: file.name, header, linhas: dataRows,
-      banco: bancoSugerido, somenteJuros: /garantida/i.test(file.name)
+      banco: bancoSugerido, bancoIdentificado: bancoReconhecido(file.name), somenteJuros: /garantida/i.test(file.name)
     });
   }
   renderFiles();
 }
 
+// o nome do arquivo traz número/nome de algum banco cadastrado? (senão sugerirBanco cai no primeiro da lista)
+function bancoReconhecido(nome) {
+  const nd = digitSeqs(nome), n = norm(nome), nA = normA(nome);
+  if (/garantida/i.test(nome) && BANCOS.some(b => /garantida/i.test(b.nome))) return true;
+  for (const b of BANCOS) {
+    for (const bd of [...digitSeqs(b.nome), ...digitSeqs(b.palavraChave)]) for (const d of nd) if (d.length >= 4 && bd.length >= 4 && (d.includes(bd) || bd.includes(d))) return true;
+    const primeira = norm(b.palavraChave || '').split(' ')[0];
+    if (primeira.length >= 4 && n.includes(primeira)) return true;
+    const nb = normA(b.nome).replace(/\d.*$/, '').replace(/^banco (do )?/, '').trim();
+    if (nb.length >= 4 && nA.replace(/_/g, ' ').includes(nb)) return true;
+  }
+  return false;
+}
+// mês predominante das datas de um arquivo (MM/AAAA)
+function mesDoArquivo(a) {
+  const iData = a.header.findIndex(x => norm(x) === norm('Data da transação')); if (iData < 0) return '';
+  const cnt = {}; a.linhas.forEach(l => { const d = toDateStr(l[iData]); const k = d[1] + '/' + d[2]; cnt[k] = (cnt[k] || 0) + 1; });
+  return Object.entries(cnt).sort((x, y) => y[1] - x[1]).map(e => e[0])[0] || '';
+}
 function digitSeqs(s) {
   return (String(s || '').match(/\d[\d.\-]{2,}\d|\d{3,}/g) || []).map(x => x.replace(/\D/g, '')).filter(x => x.length >= 3);
 }
@@ -856,13 +879,17 @@ function renderFiles() {
   list.innerHTML = '';
   document.getElementById('extratosSub').textContent = ARQUIVOS.length
     ? `${ARQUIVOS.length} arquivo(s) carregado(s)` : 'Nenhum arquivo ainda';
+  const meses = ARQUIVOS.map(mesDoArquivo), freq = {}; meses.forEach(m => { if (m) freq[m] = (freq[m] || 0) + 1; });
+  const mesRef = Object.entries(freq).sort((x, y) => y[1] - x[1])[0]; const mesRefV = mesRef ? mesRef[0] : '';
   ARQUIVOS.forEach((a, i) => {
     const div = document.createElement('div');
     div.className = 'file-row';
     const options = BANCOS.map(b => `<option value="${b.conta}" ${b.conta===a.banco?'selected':''}>${escapeHtml(b.nome)} (${b.conta})</option>`).join('');
     div.innerHTML = `
       <span class="fname">${escapeHtml(a.nome)}</span>
-      <span class="count">${a.linhas.length} linhas</span>
+      <span class="count">${a.linhas.length} linhas${meses[i] ? ' · ' + meses[i] : ''}</span>
+      ${meses[i] && mesRefV && meses[i] !== mesRefV ? `<span style="flex-basis:100%;font-size:12px;color:var(--danger,#b3261e)">⚠ Este extrato é de ${meses[i]}, e a maioria dos arquivos é de ${mesRefV}. Confira se é o mês certo.</span>` : ''}
+      ${a.bancoIdentificado === false ? '<span style="flex-basis:100%;font-size:12px;color:var(--danger,#b3261e)">⚠ O nome do arquivo não indica nenhum banco cadastrado — confira o banco selecionado ao lado.</span>' : ''}
       <select onchange="ARQUIVOS[${i}].banco=this.value;renderFiles()">${options}</select>
       ${ehContaAplicacao(a.banco) ? '<span style="flex-basis:100%;font-size:12px;color:var(--accent)">Conta de aplicação: as linhas “Aplicações” não são lançadas (já vêm do extrato principal); só são conferidas. Rendimento/IOF são lançados.</span>' : ''}
       <label class="chk"><input type="checkbox" ${a.somenteJuros?'checked':''} onchange="ARQUIVOS[${i}].somenteJuros=this.checked"> Só juros (conta garantida)</label>
