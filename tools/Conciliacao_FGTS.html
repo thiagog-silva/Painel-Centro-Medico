@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Conciliação de FGTS — VERSÃO: 2.1.0 — finalizado em 08/10/2026 (copiar e colar no formato da planilha manual: blocos GUIA FGTS / PROVISAO FGTS RESCISORIO / PAGTO; leitura das guias GFD reais: Total da Guia com dois-pontos, colunas com Quantidade, consignado, vencimento em linha separada; débitos hist. 112 abatem o consignado). Base oficial estável: alterar somente o que for solicitado. -->
+<!-- Conciliação de FGTS — VERSÃO: 2.4.0 — finalizado em 17/11/2026 (2.4.0: Tag da guia que vem com data/hora no lugar do nome (guia sem Tag) não vira nome no histórico; pagamentos do razão sem guia abaixo do limite de guia mensal entram no copiar e colar em bloco amarelo "SEM GUIA" (opção); no Resumo, quando o razão não tem pares D=C, os rescisórios da competência vêm da soma das guias rescisórias carregadas (editável). 2.3.0: histórico das linhas de rescisório com " - NOME DO FUNCIONÁRIO" (Tag da guia), com opção para desligar. 2.2.0: 2.2.0: guias pagas depois do último lançamento do razão entram no copiar e colar com a data e o valor da própria guia, marcadas "ainda não lançada" (caso da guia do mês 10 com competência 09); opção para desligar. 2.1.1: removida a etapa Parâmetros: conciliação automática ao carregar o razão e as guias; copiar e colar no formato da planilha manual: blocos GUIA FGTS / PROVISAO FGTS RESCISORIO / PAGTO; leitura das guias GFD reais: Total da Guia com dois-pontos, colunas com Quantidade, consignado, vencimento em linha separada; débitos hist. 112 abatem o consignado). Base oficial estável: alterar somente o que for solicitado. -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -116,6 +116,7 @@ code.k{ background:var(--surface-alt); border:1px solid var(--border); padding:1
 .panel[hidden]{ display:none; }
 table.copy tr.verde td:not(.out){ background:#92D050; color:#111; }
 table.copy td.neg{ color:var(--danger); }
+table.copy tr.semg td:not(.out){ background:#FFF2CC; color:#111; }
 table.copy tr.verde td.neg{ color:#b00020; }
 table.copy tr.sepr td{ height:14px; padding:0; background:var(--surface); }
 table.copy td{ background:var(--surface); font-family:var(--font-mono); font-size:12.5px; }
@@ -134,7 +135,7 @@ details pre{ white-space:pre-wrap; background:var(--surface-alt); border:1px sol
   <header class="topbar"><div class="topbar-inner">
     <div class="brand"><div class="brand-mark">FG</div><div><h1>Conciliação de FGTS</h1><p>Centro Médico Cirúrgico de Catalão · conta 2751 · Razão × Guias × Provisão</p></div></div>
     <div class="steps-pills" id="pills">
-      <span class="step-pill is-active" data-p="1">1 · Razão</span><span class="step-pill" data-p="2">2 · Guias</span><span class="step-pill" data-p="3">3 · Parâmetros</span><span class="step-pill" data-p="4">4 · Resultado</span>
+      <span class="step-pill is-active" data-p="1">1 · Razão</span><span class="step-pill" data-p="2">2 · Guias</span><span class="step-pill" data-p="3">3 · Resultado</span>
     </div>
   </div></header>
 
@@ -153,26 +154,13 @@ details pre{ white-space:pre-wrap; background:var(--surface-alt); border:1px sol
     <div id="guiasBox"></div>
   </section>
 
-  <section class="step-card" id="s3" data-locked="true">
-    <div class="step-head"><div class="step-num">3</div><div><h2>Parâmetros</h2><p class="step-sub">Os valores de rescisórios por competência podem ser ajustados no resultado (aba Resumo).</p></div></div>
-    <fieldset><legend>Conciliação</legend>
-      <div class="field-row">
-        <div class="field"><label for="pTol">Tolerância de data (dias)</label><input type="number" id="pTol" value="3" min="0" max="30"></div>
-        <div class="field"><label for="pDe">Competência inicial (MM/AAAA)</label><input type="text" id="pDe" placeholder="ex.: 01/2026"></div>
-        <div class="field"><label for="pAte">Competência final (MM/AAAA)</label><input type="text" id="pAte" placeholder="ex.: 07/2026"></div>
-        <div class="field"><label for="pLim">Pagamento ≥ R$ é guia mensal</label><input type="number" id="pLim" value="50000" min="0" step="1000"></div>
-      </div>
-    </fieldset>
-    <div class="actions-row"><button class="btn-primary" id="btnRun" type="button">Conciliar</button><span class="hint">Pode rodar sem guias: o resumo por competência e os rescisórios usam só o razão.</span></div>
-  </section>
-
   <section class="step-card" id="s4" data-locked="true">
-    <div class="step-head"><div class="step-num">4</div><div><h2>Resultado</h2><p class="step-sub" id="resSub">—</p></div></div>
+    <div class="step-head"><div class="step-num">3</div><div><h2>Resultado</h2><p class="step-sub" id="resSub">—</p></div></div>
     <div class="summary-grid" id="tiles"></div>
     <div class="tabs" id="tabs"></div>
     <div id="panels"></div>
   </section>
-  <div class="ver">Conciliação de FGTS · v2.1.0 · Contabilidade Integrada</div>
+  <div class="ver">Conciliação de FGTS · v2.4.0 · Contabilidade Integrada</div>
 </div>
 <div class="toast-host" id="toasts"></div>
 
@@ -374,6 +362,7 @@ function parseGuiaText(txt, nome) {
   if (!g.total && g.valorRecolher) g.total = g.valorRecolher;
   const lines = t.split(/\r?\n/);
   if (g.id) { const li = lines.find(l => l.includes(g.id)); if (li) g.tag = li.slice(li.indexOf(g.id) + g.id.length).replace(new RegExp(MONEY + '\\s*$'), '').trim(); }
+  if (/^\d{2}\/\d{2}\/\d{4}/.test(g.tag)) { g.tag = ''; g.avisos.push('Esta guia não tem Tag com o nome do funcionário — o histórico fica sem nome.'); }
   let sec = '';
   const reComp = /^\s*((?:13[º°o]?\s*\/\s*\d{4})|(?:\d{2}\/\d{4}))\s+(.*)$/i;
   for (const ln of lines) {
@@ -426,7 +415,7 @@ function subsetsFast(items, maxK, target, tolCents) {
 }
 
 function conciliar(lines, guias, opts) {
-  opts = Object.assign({ tolDias: 3, resc: {}, de: '', ate: '', incluirAbertos: true }, opts || {});
+  opts = Object.assign({ tolDias: 3, resc: {}, de: '', ate: '', incluirAbertos: true, incluirPosRazao: true, comNome: true }, opts || {});
   const pagos = lines.filter(l => l.cat === 'PAGAMENTO');
   const used = new Set();   // índices de pagamentos já consumidos
   const res = {};
@@ -441,6 +430,8 @@ function conciliar(lines, guias, opts) {
     }
   }
   for (const l of lines) if (l.cat === 'RESCISÓRIO (par D=C)') { const c = prov[l.comp] = prov[l.comp] || { comp: l.comp, mensal: 0, d13: 0, arred: 0, consig: 0, rescRazao: 0 }; c.rescRazao += l.cred; }
+  const limG = opts.limiteResc || 50000, guiaRescTot = {};
+  for (const g of guias || []) if (g.total > 0 && g.total < limG) for (const c of g.comps || []) if (/^\d{2}\//.test(c.comp)) guiaRescTot[c.comp] = r2((guiaRescTot[c.comp] || 0) + (c.total || 0));
   const guiaResc = {};
   for (const g of guias || []) for (const c of g.comps || []) if (c.resc || c.indeniz) guiaResc[c.comp] = r2((guiaResc[c.comp] || 0) + (c.resc || 0) + (c.indeniz || 0));
 
@@ -455,7 +446,8 @@ function conciliar(lines, guias, opts) {
     r.rescRazao = r2(c.rescRazao); r.consigBaixa = r2(c.consigBaixa);
     r.rescGuias = guiaResc[c.comp] != null ? guiaResc[c.comp] : null;
     r.rescManual = opts.resc[c.comp] != null && opts.resc[c.comp] !== '' ? +opts.resc[c.comp] : null;
-    r.resc = r.rescManual != null ? r.rescManual : r.rescRazao;
+    r.rescOrigem = r.rescManual != null ? 'manual' : (r.rescRazao > 0 ? 'razão' : (guiaRescTot[c.comp] ? 'guias' : ''));
+    r.resc = r.rescManual != null ? r.rescManual : (r.rescRazao > 0 ? r.rescRazao : (guiaRescTot[c.comp] || 0));
     r.esperada = r2(r.provTotal - r.resc);
     const nx = nextComp(c.comp), [a, b] = monthRange(nx);
     const win = pagos.filter(p => p.data >= a && p.data <= b && !used.has(p.i));
@@ -596,9 +588,17 @@ function copiarLinhas(res, opts, lines) {
   const lim = opts.limiteResc || 50000;
   const okSt = x => x.status === 'CONCILIADO' || x.status === 'CONCILIADO (LOTE)' || (opts.incluirDiverg && /^DIVERG/.test(x.status));
   const matched = res.guias.filter(okSt);
+  // v2.2.0: guias pagas depois do último lançamento do razão também entram (data e valor da própria guia);
+  // a guia do mês seguinte pode trazer a competência do mês do razão (ex.: guia paga em outubro com competência 09).
+  if (opts.incluirPosRazao !== false) res.guias.filter(x => x.status === 'PAGA APÓS O PERÍODO DO RAZÃO' && x.g.paga && x.g.total > 0).forEach((x, n) => {
+    matched.push({ g: x.g, status: 'PAGA APÓS O RAZÃO – ainda não lançada', deb: [{ i: -(n + 1), data: x.g.paga, deb: x.g.total, pseudo: true }], nota: x.nota });
+  });
   const rows = [];
   const R = (tipo, data, hist, valor, status, ref) => ({ tipo, data, hist, valor: r2(valor), status: status || '', ref: ref || '' });
   const lab = c => c.replace('/', '.');
+  // v2.3.0: nome do funcionário (da Tag da guia, sem a palavra RESCISAO) como sufixo " - NOME" no histórico das linhas de rescisório
+  const nomeG = g => { const t = String((g && g.tag) || '').replace(/^\s*RESC[IÍ]S[AÃ]O\b\s*[-:]?\s*/i, '').replace(/\s+/g, ' ').trim(); return t.toUpperCase(); };
+  const suf = gs => { if (opts.comNome === false) return ''; const ns = []; (Array.isArray(gs) ? gs : [gs]).forEach(g => { const n = nomeG(g); if (n && ns.indexOf(n) < 0) ns.push(n); }); return ns.length ? ' - ' + ns.join(' / ') : ''; };
   const mensais = matched.filter(x => x.g.total >= lim), resc = matched.filter(x => x.g.total < lim);
   const compsDe = g => Array.from(new Set((g.comps || []).map(c => c.comp)));
   const provPorComp = g => { const m = {}; (g.comps || []).forEach(c => { m[c.comp] = r2((m[c.comp] || 0) + (c.total || 0)); }); return m; };
@@ -622,7 +622,7 @@ function copiarLinhas(res, opts, lines) {
       pags.sort((a, b) => b.d.data - a.d.data || a.d.i - b.d.i);
       const soma = r2(pags.reduce((s, p) => s + p.d.deb, 0));
       out.push(R('verde', ld, 'PROVISAO FGTS RESCISORIO', -soma, 'soma dos rescisórios pagos em ' + M, ''));
-      pags.forEach(p => out.push(R('verde', p.d.data, 'PAGTO FGTS RESCISAO', p.d.deb, status, (p.x.g.id || '') + (p.x.g.tag ? ' · ' + p.x.g.tag : ''))));
+      pags.forEach(p => out.push(R('verde', p.d.data, 'PAGTO FGTS RESCISAO' + suf(p.x.g), p.d.deb, status, (p.x.g.id || '') + (p.x.g.tag ? ' · ' + p.x.g.tag : ''))));
     }
     pagtos.forEach(d => out.push(R('verde', d.data, 'PAGTO', d.deb, status, ref)));
     const sum = r2(out.reduce((s, r) => s + r.valor, 0));
@@ -665,8 +665,8 @@ function copiarLinhas(res, opts, lines) {
     const prov = {};
     g.xs.forEach(x => { if (provEmitida.has(x.g.k)) return; provEmitida.add(x.g.k); const pc = provPorComp(x.g); Object.keys(pc).forEach(c => { prov[c] = r2((prov[c] || 0) + pc[c]); }); if (!x.g.comps || !x.g.comps.length) prov['?'] = r2(x.g.total); });
     const out = [];
-    Object.keys(prov).sort((a, b) => compKey(a) - compKey(b)).forEach(c => out.push(R('branco', c === '?' ? lastDayOfComp(compOf(g.d.data)) : lastDayOfComp(c), 'PROVISAO FGTS RESCISORIO', -prov[c], c === '?' ? 'competência da guia não informada' : '', (g.xs[0].g.id || '') + (g.xs[0].g.tag ? ' · ' + g.xs[0].g.tag : ''))));
-    out.push(R('branco', g.d.data, 'PAGTO FGTS RESCISAO', g.d.deb, g.xs.map(x => x.status).filter((v, i, a) => a.indexOf(v) === i).join(' / '), g.xs.map(x => x.g.id || x.g.nome).join(' + ')));
+    Object.keys(prov).sort((a, b) => compKey(a) - compKey(b)).forEach(c => out.push(R('branco', c === '?' ? lastDayOfComp(compOf(g.d.data)) : lastDayOfComp(c), 'PROVISAO FGTS RESCISORIO' + suf(g.xs.map(x => x.g)), -prov[c], c === '?' ? 'competência da guia não informada' : (g.xs[0].status.indexOf('PAGA APÓS') === 0 ? g.xs[0].status : ''), (g.xs[0].g.id || '') + (g.xs[0].g.tag ? ' · ' + g.xs[0].g.tag : ''))));
+    out.push(R('branco', g.d.data, 'PAGTO FGTS RESCISAO' + suf(g.xs.map(x => x.g)), g.d.deb, g.xs.map(x => x.status).filter((v, i, a) => a.indexOf(v) === i).join(' / '), g.xs.map(x => x.g.id || x.g.nome).join(' + ')));
     const sum = r2(out.reduce((s, r) => s + r.valor, 0));
     if (Math.abs(sum) > 0.005) out.forEach(r => { r.aviso = 'grupo não fecha em zero (' + fmtPlain(sum) + ')'; });
     out.forEach(r => rows.push(r));
@@ -676,8 +676,16 @@ function copiarLinhas(res, opts, lines) {
     const soma = r2(pags.reduce((s, p) => s + p.d.deb, 0));
     const st = 'rescisórios pagos em ' + M + ' – aguarda a guia mensal ' + M;
     rows.push(R('branco', lastDayOfComp(M), 'PROVISAO FGTS RESCISORIO', -soma, st, ''));
-    pags.forEach(p => rows.push(R('branco', p.d.data, 'PAGTO FGTS RESCISAO', p.d.deb, st, (p.x.g.id || '') + (p.x.g.tag ? ' · ' + p.x.g.tag : ''))));
+    pags.forEach(p => rows.push(R('branco', p.d.data, 'PAGTO FGTS RESCISAO' + suf(p.x.g), p.d.deb, st, (p.x.g.id || '') + (p.x.g.tag ? ' · ' + p.x.g.tag : ''))));
   });
+  // v2.4.0: pagamentos do razão sem guia abaixo do limite de guia mensal (não geram bloco verde): entram em bloco amarelo, só o pagamento
+  if (opts.semGuiaPeq !== false) {
+    const peq = (res.semGuia || []).filter(p => p.deb < lim).sort((a, b) => a.data - b.data || a.i - b.i);
+    if (peq.length) {
+      if (rows.length && rows[rows.length - 1].tipo !== 'sep') rows.push(R('sep'));
+      peq.forEach(p => rows.push(R('semguia', p.data, 'PAGTO FGTS - SEM GUIA', p.deb, 'SEM GUIA – anexe a guia deste pagamento para gerar a provisão', (p.compl || '').replace(/\s+/g, ' ').slice(0, 90))));
+    }
+  }
   while (rows.length && rows[rows.length - 1].tipo === 'sep') rows.pop();
   return rows;
 }
@@ -690,7 +698,7 @@ if (typeof module !== 'undefined') module.exports = { copiarLinhas, parseRazao, 
 (function(){
   const $ = id => document.getElementById(id);
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  const S = { razao: null, nomeRazao: '', guias: [], res: null, tab: 'copiar', resc: {}, incluirDiverg: false, semGuia: false, abertos: true };
+  const S = { razao: null, nomeRazao: '', guias: [], res: null, tab: 'copiar', resc: {}, incluirDiverg: false, semGuia: true, abertos: true, posRazao: true, comNome: true, semGuiaPeq: true };
 
   function toast(msg, kind){ const t = document.createElement('div'); t.className = 'toast' + (kind ? ' toast-' + kind : ''); t.textContent = msg; $('toasts').appendChild(t); setTimeout(() => t.remove(), 4200); }
   function pills(n){ document.querySelectorAll('#pills .step-pill').forEach(p => { const k = +p.dataset.p; p.classList.toggle('is-active', k === n); p.classList.toggle('is-done', k < n); }); }
@@ -719,7 +727,7 @@ if (typeof module !== 'undefined') module.exports = { copiarLinhas, parseRazao, 
       const cats = {}; L.forEach(l => cats[l.cat] = (cats[l.cat] || 0) + 1);
       $('razaoInfo').innerHTML = '<span class="file-chip">' + esc(f.name) + '</span><span class="file-chip">layout ' + esc(p.layout) + '</span>' +
         '<div class="summary-grid">' + tile(L.length, 'lançamentos') + tile(fmtDate(Math.min(...ds)) + ' – ' + fmtDate(Math.max(...ds)), 'período') + tile(fmtBR(r2(cred - deb)), 'saldo credor (créd. − déb.)', 'accent') + tile(cats['PAGAMENTO'] || 0, 'pagamentos (débitos)') + tile((cats['OUTRO DÉBITO'] || 0) + (cats['OUTRO CRÉDITO'] || 0) + (cats['OUTRO'] || 0), 'não classificados', (cats['OUTRO DÉBITO'] || cats['OUTRO CRÉDITO'] || cats['OUTRO']) ? 'warn' : '') + '</div>';
-      unlock('s2'); unlock('s3'); pills(2);
+      unlock('s2'); pills(2); S.resc = {}; S.semGuia = true; run();
       toast('Razão lido: ' + L.length + ' lançamentos.', 'ok');
     }catch(e){ toast('Razão: ' + (e.message || e), 'err'); }
   }
@@ -766,15 +774,15 @@ if (typeof module !== 'undefined') module.exports = { copiarLinhas, parseRazao, 
   $('guiasBox').addEventListener('click', e => { const b = e.target.closest('[data-del]'); if (!b) return; S.guias.splice(+b.dataset.del, 1); renderGuias(); if (S.res) run(); });
 
   /* ---- 3/4: conciliar ---- */
-  function opts(){ return { tolDias: +$('pTol').value || 0, de: $('pDe').value.trim(), ate: $('pAte').value.trim(), limiteResc: +$('pLim').value || 50000, resc: S.resc, incluirDiverg: S.incluirDiverg, semGuia: S.semGuia, incluirAbertos: S.abertos }; }
+  // parâmetros fixos (a tela de parâmetros foi removida): tolerância de 3 dias; sem filtro de competência; guia mensal = total ≥ R$ 50.000
+  function opts(){ return { tolDias: 3, de: '', ate: '', limiteResc: 50000, resc: S.resc, incluirDiverg: S.incluirDiverg, semGuia: S.semGuia, incluirAbertos: S.abertos, incluirPosRazao: S.posRazao, comNome: S.comNome, semGuiaPeq: S.semGuiaPeq }; }
   function run(){
     if (!S.razao) return;
     try{
       S.res = conciliar(S.razao.lines, S.guias, opts());
-      unlock('s4'); pills(4); render();
+      unlock('s4'); pills(3); render();
     }catch(e){ toast('Erro na conciliação: ' + (e.message || e), 'err'); console.error(e); }
   }
-  $('btnRun').addEventListener('click', () => { S.resc = {}; S.semGuia = !S.guias.length; run(); $('s4').scrollIntoView({ behavior: 'smooth' }); });
 
   const TABS = [['copiar', 'Copiar e colar'], ['resumo', 'Resumo por competência'], ['guias', 'Guia × Razão'], ['resc', 'Rescisórios'], ['juros', 'Juros'], ['saldo', 'Saldo']];
   function render(){
@@ -782,7 +790,7 @@ if (typeof module !== 'undefined') module.exports = { copiarLinhas, parseRazao, 
     const okG = R.guias.filter(x => /^CONCILIADO/.test(x.status)).length;
     $('resSub').textContent = 'Razão: ' + S.nomeRazao + ' · ' + R.guias.length + ' guia(s) · ' + R.resumo.length + ' competência(s).';
     const difs = R.resumo.filter(r => !r.situ.startsWith('OK')).length;
-    $('tiles').innerHTML = tile(R.copiar.filter(c => c.tipo !== 'sep').length, 'linhas para copiar', 'accent') + tile(fmtBR(r2(R.copiar.filter(c => c.tipo !== 'sep' && c.valor > 0).reduce((a, c) => a + c.valor, 0))), 'pagamentos conciliados') + tile(R.guias.length ? okG + '/' + R.guias.length : '—', 'guias conciliadas') + tile(difs, 'competências com pendência', difs ? 'warn' : '') + tile(fmtBR(R.saldo.final), 'saldo credor final');
+    $('tiles').innerHTML = tile(R.copiar.filter(c => c.tipo !== 'sep').length, 'linhas para copiar', 'accent') + tile(fmtBR(r2(R.copiar.filter(c => c.tipo !== 'sep' && c.tipo !== 'semguia' && c.valor > 0).reduce((a, c) => a + c.valor, 0))), 'pagamentos conciliados') + tile(R.guias.length ? okG + '/' + R.guias.length : '—', 'guias conciliadas') + tile(difs, 'competências com pendência', difs ? 'warn' : '') + tile(fmtBR(R.saldo.final), 'saldo credor final');
     const cnt = { copiar: R.copiar.filter(c => c.tipo !== 'sep').length, resumo: R.resumo.length, guias: R.guias.length, resc: R.resc.length, juros: R.jurosMes.length, saldo: '' };
     $('tabs').innerHTML = TABS.map(t => '<button type="button" class="tab' + (S.tab === t[0] ? ' is-active' : '') + '" data-t="' + t[0] + '">' + t[1] + (cnt[t[0]] !== '' ? '<span class="cnt">' + cnt[t[0]] + '</span>' : '') + '</button>').join('');
     $('panels').innerHTML = TABS.map(t => '<div class="panel" id="pn_' + t[0] + '"' + (S.tab === t[0] ? '' : ' hidden') + '></div>').join('');
@@ -798,14 +806,17 @@ if (typeof module !== 'undefined') module.exports = { copiarLinhas, parseRazao, 
     let h = '<p class="hint" style="margin-top:12px">Formato da planilha de conciliação: <b>Data · Histórico · Valor</b>. Bloco <b>verde</b> = competência fechada com a guia mensal (guia e provisão negativas, pagamentos positivos); linhas sem cor = rescisórios pagos fora do mês da competência (provisão negativa + pagamento positivo). Cada bloco deve somar zero. A coluna "Status" fica fora da área a copiar.</p>';
     h += '<label class="chk"><input type="checkbox" id="ckAb"' + (S.abertos ? ' checked' : '') + '><span>Incluir <b>rescisórios pagos no mês</b> cuja guia mensal ainda não foi paga (grupo sem cor, aguardando a guia mensal)</span></label>';
     h += '<label class="chk"><input type="checkbox" id="ckDiv"' + (S.incluirDiverg ? ' checked' : '') + '><span>Incluir guias com <b>divergência de data ou de valor</b> (revisar antes de colar)</span></label>';
+    h += '<label class="chk"><input type="checkbox" id="ckNome"' + (S.comNome ? ' checked' : '') + '><span>Colocar <b>" - NOME DO FUNCIONÁRIO"</b> no histórico das linhas de rescisório (nome vem da Tag da guia)</span></label>';
+    h += '<label class="chk"><input type="checkbox" id="ckPR"' + (S.posRazao ? ' checked' : '') + '><span>Incluir <b>guias pagas depois do último lançamento do razão</b> (usa a data e o valor da própria guia; a guia paga no mês seguinte pode trazer a competência do mês do razão)</span></label>';
     h += '<label class="chk"><input type="checkbox" id="ckSG"' + (S.semGuia ? ' checked' : '') + '><span>Gerar o bloco verde também para <b>pagamentos mensais sem guia</b> (competência = mês anterior ao pagamento, ou a que fecha no Resumo)</span></label>';
+    h += '<label class="chk"><input type="checkbox" id="ckSP"' + (S.semGuiaPeq ? ' checked' : '') + '><span>Listar os <b>pagamentos do razão sem guia</b> (abaixo de R$ 50.000) em bloco amarelo no fim, só com o pagamento e sem provisão — anexe a guia para gerar o grupo completo</span></label>';
     const n = R.copiar.filter(c => c.tipo !== 'sep').length;
     if (!n){ P.innerHTML = h + '<div class="empty-state neutral"><div class="big">∅</div>Nenhuma linha conciliada ainda. Carregue as guias (passo 2) ou marque a opção de pagamentos sem guia.</div>'; bindCopiar(); return; }
     h += '<div class="actions-row"><button class="btn-primary" id="btnCopy" type="button">Copiar ' + n + ' linhas (com cor e formato)</button><button class="btn-secondary" id="btnCopyTxt" type="button">Copiar só o texto</button><button class="btn-secondary" id="btnXlsx" type="button">Baixar Excel (.xlsx)</button></div>';
     let rows = '';
     R.copiar.forEach(c => {
       if (c.tipo === 'sep'){ rows += '<tr class="sepr"><td colspan="3"></td><td class="out"></td></tr>'; return; }
-      rows += '<tr class="' + (c.tipo === 'verde' ? 'verde' : '') + (c.aviso ? ' div' : '') + '"><td>' + fmtDate(c.data) + '</td><td>' + esc(c.hist) + '</td><td class="num' + (c.valor < 0 ? ' neg' : '') + '">' + fmtCell(c.valor) + '</td><td class="out">' + (c.status ? stag(c.status) : '') + (c.ref ? ' <span class="mono">' + esc(c.ref) + '</span>' : '') + (c.aviso ? ' <span class="hint err">' + esc(c.aviso) + '</span>' : '') + '</td></tr>';
+      rows += '<tr class="' + (c.tipo === 'verde' ? 'verde' : c.tipo === 'semguia' ? 'semg' : '') + (c.aviso ? ' div' : '') + '"><td>' + fmtDate(c.data) + '</td><td>' + esc(c.hist) + '</td><td class="num' + (c.valor < 0 ? ' neg' : '') + '">' + fmtCell(c.valor) + '</td><td class="out">' + (c.status ? stag(c.status) : '') + (c.ref ? ' <span class="mono">' + esc(c.ref) + '</span>' : '') + (c.aviso ? ' <span class="hint err">' + esc(c.aviso) + '</span>' : '') + '</td></tr>';
     });
     h += tbl([['Data'], ['Histórico'], ['Valor', 1], ['Status (não copiar)']], rows, 'copy');
     P.innerHTML = h; bindCopiar();
@@ -816,7 +827,7 @@ if (typeof module !== 'undefined') module.exports = { copiarLinhas, parseRazao, 
     let h = '<table>';
     S.res.copiar.forEach(c => {
       if (c.tipo === 'sep'){ h += '<tr><td></td><td></td><td></td></tr>'; return; }
-      const bg = c.tipo === 'verde' ? 'background:#92D050;' : '';
+      const bg = c.tipo === 'verde' ? 'background:#92D050;' : c.tipo === 'semguia' ? 'background:#FFF2CC;' : '';
       h += '<tr><td style="' + bg + 'mso-number-format:\'dd\\/mm\\/yyyy\'">' + fmtDate(c.data) + '</td><td style="' + bg + '">' + esc(c.hist) + '</td><td style=\'' + bg + 'mso-number-format:' + NF + '\'>' + fmtPlain(c.valor) + '</td></tr>';
     });
     return h + '</table>';
@@ -835,7 +846,7 @@ if (typeof module !== 'undefined') module.exports = { copiarLinhas, parseRazao, 
     }
   }
   function bindCopiar(){
-    [['ckAb', 'abertos'], ['ckDiv', 'incluirDiverg'], ['ckSG', 'semGuia']].forEach(p => { const el = $(p[0]); if (el) el.addEventListener('change', () => { S[p[1]] = el.checked; run(); }); });
+    [['ckAb', 'abertos'], ['ckDiv', 'incluirDiverg'], ['ckPR', 'posRazao'], ['ckNome', 'comNome'], ['ckSG', 'semGuia'], ['ckSP', 'semGuiaPeq']].forEach(p => { const el = $(p[0]); if (el) el.addEventListener('change', () => { S[p[1]] = el.checked; run(); }); });
     const c = $('btnCopy'); if (c) c.addEventListener('click', () => copiar(true));
     const ct = $('btnCopyTxt'); if (ct) ct.addEventListener('click', () => copiar(false));
     const x = $('btnXlsx'); if (x) x.addEventListener('click', exportXlsx);
@@ -846,12 +857,12 @@ if (typeof module !== 'undefined') module.exports = { copiarLinhas, parseRazao, 
     R.resumo.forEach(r => {
       Object.keys(t).forEach(k => { t[k] += (r[k] || 0); });
       rows += '<tr><td>' + r.comp + '</td><td class="num">' + fmtBR(r.mensal) + '</td><td class="num">' + fmtBR(r.d13) + '</td><td class="num">' + fmtBR(r.arred) + '</td><td class="num">' + fmtBR(r.consig) + '</td><td class="num">' + fmtBR(r.provTotal) + '</td>' +
-        '<td><input type="text" data-resc="' + r.comp + '" value="' + fmtPlain(r.resc) + '"' + (r.rescManual != null ? ' style="border-color:var(--accent)"' : '') + '></td>' +
+        '<td><input type="text" data-resc="' + r.comp + '" value="' + fmtPlain(r.resc) + '"' + (r.rescManual != null ? ' style="border-color:var(--accent)"' : (r.rescOrigem === 'guias' ? ' style="border-color:var(--brand-cyan)" title="soma das guias rescisórias carregadas (FGTS + consignado) desta competência"' : '')) + '></td>' +
         '<td class="num">' + (r.rescGuias != null ? fmtBR(r.rescGuias) : '—') + '</td><td class="num">' + fmtBR(r.esperada) + '</td><td>' + fmtDate(r.pagData) + '</td><td class="num">' + (r.pagValor != null ? fmtBR(r.pagValor) : '—') + '</td><td class="num">' + fmtBR(r.juros) + '</td><td class="num">' + (r.dif != null ? fmtBR(r.dif) : '—') + '</td><td>' + stag(r.situ) + '</td></tr>';
     });
     rows += '<tr class="total"><td>TOTAL</td><td class="num">' + fmtBR(t.mensal) + '</td><td class="num">' + fmtBR(t.d13) + '</td><td class="num">' + fmtBR(t.arred) + '</td><td class="num">' + fmtBR(t.consig) + '</td><td class="num">' + fmtBR(t.provTotal) + '</td><td class="num">' + fmtBR(t.resc) + '</td><td></td><td class="num">' + fmtBR(t.esperada) + '</td><td></td><td class="num">' + fmtBR(t.pagValor) + '</td><td class="num">' + fmtBR(t.juros) + '</td><td></td><td></td></tr>';
     const bx = R.resumo.filter(r => r.consigBaixa > 0).map(r => r.comp + ': ' + fmtBR(r.consigBaixa)).join('; ');
-    $('pn_resumo').innerHTML = (bx ? '<p class="hint warn" style="margin-top:12px">Débitos de histórico 112 (baixa de consignado) abatidos do consignado da competência — ' + esc(bx) + '. Confira se são baixas por rescisão já pagas em guia à parte.</p>' : '') + '<p class="hint" style="margin-top:12px">Guia mensal esperada = provisão total (FGTS + 13º + arredondamento + consignado) − rescisórios da competência; paga no mês seguinte. "Rescisórios" vem dos pares D=C do razão e pode ser ajustado (campo editável; Enter ou sair do campo recalcula). "Resc. guias" é a soma da coluna Rescisório das guias carregadas, só para comparação.</p>' +
+    $('pn_resumo').innerHTML = (bx ? '<p class="hint warn" style="margin-top:12px">Débitos de histórico 112 (baixa de consignado) abatidos do consignado da competência — ' + esc(bx) + '. Confira se são baixas por rescisão já pagas em guia à parte.</p>' : '') + '<p class="hint" style="margin-top:12px">Guia mensal esperada = provisão total (FGTS + 13º + arredondamento + consignado) − rescisórios da competência; paga no mês seguinte. "Rescisórios" vem dos pares D=C do razão; quando o razão não tem pares (campo com borda azul-clara), vem da soma das guias rescisórias carregadas da competência (FGTS + consignado), então quanto mais guias você anexar, mais completo fica. Pode ser ajustado (campo editável; Enter ou sair do campo recalcula). "Resc. guias" é a soma da coluna Rescisório das guias carregadas, só para comparação.</p>' +
       tbl([['Comp.'], ['FGTS mensal', 1], ['FGTS 13º', 1], ['Arredond.', 1], ['Consignado', 1], ['Provisão total', 1], ['(−) Rescisórios'], ['Resc. guias', 1], ['Guia esperada', 1], ['Data pgto'], ['Pago no razão', 1], ['(+) Juros', 1], ['Diferença', 1], ['Situação']], rows);
     $('pn_resumo').querySelectorAll('input[data-resc]').forEach(i => i.addEventListener('change', () => { const v = i.value.trim(); if (v === '') delete S.resc[i.dataset.resc]; else S.resc[i.dataset.resc] = parseNum(v); run(); }));
   }
