@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- VERSÃO: 1.3.0 — padrão do Painel de Automação com paleta exclusiva São Nicolau, aplicado em 01/10/2026; 1.2.0 paleta; 1.1.0 layout da planilha; 1.0.0 base -->
+<!-- VERSÃO: 1.4.0 — CSV do mês anterior (vincula férias/rescisões pagas antes do período sem entrar na colagem) e rescisão com nome parcial no banco; 1.3.0 — padrão do Painel de Automação com paleta exclusiva São Nicolau, aplicado em 01/10/2026; 1.2.0 paleta; 1.1.0 layout da planilha; 1.0.0 base -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -238,7 +238,7 @@ tr.nomatch td{ background:var(--surface-alt); color:var(--muted); }
       <div class="step-num">1</div>
       <div>
         <h2>Arquivos</h2>
-        <p class="step-sub">Sobe o PDF da folha (Relação de Cálculo) e os CSVs de movimento bancário. O sistema lê o resumo "Relação de Funcionários em Gozo de Férias" e o "Líquido Rescisão" e cruza cada pessoa com o lançamento do banco. Os CSVs podem ser vários de uma vez; o tipo é identificado pelo texto de cada lançamento.</p>
+        <p class="step-sub">Sobe o PDF da folha (Relação de Cálculo) e os CSVs de movimento bancário. O sistema lê o resumo "Relação de Funcionários em Gozo de Férias" e o "Líquido Rescisão" e cruza cada pessoa com o lançamento do banco. Os CSVs podem ser vários de uma vez; o tipo é identificado pelo texto de cada lançamento. Opcional: suba também o CSV do mês anterior para vincular as férias e rescisões pagas antes do período (por exemplo, nos últimos dias do mês); esses pagamentos já foram colados no mês passado, então aparecem só para conferência e não entram na colagem.</p>
       </div>
     </div>
     <div class="drops">
@@ -251,6 +251,11 @@ tr.nomatch td{ background:var(--surface-alt); color:var(--muted); }
         <div class="dropzone" id="dzCsv"><strong>CSVs do banco (Movimentos)</strong><span>arraste aqui ou clique para escolher</span></div>
         <input type="file" id="csvInput" accept=".csv,text/csv" multiple hidden>
         <div class="files" id="csvNames"></div>
+      </div>
+      <div class="drop">
+        <div class="dropzone" id="dzPrev"><strong>CSV do mês anterior (opcional)</strong><span>para vincular pagamentos antecipados — não entram na colagem</span></div>
+        <input type="file" id="prevInput" accept=".csv,text/csv" multiple hidden>
+        <div class="files" id="prevNames"></div>
       </div>
     </div>
     <div class="field-row">
@@ -294,7 +299,7 @@ tr.nomatch td{ background:var(--surface-alt); color:var(--muted); }
           <button class="btn-secondary" data-copy="ferias">Copiar tabela acima</button>
           <button class="btn-ghost" data-csv="ferias">Baixar CSV</button>
         </div>
-        <p class="note">Ordem do layout: (1) funcionários com pagamento encontrado no banco, linhas da folha seguidas da linha do banco, por data de pagamento; (2) uma linha em branco e as linhas da folha sem pagamento no mês (só provisão, já pagas antes), em ordem alfabética; (3) uma linha em branco e os pagamentos do banco sem provisão na folha, por data. A coluna "Líquido pago" só é preenchida quando difere do desconto do mês. Pares com diferença acima do alerta ficam nos blocos 2 e 3 para você conferir. Desc. Adto Férias = valor descontado na folha do mês; Líquido pago = valor do resumo de gozo (é o que sai no banco); Restante = parcela que ainda será descontada na folha seguinte. Diferença de dias = data do banco − data da folha (negativo = pago antes).</p>
+        <p class="note">Ordem do layout: (1) funcionários com pagamento encontrado no banco, linhas da folha seguidas da linha do banco, por data de pagamento; (2) uma linha em branco e as linhas da folha sem pagamento no mês (só provisão, já pagas antes), em ordem alfabética; (3) uma linha em branco e os pagamentos do banco sem provisão na folha, por data. A coluna "Líquido pago" só é preenchida quando difere do desconto do mês. Pares com diferença acima do alerta ficam nos blocos 2 e 3 para você conferir. Desc. Adto Férias = valor descontado na folha do mês; Líquido pago = valor do resumo de gozo (é o que sai no banco); Restante = parcela que ainda será descontada na folha seguinte. Diferença de dias = data do banco − data da folha (negativo = pago antes). Linhas "Pago no mês anterior · já lançado" foram vinculadas ao CSV do mês anterior: a linha do banco já foi colada no mês passado, por isso aqui só entra a linha da folha (bloco 2), sem repetir o banco.</p>
       </div>
 
       <div class="pane" id="pane-resc">
@@ -306,7 +311,7 @@ tr.nomatch td{ background:var(--surface-alt); color:var(--muted); }
           <button class="btn-secondary" data-copy="resc">Copiar tabela acima</button>
           <button class="btn-ghost" data-csv="resc">Baixar CSV</button>
         </div>
-        <p class="note">A folha não traz data de pagamento da rescisão; a referência é a data de demissão. O match é por nome e valor do líquido. Mesma ordem do layout de férias: pareados por data do banco, depois (linha em branco) rescisões da folha sem pagamento no mês em ordem alfabética, depois (linha em branco) pagamentos do banco sem rescisão na folha.</p>
+        <p class="note">A folha não traz data de pagamento da rescisão; a referência é a data de demissão. O match é por nome e valor do líquido. Rescisões vinculadas ao CSV do mês anterior ("Pago no mês anterior") ficam só com a linha da folha, sem repetir o banco. Nome parcial: quando o banco traz o nome incompleto, o vínculo é feito pelo valor igual e pelas palavras do nome. Mesma ordem do layout de férias: pareados por data do banco, depois (linha em branco) rescisões da folha sem pagamento no mês em ordem alfabética, depois (linha em branco) pagamentos do banco sem rescisão na folha.</p>
       </div>
 
       <div class="pane" id="pane-orf">
@@ -376,7 +381,7 @@ import * as pdfjsLib from 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/6.1.200
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/6.1.200/pdf.worker.mjs';
 
 const $ = id => document.getElementById(id);
-const dzPdf=$('dzPdf'), dzCsv=$('dzCsv'), pdfInput=$('pdfInput'), csvInput=$('csvInput');
+const dzPdf=$('dzPdf'), dzCsv=$('dzCsv'), dzPrev=$('dzPrev'), pdfInput=$('pdfInput'), csvInput=$('csvInput'), prevInput=$('prevInput');
 function setSteps(n){
   $('pill1').className='step-pill '+(n===1?'is-active':'is-done');
   $('pill2').className='step-pill '+(n===2?'is-active':'');
@@ -384,7 +389,7 @@ function setSteps(n){
 const runBtn=$('runBtn'), errorBox=$('errorBox'), notice=$('notice');
 const progressWrap=$('progressWrap'), progressBar=$('progressBar'), progressLabel=$('progressLabel');
 
-let pdfFile=null, csvFiles=[];
+let pdfFile=null, csvFiles=[], prevFiles=[];
 let tables={ferias:{head:[],rows:[]},resc:{head:[],rows:[]},orf:{head:[],rows:[]}};
 
 /* ---------- utilitários ---------- */
@@ -434,6 +439,8 @@ function refreshFiles(){
   dzPdf.classList.toggle('filled',!!pdfFile);
   $('csvNames').innerHTML = csvFiles.map(f=>`<span class="file-chip">${esc(f.name)}</span>`).join(' ');
   dzCsv.classList.toggle('filled',csvFiles.length>0);
+  $('prevNames').innerHTML = prevFiles.map(f=>`<span class="file-chip">${esc(f.name)}</span>`).join(' ');
+  dzPrev.classList.toggle('filled',prevFiles.length>0);
   runBtn.disabled = !pdfFile;
 }
 bindDrop(dzPdf,pdfInput,fs=>{ pdfFile=fs.find(f=>/\.pdf$/i.test(f.name))||fs[0]; refreshFiles(); });
@@ -441,9 +448,13 @@ bindDrop(dzCsv,csvInput,fs=>{
   fs.filter(f=>/\.csv$/i.test(f.name)).forEach(f=>{ if(!csvFiles.some(x=>x.name===f.name&&x.size===f.size)) csvFiles.push(f); });
   refreshFiles();
 });
+bindDrop(dzPrev,prevInput,fs=>{
+  fs.filter(f=>/\.csv$/i.test(f.name)).forEach(f=>{ if(!prevFiles.some(x=>x.name===f.name&&x.size===f.size)) prevFiles.push(f); });
+  refreshFiles();
+});
 runBtn.addEventListener('click',run);
 $('resetBtn').addEventListener('click',()=>{
-  pdfFile=null; csvFiles=[]; pdfInput.value=''; csvInput.value='';
+  pdfFile=null; csvFiles=[]; prevFiles=[]; pdfInput.value=''; csvInput.value=''; prevInput.value='';
   refreshFiles(); clearError(); showNotice(''); progressWrap.style.display='none'; $('results').style.display='none'; setSteps(1);
 });
 
@@ -491,7 +502,7 @@ async function readBank(files){
         tipo='resc';
         const m=texto.match(/Pagamento de Rescis[^\s-]*\s*-\s*(.+?)(?:\s{2,}|$)/i);
         nome=m?m[1].replace(/\s+(Rescis.*A Pagar)$/i,'').trim():'';
-      } else if(/FERIAS/.test(nt)) tipo='ferias';
+      } else if(/FERIAS/.test(nt)&&!/LIQUIDO DE FERIAS/.test(nt)&&/\[[^\]]+\]/.test(texto)) tipo='ferias';
       else tipo='outro';
       const bm=texto.match(/\[([^\]]+)\]/);
       const rec={ lanc:(r[iL]||'').trim(), ms:parseDate(data), cents:toCents(val), banco:bm?bm[1]:'', tipo, nome, texto, compl:((r[iC]||'').replace(/\s+/g,' ').trim()||texto), arquivo:file.name };
@@ -596,9 +607,7 @@ function subsetSum(cands,target,maxK){
   })(0,target);
   return sols;
 }
-function matchFerias(folha,bank,thr,win){
-  const rows=folha.map((f,i)=>({f,i,b:null,tipo:null,lote:null,ambiguo:false}));
-  const bk=bank.filter(b=>b.tipo==='ferias').map((b,j)=>({...b,j,used:false}));
+function matchCore(rows,bk,thr,win,cMax){
   const pairPass=(maxDays)=>{
     const cand=[];
     rows.forEach(r=>{ if(r.b) return;
@@ -626,21 +635,53 @@ function matchFerias(folha,bank,thr,win){
     b.used=true;
     best.forEach(c=>{ c.r.b=b; c.r.tipo='lote'; c.r.lote={n:best.length,total:b.cents,ref:b.lanc}; c.r.ambiguo=empate; });
   });
-  pairPass(null);                                       // C: valor igual, qualquer data
+  pairPass(cMax);                                       // C: valor igual, qualquer data (ou até cMax dias)
+}
+function matchFerias(folha,bank,thr,win){
+  const rows=folha.map((f,i)=>({f,i,b:null,tipo:null,lote:null,ambiguo:false,prev:null}));
+  const bk=bank.filter(b=>b.tipo==='ferias').map((b,j)=>({...b,j,used:false}));
+  matchCore(rows,bk,thr,win,null);
   return {rows,orfaos:bk.filter(b=>!b.used)};
+}
+/* férias que sobraram sem banco: tenta vincular ao movimento do mês anterior (só conferência; não entra na colagem) */
+function matchFeriasPrev(mf,bankPrev,thr,win){
+  const bk=bankPrev.filter(b=>b.tipo==='ferias').map((b,j)=>({...b,j,used:false}));
+  const sub=mf.rows.filter(r=>!r.b).map(r=>({r,s:{f:r.f,i:r.i,b:null,tipo:null,lote:null,ambiguo:false}}));
+  matchCore(sub.map(x=>x.s),bk,thr,win,31);
+  sub.forEach(({r,s})=>{ if(s.b) r.prev={b:s.b,tipo:s.tipo,lote:s.lote,ambiguo:s.ambiguo}; });
 }
 
 /* ---------- match: rescisão ---------- */
-function matchResc(folha,bank){
-  const rows=folha.map((f,i)=>({f,i,b:null,tipo:null}));
-  const bk=bank.filter(b=>b.tipo==='resc').map(b=>({...b,used:false,key:tokKey(b.nome)}));
+const tokSet = s => new Set(norm(s).split(' ').filter(t=>t&&!CONECTORES.has(t)));
+function nomeParcial(a,b){
+  const A=tokSet(a), B=tokSet(b), [m,M]=A.size<=B.size?[A,B]:[B,A];
+  if(m.size<2) return false;
+  for(const t of m) if(!M.has(t)) return false;
+  return true;
+}
+function matchRescCore(rows,bk,permiteValorDiferente){
   rows.forEach(r=>{ const k=tokKey(r.f.nome);
     const b=bk.find(x=>!x.used&&x.key===k&&x.cents===r.f.cents);
     if(b){ b.used=true; r.b=b; r.tipo='ok'; } });
+  rows.forEach(r=>{ if(r.b) return;                      // nome incompleto no banco: valor igual + palavras do nome
+    const b=bk.find(x=>!x.used&&x.cents===r.f.cents&&nomeParcial(r.f.nome,x.nome));
+    if(b){ b.used=true; r.b=b; r.tipo='parcial'; } });
+  if(!permiteValorDiferente) return;
   rows.forEach(r=>{ if(r.b) return; const k=tokKey(r.f.nome);
     const b=bk.find(x=>!x.used&&x.key===k);
     if(b){ b.used=true; r.b=b; r.tipo='valor'; } });
+}
+function matchResc(folha,bank){
+  const rows=folha.map((f,i)=>({f,i,b:null,tipo:null,prev:null}));
+  const bk=bank.filter(b=>b.tipo==='resc').map(b=>({...b,used:false,key:tokKey(b.nome)}));
+  matchRescCore(rows,bk,true);
   return {rows,orfaos:bk.filter(b=>!b.used)};
+}
+function matchRescPrev(mr,bankPrev){
+  const bk=bankPrev.filter(b=>b.tipo==='resc').map(b=>({...b,used:false,key:tokKey(b.nome)}));
+  const sub=mr.rows.filter(r=>!r.b).map(r=>({r,s:{f:r.f,i:r.i,b:null,tipo:null}}));
+  matchRescCore(sub.map(x=>x.s),bk,false);
+  sub.forEach(({r,s})=>{ if(s.b) r.prev={b:s.b,tipo:s.tipo}; });
 }
 
 /* ---------- render ---------- */
@@ -649,7 +690,7 @@ function setTable(key,tableEl,head,rows,htmlRows){
   tables[key]={head,rows};
   tableEl.innerHTML='<thead><tr>'+head.map(h=>`<th${h.num?' class="num"':''}>${esc(h.t)}</th>`).join('')+'</tr></thead><tbody>'+htmlRows.join('')+'</tbody>';
 }
-function render(folha,bank,thr,win,mf,mr){
+function render(folha,bank,thr,win,mf,mr,hasPrev,bankPrevN){
   const per=folha.periodo, iniMs=per?parseDate(per.ini):null;
 
   /* férias */
@@ -672,7 +713,7 @@ function render(folha,bank,thr,win,mf,mr){
   grpF.forEach((rs,b)=>{ if(!rs.every(r=>Math.abs(dayDiff(r.f.pagMs,b.ms))<=thr)) demB.add(b); });
 
   const hF=[{t:'Cad.'},{t:'Funcionário'},{t:'Histórico (planilha)'},{t:'Desc. Adto Férias (folha)',num:1},{t:'Período de gozo'},{t:'Pgto folha'},{t:'Líquido pago',num:1},{t:'Restante a descontar',num:1},{t:'Pgto banco'},{t:'Histórico do pagamento (banco)'},{t:'Dif. dias',num:1},{t:'Tipo'},{t:'Situação'}];
-  const rowsF=[], htmlF=[]; let cOk=0,cAnt=0,cAtr=0,cRev=0,cSem=0,cAnterior=0,cSoDesc=0;
+  const rowsF=[], htmlF=[]; let cOk=0,cAnt=0,cAtr=0,cRev=0,cSem=0,cAnterior=0,cSoDesc=0,cPrev=0,vPrev=0;
   const pushRow = o=>{
     rowsF.push([o.cad,o.nome,o.hist,o.desc,o.gozo,o.pgf,o.liq,o.rest,o.pb,o.hb,o.diff,o.tipo,o.sitTxt]);
     htmlF.push(`<tr${o.cls}><td class="mono">${esc(o.cad)}</td><td>${esc(o.nome)}${o.sub?`<span class="small">${esc(o.sub)}</span>`:''}</td><td class="mono">${esc(o.hist)}</td><td class="num mono">${o.desc}</td><td class="mono">${esc(o.gozo)}</td><td class="mono">${o.pgf}</td><td class="num mono">${o.liq}</td><td class="num mono">${o.rest}</td><td class="mono">${esc(o.pb)}</td><td>${esc(o.hb)}</td><td class="num mono">${o.diff===''?'':(o.diff>0?'+':'')+o.diff}</td><td>${esc(o.tipo)}</td><td>${o.sit}</td></tr>`);
@@ -687,9 +728,20 @@ function render(folha,bank,thr,win,mf,mr){
       else if(diff<0){ sit=chip('info',`Antecipado ${-diff} dia${-diff>1?'s':''}`); cAnt++; }
       else { sit=chip('warn',`Atrasado ${diff} dia${diff>1?'s':''}`); cAtr++; }
       if(r.ambiguo) sit+=' '+chip('warn','lote ambíguo');
+    } else if(r.prev){
+      const p=r.prev;
+      diff=dayDiff(f.pagMs,p.b.ms); pb=fmtDateWd(p.b.ms); hb=p.b.compl||'';
+      tipo=(p.tipo==='lote' ? `Lote: ${p.lote.n} func. = R$ ${fmtBRL(p.lote.total)}` : 'Individual')+' · mês anterior';
+      if(Math.abs(diff)>thr){ sit=chip('bad',`Revisar · ${diff>0?'+':''}${diff} dias (mês anterior)`); cRev++; }
+      else sit=chip('info','Pago no mês anterior · já lançado');
+      if(p.ambiguo) sit+=' '+chip('warn','lote ambíguo');
+      cPrev++; vPrev+=f.cents;
     } else {
       cls=' class="nomatch"';
-      if(iniMs!==null&&f.pagMs<iniMs){ sit=chip('mute','Sem lançamento · pgto em mês anterior'); cAnterior++; }
+      if(iniMs!==null&&f.pagMs<iniMs){
+        if(hasPrev){ sit=chip('bad','Sem lançamento · nem no mês anterior'); cSem++; }
+        else { sit=chip('mute','Sem lançamento · pgto em mês anterior (suba o CSV do mês anterior)'); cAnterior++; }
+      }
       else { sit=chip('bad','Sem lançamento no banco'); cSem++; }
     }
     const rest = d ? f.cents-d.cents : null;
@@ -715,14 +767,20 @@ function render(folha,bank,thr,win,mf,mr){
 
   /* rescisões */
   const hR=[{t:'Cad.'},{t:'Funcionário'},{t:'C. custo'},{t:'Demissão'},{t:'Líquido folha',num:1},{t:'Pgto banco'},{t:'Histórico do pagamento (banco)'},{t:'Dias após demissão',num:1},{t:'Valor banco',num:1},{t:'Situação'}];
-  const rowsR=[], htmlR=[]; let rOk=0,rVal=0,rSem=0;
+  const rowsR=[], htmlR=[]; let rOk=0,rVal=0,rSem=0,rPrev=0;
   mr.rows.forEach(r=>{
     const f=r.f,b=r.b; let sit='',pb='',hb='',dd='',vb='',cls='';
     if(b){
       pb=fmtDateWd(b.ms); hb=b.compl||''; vb=fmtBRL(b.cents);
       if(f.demissao) dd=dayDiff(parseDate(f.demissao),b.ms);
       if(r.tipo==='ok'){ sit=chip('ok','Conferido'); rOk++; }
+      else if(r.tipo==='parcial'){ sit=chip('ok','Conferido · nome parcial no banco'); rOk++; }
       else { sit=chip('bad',`Valor diferente (${fmtBRL(b.cents-f.cents)})`); rVal++; }
+    } else if(r.prev){
+      const pbk=r.prev.b;
+      pb=fmtDateWd(pbk.ms); hb=pbk.compl||''; vb=fmtBRL(pbk.cents);
+      if(f.demissao) dd=dayDiff(parseDate(f.demissao),pbk.ms);
+      sit=chip('info','Pago no mês anterior · já lançado'); rPrev++;
     } else { cls=' class="nomatch"'; sit=chip('bad','Sem lançamento no banco'); rSem++; }
     rowsR.push([f.cad,f.nome,f.cc,f.demissao,fmtBRL(f.cents),pb,hb,dd,vb,sit.replace(/<[^>]+>/g,'')]);
     htmlR.push(`<tr${cls}><td class="mono">${esc(f.cad)}</td><td>${esc(f.nome)}</td><td>${esc(f.cc)}</td><td class="mono">${esc(f.demissao)}</td><td class="num mono">${fmtBRL(f.cents)}</td><td class="mono">${esc(pb)}</td><td>${esc(hb)}</td><td class="num mono">${dd}</td><td class="num mono">${vb}</td><td>${sit}</td></tr>`);
@@ -751,10 +809,12 @@ function render(folha,bank,thr,win,mf,mr){
     tot(mf.rows.length,`funcionários em gozo de férias (R$ ${fmtBRL(totalF)})`) +
     tot(cOk,'férias pagas no dia') + tot(cAnt,'férias antecipadas') + tot(cAtr,'férias atrasadas') +
     tot(cRev,`férias para revisar (> ${thr} dias)`) + tot(cSem+cAnterior,'férias sem lançamento') + tot((folha.desc||[]).length,`descontos de adto férias na folha (${cSoDesc} sem resumo de gozo)`) +
-    tot(`${rOk}/${mr.rows.length}`,'rescisões conferidas') + tot(orf.length,'lançamentos do banco sem par');
+    tot(`${rOk}/${mr.rows.length}`,'rescisões conferidas') + tot(orf.length,'lançamentos do banco sem par') +
+    (hasPrev?tot(cPrev,`férias pagas no mês anterior, só conferência (R$ ${fmtBRL(vPrev)})`)+tot(rPrev,'rescisões pagas no mês anterior, só conferência'):'');
   $('resSub').textContent = (per?`Competência ${per.ini} a ${per.fim}. `:'')+
-    (cAnterior?`${cAnterior} funcionário(s) com pagamento na folha em mês anterior ao período não aparecem nos CSVs carregados. `:'')+
-    `${bank.length} lançamentos lidos dos CSVs.`;
+    (cAnterior?`${cAnterior} funcionário(s) com pagamento na folha em mês anterior ao período não aparecem nos CSVs carregados; suba o CSV do mês anterior para vincular. `:'')+
+    (cPrev?`${cPrev} férias e ${rPrev} rescisão(ões) vinculadas ao mês anterior (já lançadas, fora da colagem). `:'')+
+    `${bank.length} lançamentos lidos dos CSVs`+(bankPrevN?` (mais ${bankPrevN} do mês anterior).`:'.');
 }
 
 /* ---------- fluxo ---------- */
@@ -765,20 +825,32 @@ async function run(){
   try{
     const thr=Math.max(0,parseInt($('thrField').value||'5',10));
     const win=Math.max(0,parseInt($('winField').value||'7',10));
-    const {bank,ignoradas}=await readBank(csvFiles);
+    const rc=await readBank(csvFiles), rp=await readBank(prevFiles);
     const folha=await readFolha(pdfFile);
+    const iniMs=folha.periodo?parseDate(folha.periodo.ini):null;
+    const bank=[], bankPrev=[], keyOf=b=>b.lanc+'|'+b.ms+'|'+b.cents, seenPrev=new Set();
+    let roteados=0, foraPeriodo=0;
+    rc.bank.forEach(b=>{ if(iniMs!==null&&b.ms<iniMs){ if(b.tipo!=='outro') roteados++; if(!seenPrev.has(keyOf(b))){ seenPrev.add(keyOf(b)); bankPrev.push(b); } } else bank.push(b); });
+    const keysCur=new Set(bank.map(keyOf));
+    rp.bank.forEach(b=>{ if(iniMs!==null&&b.ms>=iniMs){ if(b.tipo!=='outro') foraPeriodo++; return; } if(keysCur.has(keyOf(b))||seenPrev.has(keyOf(b))) return; seenPrev.add(keyOf(b)); bankPrev.push(b); });
+    const ignoradas=rc.ignoradas+rp.ignoradas;
     const avisos=[];
     if(!folha.ferias.length) avisos.push('Não encontrei o relatório "Relação de Funcionários em Gozo de Férias" neste PDF.');
     if(!folha.resc.length) avisos.push('Não encontrei nenhum "Líquido Rescisão" neste PDF.');
     if(!folha.periodo) avisos.push('Não achei a linha "Período:" no PDF.');
-    if(!csvFiles.length) avisos.push('Nenhum CSV do banco foi carregado: só o resumo da folha será mostrado.');
+    if(!csvFiles.length&&!prevFiles.length) avisos.push('Nenhum CSV do banco foi carregado: só o resumo da folha será mostrado.');
+    if(roteados) avisos.push(`${roteados} lançamento(s) dos CSVs principais têm data anterior ao período e foram tratados como mês anterior (só conferência, não entram na colagem).`);
+    if(foraPeriodo) avisos.push(`${foraPeriodo} lançamento(s) do CSV do mês anterior têm data dentro do período e foram ignorados (confira se subiu o arquivo certo).`);
+    if(prevFiles.length&&!bankPrev.length) avisos.push('O CSV do mês anterior não trouxe lançamentos de datas anteriores ao período.');
     const outros=bank.filter(b=>b.tipo==='outro').length;
     if(outros) avisos.push(`${outros} lançamento(s) dos CSVs não são de férias nem de rescisão e foram ignorados.`);
     if(ignoradas) avisos.push(`${ignoradas} linha(s) dos CSVs sem data/valor válidos foram ignoradas.`);
     showNotice(avisos.join('<br>'));
     const mf=matchFerias(folha.ferias,bank,thr,win);
     const mr=matchResc(folha.resc,bank);
-    render(folha,bank,thr,win,mf,mr);
+    const hasPrev=bankPrev.length>0;
+    if(hasPrev){ matchFeriasPrev(mf,bankPrev,thr,win); matchRescPrev(mr,bankPrev); }
+    render(folha,bank,thr,win,mf,mr,hasPrev,bankPrev.filter(b=>b.tipo!=='outro').length);
     $('results').style.display='block';
     progressWrap.style.display='none';
     setSteps(2);
